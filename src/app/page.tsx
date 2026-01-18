@@ -99,7 +99,7 @@ export default async function DashboardPage() {
   ];
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 px-4 md:px-8">
       <PageHeader
         title="Dashboard Quản lý Kho"
         description="Tổng hợp tình hình hoạt động kho Phú Mỹ"

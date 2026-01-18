@@ -150,7 +150,7 @@ export function MaterialsClient({ initialMaterials }: MaterialsClientProps) {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 px-4 md:px-8">
       <PageHeader
         title="Danh mục Vật tư"
         breadcrumbs={<Breadcrumbs />}
