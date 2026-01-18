@@ -91,7 +91,7 @@ export function DashboardCharts() {
         <CardContent>
           <ChartContainer
             config={pieChartConfig}
-            className="mx-auto aspect-square max-h-[400px]"
+            className="mx-auto aspect-square max-h-[500px]"
           >
             <PieChart>
               <ChartTooltip
@@ -102,7 +102,7 @@ export function DashboardCharts() {
                 data={pieChartData}
                 dataKey="value"
                 nameKey="name"
-                innerRadius={40}
+                innerRadius={50}
                 strokeWidth={5}
               >
                 {pieChartData.map((entry, index) => (
