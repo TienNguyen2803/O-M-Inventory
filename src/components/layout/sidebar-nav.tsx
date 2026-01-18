@@ -80,7 +80,7 @@ const navItems = [
     group: "HỆ THỐNG & BẢO MẬT",
     items: [
       { href: "/users", label: "Quản lý Người dùng", icon: UserCog },
-      { href: "#", label: "Phân quyền Vai trò", icon: KeyRound },
+      { href: "/roles", label: "Phân quyền Vai trò", icon: KeyRound },
       { href: "#", label: "Nhật ký Hoạt động", icon: ScrollText },
     ],
   },

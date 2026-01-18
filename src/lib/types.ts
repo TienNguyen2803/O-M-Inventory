@@ -236,3 +236,22 @@ export interface User {
   role: string; // VAI TRÒ
   status: 'Active' | 'Inactive'; // TRẠNG THÁI
 }
+
+export interface RolePermission {
+  feature: string;
+  view: boolean;
+  create: boolean;
+  edit: boolean;
+  delete: boolean;
+  approve: boolean;
+}
+
+export interface Role {
+  id: string;
+  name: string;
+  description: string;
+  userCount: number;
+  permissions: {
+    [group: string]: RolePermission[];
+  };
+}

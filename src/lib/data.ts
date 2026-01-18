@@ -1,4 +1,4 @@
-import type { Material, InventoryLog, WarehouseLocation, WarehouseItem, Supplier, MaterialRequest, MaterialRequestItem, PurchaseRequest, PurchaseRequestItem, BiddingPackage, BiddingItem, BiddingResult, InboundReceipt, InboundReceiptItem, InboundReceiptDocument, OutboundVoucher, OutboundVoucherItem, StockTake, StockTakeResult, User } from "./types";
+import type { Material, InventoryLog, WarehouseLocation, WarehouseItem, Supplier, MaterialRequest, MaterialRequestItem, PurchaseRequest, PurchaseRequestItem, BiddingPackage, BiddingItem, BiddingResult, InboundReceipt, InboundReceiptItem, InboundReceiptDocument, OutboundVoucher, OutboundVoucherItem, StockTake, StockTakeResult, User, Role } from "./types";
 
 export const materials: Material[] = [
   {
@@ -810,7 +810,7 @@ export const suppliers: Supplier[] = [
     id: 'sup-21', 
     code: 'NCC-021', 
     taxCode: '0101234577',
-    name: 'Pilz GmbH & Co. KG', 
+    name: 'Pilz GmbH &amp; Co. KG', 
     address: 'Ostfildern, Germany',
     country: 'Germany',
     type: 'OEM',
@@ -1105,6 +1105,89 @@ export const users: User[] = Array.from({ length: 25 }, (_, i) => {
     };
 });
 
+const allPermissions = {
+  "BÁO CÁO & PHÂN TÍCH": [
+    { feature: "Tổng quan", view: true, create: false, edit: false, delete: false, approve: false },
+    { feature: "Báo cáo nhập, xuất, tồn", view: true, create: false, edit: false, delete: false, approve: false },
+    { feature: "Vật tư chậm luân chuyển", view: true, create: false, edit: false, delete: false, approve: false },
+    { feature: "Định mức tồn kho an toàn", view: true, create: false, edit: false, delete: false, approve: false },
+  ],
+  "KẾ HOẠCH & MUA SẮM": [
+    { feature: "Yêu cầu Vật tư", view: true, create: true, edit: true, delete: true, approve: false },
+    { feature: "Yêu cầu Mua sắm", view: true, create: true, edit: true, delete: false, approve: true },
+    { feature: "Quản lý Đấu thầu", view: true, create: true, edit: true, delete: false, approve: true },
+  ],
+  "DỮ LIỆU DANH MỤC": [
+    { feature: "Danh mục Vật tư", view: true, create: true, edit: true, delete: false, approve: false },
+    { feature: "Danh mục Kho", view: true, create: true, edit: true, delete: false, approve: false },
+    { feature: "Nhà cung cấp", view: true, create: true, edit: true, delete: true, approve: false },
+  ],
+  "VẬN HÀNH KHO": [
+    { feature: "Nhập kho (Inbound)", view: true, create: true, edit: true, delete: false, approve: false },
+    { feature: "Xuất kho (Outbound)", view: true, create: true, edit: true, delete: false, approve: false },
+    { feature: "Kiểm kê (Stock Take)", view: true, create: true, edit: true, delete: false, approve: true },
+    { feature: "Truy vết Vòng đời", view: true, create: false, edit: false, delete: false, approve: false },
+  ],
+  "HỆ THỐNG & BẢO MẬT": [
+    { feature: "Quản lý Người dùng", view: true, create: true, edit: true, delete: true, approve: false },
+    { feature: "Phân quyền Vai trò", view: true, create: true, edit: true, delete: true, approve: false },
+    { feature: "Nhật ký Hoạt động", view: true, create: false, edit: false, delete: false, approve: false },
+  ],
+};
+
+export const roles: Role[] = [
+  {
+    id: "role-1",
+    name: "Quản trị viên hệ thống",
+    description: "Toàn quyền truy cập và cấu hình hệ thống.",
+    userCount: 2,
+    permissions: JSON.parse(JSON.stringify(allPermissions)), // Full permissions
+  },
+  {
+    id: "role-2",
+    name: "Trưởng phòng vật tư",
+    description: "Quản lý toàn bộ hoạt động mua sắm và kho.",
+    userCount: 1,
+    permissions: {
+      "BÁO CÁO & PHÂN TÍCH": allPermissions["BÁO CÁO & PHÂN TÍCH"].map(p => ({ ...p, view: true })),
+      "KẾ HOẠCH & MUA SẮM": allPermissions["KẾ HOẠCH & MUA SẮM"].map(p => ({ ...p, view: true, approve: true })),
+      "DỮ LIỆU DANH MỤC": allPermissions["DỮ LIỆU DANH MỤC"].map(p => ({ ...p, view: true, create: true, edit: true })),
+      "VẬN HÀNH KHO": allPermissions["VẬN HÀNH KHO"].map(p => ({ ...p, view: true, approve: true })),
+      "HỆ THỐNG & BẢO MẬT": allPermissions["HỆ THỐNG & BẢO MẬT"].map(p => ({ ...p, view: true, create: false, edit: false, delete: false, approve: false })),
+    },
+  },
+  {
+    id: "role-3",
+    name: "Chuyên viên mua hàng",
+    description: "Thực hiện các nghiệp vụ mua sắm, đấu thầu.",
+    userCount: 5,
+    permissions: {
+      "BÁO CÁO & PHÂN TÍCH": allPermissions["BÁO CÁO & PHÂN TÍCH"].map(p => ({ ...p, view: true, create: false, edit: false, delete: false, approve: false })),
+      "KẾ HOẠCH & MUA SẮM": allPermissions["KẾ HOẠCH & MUA SẮM"].map(p => ({ ...p, view: true, create: true, edit: true, delete: false, approve: false })),
+      "DỮ LIỆU DANH MỤC": [{ feature: "Nhà cung cấp", view: true, create: true, edit: true, delete: false, approve: false }, ...allPermissions["DỮ LIỆU DANH MỤC"].slice(1).map(p => ({ ...p, view: true, create: false, edit: false, delete: false, approve: false }))],
+      "VẬN HÀNH KHO": [],
+      "HỆ THỐNG & BẢO MẬT": [],
+    },
+  },
+  {
+    id: "role-4",
+    name: "Thủ kho",
+    description: "Thực hiện các nghiệp vụ nhập, xuất, kiểm kê kho.",
+    userCount: 3,
+    permissions: {
+        "BÁO CÁO & PHÂN TÍCH": [],
+        "KẾ HOẠCH & MUA SẮM": [],
+        "DỮ LIỆU DANH MỤC": [{ feature: "Danh mục Vật tư", view: true, create: false, edit: false, delete: false, approve: false }, { feature: "Danh mục Kho", view: true, create: true, edit: true, delete: false, approve: false }, { feature: "Nhà cung cấp", view: true, create: false, edit: false, delete: false, approve: false }],
+        "VẬN HÀNH KHO": allPermissions["VẬN HÀNH KHO"].map(p => ({ ...p, view: true, create: true, edit: true, delete: false, approve: false })),
+        "HỆ THỐNG & BẢO MẬT": [],
+    },
+  },
+];
+// For admin, all permissions are true.
+roles[0].permissions = Object.entries(allPermissions).reduce((acc, [group, perms]) => {
+  acc[group] = perms.map(p => ({ ...p, view: true, create: true, edit: true, delete: true, approve: true }));
+  return acc;
+}, {} as Role['permissions']);
 
 export const getMaterials = async (): Promise<Material[]> => {
   // Simulate API delay
@@ -1165,3 +1248,8 @@ export const getUsers = async (): Promise<User[]> => {
     await new Promise(resolve => setTimeout(resolve, 100));
     return users;
 };
+
+export const getRoles = async (): Promise<Role[]> => {
+    await new Promise(resolve => setTimeout(resolve, 100));
+    return roles;
+}
