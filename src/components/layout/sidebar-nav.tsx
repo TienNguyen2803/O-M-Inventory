@@ -87,11 +87,11 @@ export function SidebarNav() {
   return (
     <SidebarContent className="pt-4">
       {navItems.map((group) => (
-        <SidebarGroup key={group.group} className="p-2">
+        <SidebarGroup key={group.group} className="p-2 space-y-3">
           <SidebarGroupLabel>{group.group}</SidebarGroupLabel>
-          <SidebarMenu className="gap-2">
+          <SidebarMenu className="gap-3">
             {group.items.map((item) => (
-              <SidebarMenuItem key={item.href}>
+              <SidebarMenuItem key={item.label}>
                 <SidebarMenuButton
                   asChild
                   isActive={pathname === item.href}
