@@ -9,12 +9,12 @@ import { SidebarNav } from "./sidebar-nav";
 export function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <SidebarProvider>
-      <div className="flex h-screen overflow-hidden bg-background">
-        <Sidebar>
-          <SidebarNav />
-        </Sidebar>
-        <div className="flex w-full flex-1 flex-col overflow-hidden">
-          <AppHeader />
+      <div className="flex h-screen flex-col overflow-hidden bg-background">
+        <AppHeader />
+        <div className="flex flex-1 overflow-hidden">
+          <Sidebar>
+            <SidebarNav />
+          </Sidebar>
           <SidebarInset className="overflow-y-auto">
              {children}
           </SidebarInset>
