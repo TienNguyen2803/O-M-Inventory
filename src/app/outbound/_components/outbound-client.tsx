@@ -58,7 +58,7 @@ export function OutboundClient({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-2">
       <PageHeader
         title="Xuất kho"
         description="Ghi nhận vật tư xuất kho cho các hoạt động của nhà máy."

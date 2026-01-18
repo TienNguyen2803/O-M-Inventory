@@ -83,7 +83,7 @@ const pieChartConfig = {
 
 export function DashboardCharts() {
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+    <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-7">
       <Card className="col-span-1 lg:col-span-3">
         <CardHeader>
           <CardTitle>Cơ cấu giá trị tồn kho</CardTitle>

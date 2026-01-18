@@ -15,7 +15,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           <Sidebar>
             <SidebarNav />
           </Sidebar>
-          <SidebarInset className="w-full overflow-y-auto p-2 md:p-4 pt-6">
+          <SidebarInset className="w-full overflow-y-auto p-2 md:p-4">
              {children}
           </SidebarInset>
         </div>

@@ -188,7 +188,7 @@ export function WarehousesClient({ initialLocations }: WarehousesClientProps) {
   };
 
   return (
-    <div className="space-y-4 w-full">
+    <div className="space-y-2 w-full">
       <PageHeader
         title="Danh mục Kho"
         breadcrumbs={<Breadcrumbs />}
@@ -201,7 +201,7 @@ export function WarehousesClient({ initialLocations }: WarehousesClientProps) {
 
       <Card>
         <CardContent className="pt-6">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
             <Select value={areaFilter} onValueChange={setAreaFilter}>
               <SelectTrigger>
                 <SelectValue placeholder="-- Tất cả khu vực --" />

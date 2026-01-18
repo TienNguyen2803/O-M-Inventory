@@ -99,7 +99,7 @@ export default async function DashboardPage() {
   ];
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-2">
       <PageHeader
         title="Dashboard Quản lý Kho"
         description="Tổng hợp tình hình hoạt động kho Phú Mỹ"
@@ -121,7 +121,7 @@ export default async function DashboardPage() {
           </Button>
         </div>
       </PageHeader>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium uppercase">
@@ -181,7 +181,7 @@ export default async function DashboardPage() {
 
       <DashboardCharts />
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-2 lg:grid-cols-3">
         <Card className="lg:col-span-1">
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-base font-bold">
@@ -221,9 +221,9 @@ export default async function DashboardPage() {
               Tác vụ cần xử lý
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-2">
             {tasks.map((task) => (
-              <div key={task.id} className="flex items-center space-x-4">
+              <div key={task.id} className="flex items-center space-x-2">
                 <div
                   className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-white ${task.color}`}
                 >
@@ -253,7 +253,7 @@ export default async function DashboardPage() {
               Trạng thái sức chứa kho
             </CardTitle>
           </CardHeader>
-          <CardContent className="grid grid-cols-2 gap-4">
+          <CardContent className="grid grid-cols-2 gap-2">
             {warehouseStatus.map((item) => (
               <div key={item.name} className="rounded-lg border p-3">
                 <div className="flex items-center justify-between">

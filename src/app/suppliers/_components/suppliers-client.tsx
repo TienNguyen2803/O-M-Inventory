@@ -161,180 +161,178 @@ export function SuppliersClient({ initialSuppliers }: SuppliersClientProps) {
   };
 
   return (
-    <div className="w-full">
-      <div className="px-4 md:px-8">
-        <PageHeader
-          title="Nhà cung cấp"
-          breadcrumbs={<Breadcrumbs />}
-        >
-          <Button onClick={handleAdd}>
-            <Plus className="mr-2 h-4 w-4" />
-            Thêm mới
-          </Button>
-        </PageHeader>
-        
-        <Card>
-          <CardContent className="pt-6">
-            <div className="grid grid-cols-1 gap-4">
-              <Input 
-                placeholder="Tìm kiếm mã, tên, MST, địa chỉ..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-          </CardContent>
-        </Card>
+    <div className="w-full space-y-2">
+      <PageHeader
+        title="Nhà cung cấp"
+        breadcrumbs={<Breadcrumbs />}
+      >
+        <Button onClick={handleAdd}>
+          <Plus className="mr-2 h-4 w-4" />
+          Thêm mới
+        </Button>
+      </PageHeader>
+      
+      <Card>
+        <CardContent className="pt-6">
+          <div className="grid grid-cols-1 gap-2">
+            <Input 
+              placeholder="Tìm kiếm mã, tên, MST, địa chỉ..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+        </CardContent>
+      </Card>
 
-        <Card>
-          <CardContent className="pt-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[50px]">STT</TableHead>
-                  <TableHead>Mã NCC</TableHead>
-                  <TableHead>Tên Công ty</TableHead>
-                  <TableHead>Địa chỉ</TableHead>
-                  <TableHead>Trạng thái</TableHead>
-                  <TableHead className="w-[120px]">Thao tác</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {paginatedSuppliers.length > 0 ? (
-                  paginatedSuppliers.map((supplier, index) => (
-                    <TableRow key={supplier.id}>
-                      <TableCell className="text-center">
-                        {startItem + index}
-                      </TableCell>
-                      <TableCell
-                        className="font-medium text-primary hover:underline cursor-pointer"
-                        onClick={() => handleView(supplier)}
-                      >
-                        {supplier.code}
-                      </TableCell>
-                      <TableCell>{supplier.name}</TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {supplier.address}
-                      </TableCell>
-                      <TableCell>
-                        <span
-                          className={cn(
-                            "rounded-md px-2.5 py-1 text-xs font-semibold",
-                            supplier.status === "Active"
-                              ? "bg-green-100 text-green-800"
-                              : "bg-red-100 text-red-800"
-                          )}
-                        >
-                          {supplier.status === "Active"
-                            ? "Hoạt động"
-                            : "Không hoạt động"}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center space-x-1">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-muted-foreground"
-                            onClick={() => handleView(supplier)}
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-muted-foreground"
-                            onClick={() => handleEdit(supplier)}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 text-destructive/80 hover:text-destructive"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>
-                                  Bạn có chắc chắn muốn xóa?
-                                </AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  Hành động này không thể được hoàn tác. Nhà cung cấp "
-                                  {supplier.name}" sẽ bị xóa vĩnh viễn.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Hủy</AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={() => handleDelete(supplier.id)}
-                                  className="bg-destructive hover:bg-destructive/90"
-                                >
-                                  Xóa
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
+      <Card>
+        <CardContent className="pt-0">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[50px]">STT</TableHead>
+                <TableHead>Mã NCC</TableHead>
+                <TableHead>Tên Công ty</TableHead>
+                <TableHead>Địa chỉ</TableHead>
+                <TableHead>Trạng thái</TableHead>
+                <TableHead className="w-[120px]">Thao tác</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {paginatedSuppliers.length > 0 ? (
+                paginatedSuppliers.map((supplier, index) => (
+                  <TableRow key={supplier.id}>
+                    <TableCell className="text-center">
+                      {startItem + index}
+                    </TableCell>
                     <TableCell
-                      colSpan={6}
-                      className="h-24 text-center text-muted-foreground"
+                      className="font-medium text-primary hover:underline cursor-pointer"
+                      onClick={() => handleView(supplier)}
                     >
-                      Không tìm thấy nhà cung cấp nào.
+                      {supplier.code}
+                    </TableCell>
+                    <TableCell>{supplier.name}</TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {supplier.address}
+                    </TableCell>
+                    <TableCell>
+                      <span
+                        className={cn(
+                          "rounded-md px-2.5 py-1 text-xs font-semibold",
+                          supplier.status === "Active"
+                            ? "bg-green-100 text-green-800"
+                            : "bg-red-100 text-red-800"
+                        )}
+                      >
+                        {supplier.status === "Active"
+                          ? "Hoạt động"
+                          : "Không hoạt động"}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center space-x-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-muted-foreground"
+                          onClick={() => handleView(supplier)}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-muted-foreground"
+                          onClick={() => handleEdit(supplier)}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-destructive/80 hover:text-destructive"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>
+                                Bạn có chắc chắn muốn xóa?
+                              </AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Hành động này không thể được hoàn tác. Nhà cung cấp "
+                                {supplier.name}" sẽ bị xóa vĩnh viễn.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Hủy</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => handleDelete(supplier.id)}
+                                className="bg-destructive hover:bg-destructive/90"
+                              >
+                                Xóa
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
                     </TableCell>
                   </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </CardContent>
-          <CardFooter className="flex items-center justify-between pt-4">
-            <div className="text-sm text-muted-foreground">
-              Hiển thị {filteredSuppliers.length > 0 ? startItem : 0}-{endItem} trên {filteredSuppliers.length} bản ghi
-            </div>
-            <div className="flex items-center space-x-1">
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell
+                    colSpan={6}
+                    className="h-24 text-center text-muted-foreground"
+                  >
+                    Không tìm thấy nhà cung cấp nào.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+        <CardFooter className="flex items-center justify-between pt-4">
+          <div className="text-sm text-muted-foreground">
+            Hiển thị {filteredSuppliers.length > 0 ? startItem : 0}-{endItem} trên {filteredSuppliers.length} bản ghi
+          </div>
+          <div className="flex items-center space-x-1">
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            {[...Array(totalPages)].map((_, i) => (
               <Button
-                variant="outline"
+                key={i}
+                variant={currentPage === i + 1 ? "default" : "outline"}
                 size="icon"
                 className="h-8 w-8"
-                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                disabled={currentPage === 1}
+                onClick={() => setCurrentPage(i + 1)}
               >
-                <ChevronLeft className="h-4 w-4" />
+                {i + 1}
               </Button>
-              {[...Array(totalPages)].map((_, i) => (
-                <Button
-                  key={i}
-                  variant={currentPage === i + 1 ? "default" : "outline"}
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={() => setCurrentPage(i + 1)}
-                >
-                  {i + 1}
-                </Button>
-              ))}
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-8 w-8"
-                onClick={() =>
-                  setCurrentPage((p) => Math.min(totalPages, p + 1))
-                }
-                disabled={currentPage === totalPages}
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
-          </CardFooter>
-        </Card>
-      </div>
+            ))}
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() =>
+                setCurrentPage((p) => Math.min(totalPages, p + 1))
+              }
+              disabled={currentPage === totalPages}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </CardFooter>
+      </Card>
 
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
         <DialogContent className="sm:max-w-4xl">
