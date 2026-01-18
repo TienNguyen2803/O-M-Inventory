@@ -13,6 +13,7 @@ export interface Material {
   managementType: "Batch" | "Serial"; // Quản lý theo Serial/IMEI (Checkbox)
   category: string;
   unit: string; // Đơn vị tính
+  status: "Mới" | "Cũ nhưng dùng được" | "Hư hỏng" | "Hư hỏng không thể sửa chữa" | "Thanh lý";
   description?: string; // Ghi chú
   stock: number;
   manufacturer?: string; // Nhà sản xuất

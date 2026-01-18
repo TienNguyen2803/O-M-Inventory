@@ -42,6 +42,7 @@ const formSchema = z.object({
   nameEn: z.string().optional(),
   partNo: z.string().min(1, "Part Number không được để trống."),
   unit: z.string({ required_error: "Vui lòng chọn đơn vị tính." }),
+  status: z.enum(["Mới", "Cũ nhưng dùng được", "Hư hỏng", "Hư hỏng không thể sửa chữa", "Thanh lý"], { required_error: "Vui lòng chọn trạng thái vật tư." }),
   manufacturer: z.string().optional(),
   origin: z.string().optional(),
   minStock: z.coerce.number().optional(),
@@ -106,6 +107,7 @@ export function MaterialForm({
           code: "",
           partNo: "",
           unit: "",
+          status: "Mới",
           manufacturer: "",
           origin: "",
         },
@@ -260,6 +262,34 @@ export function MaterialForm({
                       <SelectItem value="Bịch">Bịch</SelectItem>
                       <SelectItem value="Bộ">Bộ</SelectItem>
                       <SelectItem value="Sợi">Sợi</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+             <FormField
+              control={form.control}
+              name="status"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Trạng thái vật tư</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                    disabled={viewMode}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Chọn trạng thái" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="Mới">Mới</SelectItem>
+                      <SelectItem value="Cũ nhưng dùng được">Cũ nhưng dùng được</SelectItem>
+                      <SelectItem value="Hư hỏng">Hư hỏng</SelectItem>
+                      <SelectItem value="Hư hỏng không thể sửa chữa">Hư hỏng không thể sửa chữa</SelectItem>
+                      <SelectItem value="Thanh lý">Thanh lý</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
