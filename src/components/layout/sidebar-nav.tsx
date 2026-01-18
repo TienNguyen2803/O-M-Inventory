@@ -20,6 +20,10 @@ import {
   Gavel,
   ClipboardList,
   Hammer,
+  History,
+  UserCog,
+  KeyRound,
+  ScrollText,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -61,8 +65,18 @@ const navItems = [
   {
     group: "VẬN HÀNH KHO",
     items: [
-      { href: "/inbound", label: "Nhập kho", icon: ArrowDownToLine },
-      { href: "/outbound", label: "Xuất kho", icon: ArrowUpFromLine },
+      { href: "/inbound", label: "Nhập kho (Inbound)", icon: ArrowDownToLine },
+      { href: "/outbound", label: "Xuất kho (Outbound)", icon: ArrowUpFromLine },
+      { href: "#", label: "Kiểm kê (Stock Take)", icon: ClipboardList },
+      { href: "#", label: "Truy vết Vòng đời", icon: History },
+    ],
+  },
+  {
+    group: "HỆ THỐNG & BẢO MẬT",
+    items: [
+      { href: "#", label: "Quản lý Người dùng", icon: UserCog },
+      { href: "#", label: "Phân quyền Vai trò", icon: KeyRound },
+      { href: "#", label: "Nhật ký Hoạt động", icon: ScrollText },
     ],
   },
 ];
@@ -75,7 +89,7 @@ export function SidebarNav() {
       {navItems.map((group) => (
         <SidebarGroup key={group.group} className="p-1.5">
           <SidebarGroupLabel>{group.group}</SidebarGroupLabel>
-          <SidebarMenu className="gap-1.5">
+          <SidebarMenu className="gap-2">
             {group.items.map((item) => (
               <SidebarMenuItem key={item.href}>
                 <SidebarMenuButton
