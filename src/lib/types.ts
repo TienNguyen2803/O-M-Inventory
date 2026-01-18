@@ -31,3 +31,12 @@ export interface InventoryLog {
   date: string; // ISO 8601 string format
   actor: string; // Could be supplier or department
 }
+
+export interface WarehouseLocation {
+  id: string;
+  code: string; // Mã vị trí
+  name: string; // Tên vị trí
+  area: string; // Khu vực
+  type: string; // Loại
+  status: "Active" | "Inactive"; // Trạng thái
+}

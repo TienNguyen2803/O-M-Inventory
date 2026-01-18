@@ -37,7 +37,10 @@ const navItems = [
   },
   {
     group: "DỮ LIỆU DANH MỤC",
-    items: [{ href: "/materials", label: "Danh mục Vật tư", icon: Package }],
+    items: [
+      { href: "/materials", label: "Danh mục Vật tư", icon: Package },
+      { href: "/warehouses", label: "Danh mục Kho", icon: Warehouse },
+    ],
   },
   {
     group: "VẬN HÀNH KHO",

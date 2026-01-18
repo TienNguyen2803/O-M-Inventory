@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { Material } from "@/lib/types";
+import type { WarehouseLocation } from "@/lib/types";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,12 +22,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -38,7 +32,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { MaterialForm, type MaterialFormValues } from "./material-form";
 import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
 import {
@@ -50,8 +43,8 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
-type MaterialsClientProps = {
-  initialMaterials: Material[];
+type WarehousesClientProps = {
+  initialLocations: WarehouseLocation[];
 };
 
 const Breadcrumbs = () => (
@@ -62,97 +55,35 @@ const Breadcrumbs = () => (
   </div>
 );
 
-export function MaterialsClient({ initialMaterials }: MaterialsClientProps) {
-  const [materials, setMaterials] = useState<Material[]>(initialMaterials);
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [selectedMaterial, setSelectedMaterial] = useState<Material | null>(
-    null
-  );
-  const [viewMode, setViewMode] = useState(false);
+export function WarehousesClient({ initialLocations }: WarehousesClientProps) {
+  const [locations, setLocations] =
+    useState<WarehouseLocation[]>(initialLocations);
   const { toast } = useToast();
 
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  const totalPages = Math.ceil(materials.length / itemsPerPage);
-  const paginatedMaterials = materials.slice(
+  const totalPages = Math.ceil(locations.length / itemsPerPage);
+  const paginatedLocations = locations.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
   const startItem = (currentPage - 1) * itemsPerPage + 1;
-  const endItem = Math.min(currentPage * itemsPerPage, materials.length);
+  const endItem = Math.min(currentPage * itemsPerPage, locations.length);
 
-  const handleAdd = () => {
-    setSelectedMaterial(null);
-    setViewMode(false);
-    setIsFormOpen(true);
-  };
-
-  const handleEdit = (material: Material) => {
-    setSelectedMaterial(material);
-    setViewMode(false);
-    setIsFormOpen(true);
-  };
-
-  const handleView = (material: Material) => {
-    setSelectedMaterial(material);
-    setViewMode(true);
-    setIsFormOpen(true);
-  };
-
-  const handleDelete = (materialId: string) => {
-    setMaterials(materials.filter((m) => m.id !== materialId));
+  const handleDelete = (locationId: string) => {
+    setLocations(locations.filter((l) => l.id !== locationId));
     toast({
       title: "Thành công",
-      description: "Đã xóa vật tư thành công.",
+      description: "Đã xóa vị trí kho thành công.",
       variant: "destructive",
     });
   };
 
-  const handleFormSubmit = (values: MaterialFormValues) => {
-    if (viewMode) {
-      setIsFormOpen(false);
-      return;
-    }
-    const isEditing = !!selectedMaterial;
-
-    if (isEditing) {
-      const updatedMaterial: Material = {
-        ...selectedMaterial,
-        ...values,
-        managementType: values.isSerial ? "Serial" : "Batch",
-      };
-      setMaterials(
-        materials.map((m) =>
-          m.id === selectedMaterial.id ? updatedMaterial : m
-        )
-      );
-    } else {
-      const newMaterial: Material = {
-        id: `mat-${Date.now()}`,
-        stock: 0,
-        category: "Vật tư tiêu hao", // default
-        ...values,
-        managementType: values.isSerial ? "Serial" : "Batch",
-        description: values.description || "",
-      };
-      setMaterials([newMaterial, ...materials]);
-    }
-    setIsFormOpen(false);
-    toast({
-      title: "Thành công",
-      description: isEditing ? "Đã cập nhật vật tư." : "Đã thêm vật tư mới.",
-    });
-  };
-
-  const handleCancel = () => {
-    setIsFormOpen(false);
-  };
-
   return (
     <>
-      <PageHeader title="Danh mục Vật tư" breadcrumbs={<Breadcrumbs />}>
-        <Button onClick={handleAdd}>
+      <PageHeader title="Danh mục Kho" breadcrumbs={<Breadcrumbs />}>
+        <Button>
           <Plus className="mr-2 h-4 w-4" />
           Thêm mới
         </Button>
@@ -160,32 +91,25 @@ export function MaterialsClient({ initialMaterials }: MaterialsClientProps) {
 
       <Card className="mb-4">
         <CardContent className="pt-6">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <Select>
               <SelectTrigger>
-                <SelectValue placeholder="-- Tất cả nhóm --" />
+                <SelectValue placeholder="-- Tất cả --" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">-- Tất cả nhóm --</SelectItem>
+                <SelectItem value="all">-- Tất cả --</SelectItem>
+                <SelectItem value="khu-a">Khu A</SelectItem>
+                <SelectItem value="khu-b">Khu B</SelectItem>
               </SelectContent>
             </Select>
-            <Input placeholder="Tìm kiếm..." />
+            <Input placeholder="Mã vị trí, Tên..." />
             <Select>
               <SelectTrigger>
-                <SelectValue placeholder="-- Tất cả trạng thái --" />
+                <SelectValue placeholder="Tất cả" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">-- Tất cả trạng thái --</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select>
-              <SelectTrigger>
-                <SelectValue placeholder="-- Tất cả loại quản lý --" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">-- Tất cả loại quản lý --</SelectItem>
-                <SelectItem value="Batch">Batch</SelectItem>
-                <SelectItem value="Serial">Serial</SelectItem>
+                <SelectItem value="all">Tất cả</SelectItem>
+                <SelectItem value="pallet">Kệ Pallet</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -198,38 +122,40 @@ export function MaterialsClient({ initialMaterials }: MaterialsClientProps) {
             <TableHeader>
               <TableRow>
                 <TableHead className="w-[50px]">STT</TableHead>
-                <TableHead>Mã VT</TableHead>
-                <TableHead>Tên vật tư</TableHead>
-                <TableHead>Part No</TableHead>
-                <TableHead>ĐVT</TableHead>
-                <TableHead>Quản lý</TableHead>
+                <TableHead>Mã vị trí</TableHead>
+                <TableHead>Tên vị trí</TableHead>
+                <TableHead>Khu vực</TableHead>
+                <TableHead>Loại</TableHead>
+                <TableHead>Trạng thái</TableHead>
                 <TableHead className="w-[120px]">Thao tác</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {paginatedMaterials.map((material, index) => (
-                <TableRow key={material.id}>
+              {paginatedLocations.map((location, index) => (
+                <TableRow key={location.id}>
                   <TableCell className="text-center">
                     {startItem + index}
                   </TableCell>
                   <TableCell className="font-medium text-primary hover:underline cursor-pointer">
-                    {material.code}
+                    {location.code}
                   </TableCell>
-                  <TableCell>{material.name}</TableCell>
+                  <TableCell>{location.name}</TableCell>
                   <TableCell className="text-muted-foreground">
-                    {material.partNo}
+                    {location.area}
                   </TableCell>
-                  <TableCell>{material.unit}</TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {location.type}
+                  </TableCell>
                   <TableCell>
                     <span
                       className={cn(
                         "rounded-md px-2.5 py-1 text-xs font-semibold",
-                        material.managementType === "Batch"
-                          ? "bg-sky-100 text-sky-800"
-                          : "bg-emerald-100 text-emerald-800"
+                        location.status === "Active"
+                          ? "bg-green-100 text-green-800"
+                          : "bg-red-100 text-red-800"
                       )}
                     >
-                      {material.managementType}
+                      {location.status}
                     </span>
                   </TableCell>
                   <TableCell>
@@ -238,7 +164,6 @@ export function MaterialsClient({ initialMaterials }: MaterialsClientProps) {
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8 text-muted-foreground"
-                        onClick={() => handleView(material)}
                       >
                         <Eye className="h-4 w-4" />
                       </Button>
@@ -246,7 +171,6 @@ export function MaterialsClient({ initialMaterials }: MaterialsClientProps) {
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8 text-muted-foreground"
-                        onClick={() => handleEdit(material)}
                       >
                         <Pencil className="h-4 w-4" />
                       </Button>
@@ -266,14 +190,14 @@ export function MaterialsClient({ initialMaterials }: MaterialsClientProps) {
                               Bạn có chắc chắn muốn xóa?
                             </AlertDialogTitle>
                             <AlertDialogDescription>
-                              Hành động này không thể được hoàn tác. Vật tư "
-                              {material.name}" sẽ bị xóa vĩnh viễn.
+                              Hành động này không thể được hoàn tác. Vị trí "
+                              {location.name}" sẽ bị xóa vĩnh viễn.
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
                             <AlertDialogCancel>Hủy</AlertDialogCancel>
                             <AlertDialogAction
-                              onClick={() => handleDelete(material.id)}
+                              onClick={() => handleDelete(location.id)}
                               className="bg-destructive hover:bg-destructive/90"
                             >
                               Xóa
@@ -290,7 +214,7 @@ export function MaterialsClient({ initialMaterials }: MaterialsClientProps) {
         </CardContent>
         <CardFooter className="flex items-center justify-between pt-4">
           <div className="text-sm text-muted-foreground">
-            Hiển thị {startItem}-{endItem} trên {materials.length} bản ghi
+            Hiển thị {startItem}-{endItem} trên {locations.length} bản ghi
           </div>
           <div className="flex items-center space-x-1">
             <Button
@@ -325,26 +249,6 @@ export function MaterialsClient({ initialMaterials }: MaterialsClientProps) {
           </div>
         </CardFooter>
       </Card>
-
-      <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-        <DialogContent className="sm:max-w-4xl">
-          <DialogHeader>
-            <DialogTitle>
-              {viewMode
-                ? "Chi tiết vật tư"
-                : selectedMaterial
-                ? "Cập nhật vật tư"
-                : "Thêm vật tư mới"}
-            </DialogTitle>
-          </DialogHeader>
-          <MaterialForm
-            material={selectedMaterial}
-            onSubmit={handleFormSubmit}
-            onCancel={handleCancel}
-            viewMode={viewMode}
-          />
-        </DialogContent>
-      </Dialog>
     </>
   );
 }

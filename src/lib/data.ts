@@ -1,4 +1,4 @@
-import type { Material, InventoryLog } from "./types";
+import type { Material, InventoryLog, WarehouseLocation } from "./types";
 
 export const materials: Material[] = [
   {
@@ -165,6 +165,21 @@ export const inventoryLogs: InventoryLog[] = [
   },
 ];
 
+export const warehouseLocations: WarehouseLocation[] = [
+  { id: 'wh-1', code: 'A1-01-01', name: 'Kệ 01 - Tầng 1 - Dãy A', area: 'Khu A', type: 'Kệ Pallet', status: 'Active' },
+  { id: 'wh-2', code: 'A1-02-01', name: 'Kệ 02 - Tầng 1 - Dãy A', area: 'Khu A', type: 'Kệ Pallet', status: 'Active' },
+  { id: 'wh-3', code: 'A1-03-01', name: 'Kệ 03 - Tầng 1 - Dãy A', area: 'Khu A', type: 'Kệ Pallet', status: 'Active' },
+  { id: 'wh-4', code: 'A1-04-01', name: 'Kệ 04 - Tầng 1 - Dãy A', area: 'Khu A', type: 'Kệ Pallet', status: 'Active' },
+  { id: 'wh-5', code: 'A1-05-01', name: 'Kệ 05 - Tầng 1 - Dãy A', area: 'Khu A', type: 'Kệ Pallet', status: 'Active' },
+  { id: 'wh-6', code: 'A1-06-01', name: 'Kệ 06 - Tầng 1 - Dãy A', area: 'Khu B', type: 'Kệ Pallet', status: 'Active' },
+  { id: 'wh-7', code: 'A1-07-01', name: 'Kệ 07 - Tầng 1 - Dãy A', area: 'Khu B', type: 'Kệ Pallet', status: 'Active' },
+  { id: 'wh-8', code: 'A1-08-01', name: 'Kệ 08 - Tầng 1 - Dãy A', area: 'Khu B', type: 'Kệ Pallet', status: 'Active' },
+  { id: 'wh-9', code: 'A1-09-01', name: 'Kệ 09 - Tầng 1 - Dãy A', area: 'Khu B', type: 'Kệ Pallet', status: 'Active' },
+  { id: 'wh-10', code: 'A1-010-01', name: 'Kệ 010 - Tầng 1 - Dãy A', area: 'Khu B', type: 'Kệ Pallet', status: 'Active' },
+  { id: 'wh-11', code: 'A1-11-01', name: 'Kệ 11 - Tầng 1 - Dãy B', area: 'Khu B', type: 'Kệ Pallet', status: 'Active' },
+];
+
+
 export const getMaterials = async (): Promise<Material[]> => {
   // Simulate API delay
   await new Promise((resolve) => setTimeout(resolve, 100));
@@ -176,4 +191,10 @@ export const getInventoryLogs = async (): Promise<InventoryLog[]> => {
   // Simulate API delay
   await new Promise((resolve) => setTimeout(resolve, 100));
   return inventoryLogs;
+};
+
+export const getWarehouseLocations = async (): Promise<WarehouseLocation[]> => {
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 100));
+  return warehouseLocations;
 };
