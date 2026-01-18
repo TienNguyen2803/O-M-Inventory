@@ -206,7 +206,7 @@ export function PurchaseRequestForm({
                 {fields.map((item, index) => (
                   <TableRow key={item.id}>
                     <TableCell className="font-medium align-top p-1">
-                       <Textarea {...form.register(`items.${index}.name`)} disabled={viewMode} className={cn("border-0 p-0 h-auto", form.formState.errors?.items?.[index]?.name && "text-destructive")} />
+                       <Input {...form.register(`items.${index}.name`)} disabled={viewMode} className={cn("border-0 p-0", form.formState.errors?.items?.[index]?.name && "text-destructive")} />
                        {form.formState.errors?.items?.[index]?.name && <p className="text-xs text-destructive mt-1">{form.formState.errors.items[index]?.name?.message}</p>}
                     </TableCell>
                     <TableCell className="align-top p-1">
