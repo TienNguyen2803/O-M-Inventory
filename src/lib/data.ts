@@ -1,4 +1,4 @@
-import type { Material, InventoryLog, WarehouseLocation, WarehouseItem, Supplier, MaterialRequest, MaterialRequestItem, PurchaseRequest, PurchaseRequestItem, BiddingPackage, BiddingItem, BiddingResult, InboundReceipt, InboundReceiptItem, InboundReceiptDocument } from "./types";
+import type { Material, InventoryLog, WarehouseLocation, WarehouseItem, Supplier, MaterialRequest, MaterialRequestItem, PurchaseRequest, PurchaseRequestItem, BiddingPackage, BiddingItem, BiddingResult, InboundReceipt, InboundReceiptItem, InboundReceiptDocument, OutboundVoucher } from "./types";
 
 export const materials: Material[] = [
   {
@@ -1012,6 +1012,32 @@ export const inboundReceipts: InboundReceipt[] = Array.from({ length: 25 }, (_, 
   };
 });
 
+export const outboundVouchers: OutboundVoucher[] = Array.from({ length: 25 }, (_, i) => {
+    const id = i + 1;
+    const purposes: OutboundVoucher['purpose'][] = ['Cấp O&M', 'Khẩn cấp', 'Cho mượn', 'Đi Sửa chữa'];
+    const statuses: OutboundVoucher['status'][] = ['Đã xuất', 'Chờ xuất', 'Đã hủy'];
+    const materialRequest = materialRequests[i];
+
+    return {
+        id: `PXK-2025-${String(id).padStart(2, '0')}`,
+        purpose: purposes[i % purposes.length],
+        materialRequestId: materialRequest.id,
+        department: materialRequest.requesterDept,
+        reason: 'Sửa chữa thường xuyên',
+        status: statuses[i % statuses.length],
+        issueDate: new Date(2025, i % 7, id % 28 + 1).toISOString(),
+        items: materialRequest.items.map((item, index) => ({
+            id: `out-item-${id}-${index}`,
+            materialId: item.materialId,
+            materialCode: item.materialCode,
+            materialName: item.materialName,
+            unit: item.unit,
+            quantity: item.requestedQuantity,
+            notes: item.notes,
+        })),
+    };
+});
+
 export const getMaterials = async (): Promise<Material[]> => {
   // Simulate API delay
   await new Promise((resolve) => setTimeout(resolve, 100));
@@ -1055,4 +1081,9 @@ export const getBiddingPackages = async (): Promise<BiddingPackage[]> => {
 export const getInboundReceipts = async (): Promise<InboundReceipt[]> => {
   await new Promise(resolve => setTimeout(resolve, 100));
   return inboundReceipts.sort((a, b) => a.id.localeCompare(b.id));
+}
+
+export const getOutboundVouchers = async (): Promise<OutboundVoucher[]> => {
+    await new Promise(resolve => setTimeout(resolve, 100));
+    return outboundVouchers.sort((a, b) => a.id.localeCompare(b.id));
 }

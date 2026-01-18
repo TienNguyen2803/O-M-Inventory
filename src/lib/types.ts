@@ -150,6 +150,26 @@ export interface BiddingPackage {
   result?: BiddingResult; // Kết quả lựa chọn
 }
 
+export interface OutboundVoucherItem {
+  id: string;
+  materialId: string;
+  materialCode: string;
+  materialName: string;
+  unit: string;
+  quantity: number;
+  notes?: string;
+}
+
+export interface OutboundVoucher {
+  id: string; // e.g., PXK-2025-01
+  purpose: 'Cấp O&M' | 'Khẩn cấp' | 'Cho mượn' | 'Đi Sửa chữa';
+  materialRequestId: string; // e.g., YCVT-2025-00
+  department: string;
+  reason: string;
+  status: 'Đã xuất' | 'Chờ xuất' | 'Đã hủy';
+  issueDate: string; // ISO date string
+  items?: OutboundVoucherItem[];
+}
 
 export interface InboundReceiptItem {
   id: string;
