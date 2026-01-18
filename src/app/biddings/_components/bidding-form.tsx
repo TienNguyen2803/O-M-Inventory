@@ -109,7 +109,7 @@ export function BiddingForm({
   });
 
   const totalAmount = form.watch("items")?.reduce((sum, item) => sum + (item.amount || 0), 0) || 0;
-  const showResults = form.watch("status") === "Đã có kết quả";
+  const showResults = biddingPackage?.status === "Đã có kết quả";
 
   return (
     <div className="max-h-[75vh] overflow-y-auto pr-2">
@@ -304,7 +304,7 @@ export function BiddingForm({
                       <FormItem>
                         <FormLabel>Giá trúng thầu</FormLabel>
                         <FormControl>
-                          <Input value={field.value.toLocaleString('vi-VN')} disabled className="font-bold text-right bg-white" />
+                          <Input value={(field.value || 0).toLocaleString('vi-VN')} disabled className="font-bold text-right bg-white" />
                         </FormControl>
                       </FormItem>
                     )}
