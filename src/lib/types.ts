@@ -53,3 +53,11 @@ export interface WarehouseLocation {
   dimensions?: string;
   items?: WarehouseItem[];
 }
+
+export interface Supplier {
+  id: string;
+  code: string;
+  name: string;
+  info: string;
+  status: "Active" | "Inactive";
+}

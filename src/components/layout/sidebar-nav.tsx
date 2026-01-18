@@ -14,6 +14,7 @@ import {
   ArrowDownToLine,
   ArrowUpFromLine,
   Warehouse,
+  Users,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -28,6 +29,7 @@ const navItems = [
     items: [
       { href: "/materials", label: "Danh mục Vật tư", icon: Package },
       { href: "/warehouses", label: "Danh mục Kho", icon: Warehouse },
+      { href: "/suppliers", label: "Nhà cung cấp", icon: Users },
     ],
   },
   {

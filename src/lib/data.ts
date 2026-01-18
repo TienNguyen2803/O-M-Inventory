@@ -1,4 +1,4 @@
-import type { Material, InventoryLog, WarehouseLocation, WarehouseItem } from "./types";
+import type { Material, InventoryLog, WarehouseLocation, WarehouseItem, Supplier } from "./types";
 
 export const materials: Material[] = [
   {
@@ -218,6 +218,20 @@ export const warehouseLocations: WarehouseLocation[] = [
   { id: 'wh-11', code: 'A1-11-01', name: 'Kệ 11 - Tầng 1 - Dãy B', area: 'Khu B', type: 'Kệ Pallet', status: 'Active', items: [] },
 ];
 
+export const suppliers: Supplier[] = [
+  { id: 'sup-1', code: 'NCC-001', name: 'Siemens Energy', info: 'Germany', status: 'Active' },
+  { id: 'sup-2', code: 'NCC-002', name: 'General Electric', info: 'USA', status: 'Active' },
+  { id: 'sup-3', code: 'NCC-003', name: 'Siemens Energy', info: 'Germany', status: 'Active' },
+  { id: 'sup-4', code: 'NCC-004', name: 'General Electric', info: 'USA', status: 'Inactive' },
+  { id: 'sup-5', code: 'NCC-005', name: 'Siemens Energy', info: 'Germany', status: 'Active' },
+  { id: 'sup-6', code: 'NCC-006', name: 'General Electric', info: 'USA', status: 'Active' },
+  { id: 'sup-7', code: 'NCC-007', name: 'Siemens Energy', info: 'Germany', status: 'Active' },
+  { id: 'sup-8', code: 'NCC-008', name: 'General Electric', info: 'USA', status: 'Inactive' },
+  { id: 'sup-9', code: 'NCC-009', name: 'Siemens Energy', info: 'Germany', status: 'Active' },
+  { id: 'sup-10', code: 'NCC-010', name: 'General Electric', info: 'USA', status: 'Active' },
+  { id: 'sup-11', code: 'NCC-011', name: 'ABB', info: 'Switzerland', status: 'Active' },
+];
+
 
 export const getMaterials = async (): Promise<Material[]> => {
   // Simulate API delay
@@ -236,4 +250,10 @@ export const getWarehouseLocations = async (): Promise<WarehouseLocation[]> => {
   // Simulate API delay
   await new Promise(resolve => setTimeout(resolve, 100));
   return warehouseLocations;
+};
+
+export const getSuppliers = async (): Promise<Supplier[]> => {
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 100));
+  return suppliers;
 };
