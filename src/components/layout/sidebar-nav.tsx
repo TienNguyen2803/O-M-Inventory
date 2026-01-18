@@ -19,11 +19,12 @@ import {
   ShoppingBasket,
   Gavel,
   ClipboardList,
-  Hammer,
   History,
   UserCog,
   KeyRound,
   ScrollText,
+  Hourglass,
+  GaugeCircle,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -38,8 +39,8 @@ const navItems = [
         label: "Báo cáo nhập, xuất, tồn",
         icon: ClipboardList,
       },
-      { href: "/reports/slow-moving", label: "Vật tư chậm luân chuyển", icon: ShoppingBasket },
-      { href: "#", label: "Định mức tồn kho an toàn", icon: Hammer },
+      { href: "/reports/slow-moving", label: "Vật tư chậm luân chuyển", icon: Hourglass },
+      { href: "/reports/safety-stock", label: "Định mức tồn kho an toàn", icon: GaugeCircle },
     ],
   },
   {
