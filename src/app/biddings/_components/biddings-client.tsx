@@ -33,6 +33,12 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
 import {
@@ -43,6 +49,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { BiddingForm, type BiddingFormValues } from "./bidding-form";
 
 type BiddingsClientProps = {
   initialBiddings: BiddingPackage[];
@@ -111,15 +118,30 @@ export function BiddingsClient({
   
   // Handlers
   const handleAdd = () => {
-    toast({ title: "Thông báo", description: "Chức năng đang được phát triển." });
+    const newBiddingTemplate: BiddingPackage = {
+      id: `TB-2025-${String(biddings.length + 1).padStart(2, "0")}`,
+      name: "",
+      purchaseRequestId: "",
+      estimatedPrice: 0,
+      method: 'Đấu thầu rộng rãi',
+      status: 'Đang mời thầu',
+      items: [],
+    };
+    setSelectedBidding(newBiddingTemplate);
+    setViewMode(false);
+    setIsFormOpen(true);
   };
   
   const handleEdit = (bidding: BiddingPackage) => {
-    toast({ title: "Thông báo", description: "Chức năng đang được phát triển." });
+    setSelectedBidding(bidding);
+    setViewMode(false);
+    setIsFormOpen(true);
   };
 
   const handleView = (bidding: BiddingPackage) => {
-    toast({ title: "Thông báo", description: "Chức năng đang được phát triển." });
+    setSelectedBidding(bidding);
+    setViewMode(true);
+    setIsFormOpen(true);
   };
 
   const handleDelete = (id: string) => {
@@ -128,6 +150,34 @@ export function BiddingsClient({
       title: "Thành công",
       description: `Đã xóa gói thầu ${id}.`,
       variant: "destructive",
+    });
+  };
+
+  const handleFormSubmit = (values: BiddingFormValues) => {
+    const submittedBidding: BiddingPackage = {
+      ...values,
+      openingDate: values.openingDate?.toISOString(),
+      closingDate: values.closingDate?.toISOString(),
+      items: values.items || [],
+      result: values.result,
+    };
+
+    if (viewMode) {
+      setIsFormOpen(false);
+      return;
+    }
+
+    const isEditing = biddings.some(b => b.id === submittedBidding.id);
+
+    if (isEditing) {
+      setBiddings(biddings.map((b) => b.id === submittedBidding.id ? submittedBidding : b));
+    } else {
+      setBiddings([submittedBidding, ...biddings]);
+    }
+    setIsFormOpen(false);
+    toast({
+      title: "Thành công",
+      description: isEditing ? "Đã cập nhật gói thầu." : "Đã tạo gói thầu mới.",
     });
   };
 
@@ -353,6 +403,26 @@ export function BiddingsClient({
           </div>
         </CardFooter>
       </Card>
+
+      <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+        <DialogContent className="max-w-5xl">
+          <DialogHeader>
+            <DialogTitle>
+              {viewMode
+                ? `Chi tiết Gói thầu: ${selectedBidding?.id}`
+                : biddings.some(b => b.id === selectedBidding?.id)
+                ? "Cập nhật Gói thầu"
+                : "Tạo Gói thầu mới"}
+            </DialogTitle>
+          </DialogHeader>
+          <BiddingForm
+            biddingPackage={selectedBidding}
+            onSubmit={handleFormSubmit}
+            onCancel={() => setIsFormOpen(false)}
+            viewMode={viewMode}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

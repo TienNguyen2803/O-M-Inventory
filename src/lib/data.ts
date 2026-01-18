@@ -1,4 +1,4 @@
-import type { Material, InventoryLog, WarehouseLocation, WarehouseItem, Supplier, MaterialRequest, MaterialRequestItem, PurchaseRequest, PurchaseRequestItem, BiddingPackage } from "./types";
+import type { Material, InventoryLog, WarehouseLocation, WarehouseItem, Supplier, MaterialRequest, MaterialRequestItem, PurchaseRequest, PurchaseRequestItem, BiddingPackage, BiddingItem, BiddingResult } from "./types";
 
 export const materials: Material[] = [
   {
@@ -913,15 +913,32 @@ export const purchaseRequests: PurchaseRequest[] = Array.from({ length: 25 }, (_
 export const biddingPackages: BiddingPackage[] = Array.from({ length: 25 }, (_, i) => {
     const id = i + 1;
     const method = id % 2 === 0 ? 'Chỉ định thầu' : 'Đấu thầu rộng rãi';
-    const status = id < 6 ? 'Đang mời thầu' : id < 11 ? 'Đang chấm thầu' : 'Đã có kết quả';
+    const status = id < 6 ? 'Đang mời thầu' : id < 11 ? 'Đang chấm thầu' : id < 18 ? 'Đã có kết quả' : 'Đã hủy';
+
+    const items: BiddingItem[] = [
+        { id: 'item-1', name: 'Vane Carrier', unit: 'Bộ', quantity: 1, amount: 8000000000 },
+        { id: 'item-2', name: 'Heat Shield Tiles', unit: 'Set', quantity: 1, amount: 2500000000 },
+        { id: 'item-3', name: 'Chuyên gia TA', unit: 'Man-day', quantity: 40, amount: 2000000000 },
+    ];
+    
+    const result: BiddingResult | undefined = status === 'Đã có kết quả' ? {
+        winner: 'Siemens Energy Global',
+        winningPrice: 12450000000,
+        technicalScore: '95/100',
+        negotiationStatus: 'Đã hoàn tất 28/09/2025'
+    } : undefined;
 
     return {
         id: `TB-2025-${String(id).padStart(2, '0')}`,
         name: `Gói thầu số ${String(id).padStart(2, '0')} - Mua sắm VTTB`,
-        purchaseRequestId: `PR-2025-${String(id).padStart(2, '0')}`,
-        estimatedPrice: 1200000000 + (id * 10000000),
+        purchaseRequestId: `PR-2025-${String(id).padStart(3, '0')}`,
+        estimatedPrice: 12500000000 + (id * 10000000),
         method: method,
         status: status,
+        openingDate: new Date(2025, 4, 9, 9, 0).toISOString(),
+        closingDate: new Date(2025, 8, 25, 16, 0).toISOString(),
+        items,
+        result,
     };
 });
 
@@ -963,5 +980,5 @@ export const getPurchaseRequests = async (): Promise<PurchaseRequest[]> => {
 
 export const getBiddingPackages = async (): Promise<BiddingPackage[]> => {
     await new Promise(resolve => setTimeout(resolve, 100));
-    return biddingPackages;
+    return biddingPackages.sort((a, b) => a.id.localeCompare(b.id));
 }

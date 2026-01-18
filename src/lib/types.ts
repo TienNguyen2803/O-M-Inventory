@@ -122,6 +122,21 @@ export interface PurchaseRequest {
   items: PurchaseRequestItem[];
 }
 
+export interface BiddingItem {
+  id: string;
+  name: string;
+  unit: string;
+  quantity: number;
+  amount: number;
+}
+
+export interface BiddingResult {
+  winner: string;
+  winningPrice: number;
+  technicalScore: string;
+  negotiationStatus: string;
+}
+
 export interface BiddingPackage {
   id: string; // Mã gói
   name: string; // Tên gói thầu
@@ -129,4 +144,8 @@ export interface BiddingPackage {
   estimatedPrice: number; // Giá dự toán
   method: 'Đấu thầu rộng rãi' | 'Chỉ định thầu'; // Hình thức
   status: 'Đang mời thầu' | 'Đang chấm thầu' | 'Đã có kết quả' | 'Đã hủy'; // Trạng thái
+  openingDate?: string; // Ngày mở thầu
+  closingDate?: string; // Ngày đóng thầu
+  items?: BiddingItem[]; // Phạm vi cung cấp
+  result?: BiddingResult; // Kết quả lựa chọn
 }
