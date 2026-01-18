@@ -152,6 +152,7 @@ export function WarehouseForm({
                     <SelectContent>
                       <SelectItem value="Khu A">Khu A</SelectItem>
                       <SelectItem value="Khu B">Khu B</SelectItem>
+                      <SelectItem value="Khu C">Khu C</SelectItem>
                       <SelectItem value="Kho Lạnh">Kho Lạnh</SelectItem>
                       <SelectItem value="Kho Hóa chất">Kho Hóa chất</SelectItem>
                     </SelectContent>

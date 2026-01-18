@@ -250,10 +250,16 @@ export function MaterialForm({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="Hộp">Hộp</SelectItem>
                       <SelectItem value="Cái">Cái</SelectItem>
+                      <SelectItem value="Hộp">Hộp</SelectItem>
                       <SelectItem value="Kg">Kg</SelectItem>
                       <SelectItem value="Lít">Lít</SelectItem>
+                      <SelectItem value="Mét">Mét</SelectItem>
+                      <SelectItem value="Đôi">Đôi</SelectItem>
+                      <SelectItem value="Viên">Viên</SelectItem>
+                      <SelectItem value="Bịch">Bịch</SelectItem>
+                      <SelectItem value="Bộ">Bộ</SelectItem>
+                      <SelectItem value="Sợi">Sợi</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -298,6 +304,8 @@ export function MaterialForm({
                       <SelectItem value="Việt Nam">Việt Nam</SelectItem>
                       <SelectItem value="Trung Quốc">Trung Quốc</SelectItem>
                       <SelectItem value="Nhật Bản">Nhật Bản</SelectItem>
+                      <SelectItem value="Đức">Đức</SelectItem>
+                      <SelectItem value="Hàn Quốc">Hàn Quốc</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
