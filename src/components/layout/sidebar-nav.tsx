@@ -18,6 +18,8 @@ import {
   ClipboardCheck,
   ShoppingBasket,
   Gavel,
+  ClipboardList,
+  Hammer,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -25,7 +27,12 @@ import { usePathname } from "next/navigation";
 const navItems = [
   {
     group: "BÁO CÁO & PHÂN TÍCH",
-    items: [{ href: "/", label: "Tổng quan", icon: LayoutDashboard }],
+    items: [
+      { href: "/", label: "Tổng quan", icon: LayoutDashboard },
+      { href: "#", label: "Báo cáo nhập, xuất, tồn", icon: ClipboardList },
+      { href: "#", label: "Vật tư chậm luân chuyển", icon: ShoppingBasket },
+      { href: "#", label: "Định mức tồn kho an toàn", icon: Hammer },
+    ],
   },
   {
     group: "KẾ HOẠCH & MUA SẮM",
