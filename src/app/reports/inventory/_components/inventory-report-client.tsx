@@ -50,6 +50,16 @@ const Breadcrumbs = () => (
   </div>
 );
 
+type ReportData = {
+  materialId: string;
+  materialCode: string;
+  materialName: string;
+  openingStock: number;
+  inboundQuantity: number;
+  outboundQuantity: number;
+  closingStock: number;
+};
+
 export function InventoryReportClient({
   initialLogs,
   materials,
@@ -62,44 +72,85 @@ export function InventoryReportClient({
     to: new Date(),
   });
   const [materialFilter, setMaterialFilter] = useState("all");
-  const [typeFilter, setTypeFilter] = useState("all");
 
-  const filteredLogs = useMemo(() => {
-    return logs.filter((log) => {
-      const logDate = new Date(log.date);
-      const matchesDate =
-        !dateRange ||
-        (!dateRange.from || logDate >= dateRange.from) &&
-        (!dateRange.to || logDate <= dateRange.to);
+  const reportData = useMemo(() => {
+    const { from, to } = dateRange || {};
+    const now = new Date();
 
-      const matchesMaterial =
-        materialFilter === "all" || log.materialId === materialFilter;
+    const processMaterial = (material: Material): ReportData => {
+      const materialLogs = logs.filter((l) => l.materialId === material.id);
 
-      const matchesType =
-        typeFilter === "all" || log.type === typeFilter;
+      // We assume material.stock is the current stock.
+      // To get the stock at the end of the period (dateRange.to), we need to revert transactions after that date.
+      const logsAfterTo = materialLogs.filter(
+        (l) => new Date(l.date) > (to || now)
+      );
+      const inboundAfterTo = logsAfterTo
+        .filter((l) => l.type === "inbound")
+        .reduce((sum, l) => sum + l.quantity, 0);
+      const outboundAfterTo = logsAfterTo
+        .filter((l) => l.type === "outbound")
+        .reduce((sum, l) => sum + l.quantity, 0);
 
-      return matchesDate && matchesMaterial && matchesType;
-    });
-  }, [logs, dateRange, materialFilter, typeFilter]);
-  
+      const closingStock = material.stock - inboundAfterTo + outboundAfterTo;
+
+      // Filter logs within the selected period
+      const logsInPeriod = materialLogs.filter((l) => {
+        const logDate = new Date(l.date);
+        const fromDate = from ? new Date(from.setHours(0, 0, 0, 0)) : null;
+        const toDate = to ? new Date(to.setHours(23, 59, 59, 999)) : null;
+        return (
+          (!fromDate || logDate >= fromDate) && (!toDate || logDate <= toDate)
+        );
+      });
+
+      const inboundInPeriod = logsInPeriod
+        .filter((l) => l.type === "inbound")
+        .reduce((sum, l) => sum + l.quantity, 0);
+      const outboundInPeriod = logsInPeriod
+        .filter((l) => l.type === "outbound")
+        .reduce((sum, l) => sum + l.quantity, 0);
+
+      const openingStock = closingStock - inboundInPeriod + outboundInPeriod;
+
+      return {
+        materialId: material.id,
+        materialCode: material.code,
+        materialName: material.name,
+        openingStock,
+        inboundQuantity: inboundInPeriod,
+        outboundQuantity: outboundInPeriod,
+        closingStock,
+      };
+    };
+    
+    let materialsToProcess = materials;
+    if (materialFilter !== "all") {
+      materialsToProcess = materials.filter((m) => m.id === materialFilter);
+    }
+    
+    const data = materialsToProcess.map(processMaterial);
+    
+    // Only show materials that had activity or stock
+    return data.filter(d => d.openingStock !== 0 || d.inboundQuantity !== 0 || d.outboundQuantity !== 0 || d.closingStock !== 0);
+
+  }, [logs, materials, dateRange, materialFilter]);
+
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [dateRange, materialFilter, typeFilter]);
+  }, [dateRange, materialFilter]);
 
-  const totalPages = Math.ceil(filteredLogs.length / itemsPerPage);
-  const paginatedLogs = filteredLogs.slice(
+  const totalPages = Math.ceil(reportData.length / itemsPerPage);
+  const paginatedData = reportData.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
   const startItem = (currentPage - 1) * itemsPerPage + 1;
-  const endItem = Math.min(
-    currentPage * itemsPerPage,
-    filteredLogs.length
-  );
+  const endItem = Math.min(currentPage * itemsPerPage, reportData.length);
 
   return (
     <div className="w-full space-y-2">
@@ -116,7 +167,7 @@ export function InventoryReportClient({
 
       <Card>
         <CardContent className="pt-6">
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4 items-end">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3 items-end">
             <div className="space-y-1">
               <label className="text-sm font-medium">Khoảng thời gian</label>
               <Popover>
@@ -155,7 +206,7 @@ export function InventoryReportClient({
                 </PopoverContent>
               </Popover>
             </div>
-             <div className="space-y-1">
+            <div className="space-y-1">
               <label className="text-sm font-medium">Vật tư</label>
               <Select value={materialFilter} onValueChange={setMaterialFilter}>
                 <SelectTrigger>
@@ -163,24 +214,11 @@ export function InventoryReportClient({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">-- Tất cả vật tư --</SelectItem>
-                  {materials.map(material => (
+                  {materials.map((material) => (
                     <SelectItem key={material.id} value={material.id}>
                       {material.name}
                     </SelectItem>
                   ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1">
-              <label className="text-sm font-medium">Loại giao dịch</label>
-              <Select value={typeFilter} onValueChange={setTypeFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder="-- Tất cả --" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">-- Tất cả --</SelectItem>
-                  <SelectItem value="inbound">Nhập kho</SelectItem>
-                  <SelectItem value="outbound">Xuất kho</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -197,39 +235,30 @@ export function InventoryReportClient({
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Ngày</TableHead>
                 <TableHead>Mã VT</TableHead>
-                <TableHead>Tên Vật tư</TableHead>
-                <TableHead>Loại Giao dịch</TableHead>
-                <TableHead>Đối tượng</TableHead>
-                <TableHead className="text-right">Số lượng</TableHead>
+                <TableHead className="w-2/5">Tên Vật tư</TableHead>
+                <TableHead className="text-right">Tồn đầu kỳ</TableHead>
+                <TableHead className="text-right">Nhập trong kỳ</TableHead>
+                <TableHead className="text-right">Xuất trong kỳ</TableHead>
+                <TableHead className="text-right">Tồn cuối kỳ</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {paginatedLogs.length > 0 ? (
-                paginatedLogs.map((log) => (
-                  <TableRow key={log.id}>
-                    <TableCell>
-                      {format(new Date(log.date), "dd/MM/yyyy")}
-                    </TableCell>
+              {paginatedData.length > 0 ? (
+                paginatedData.map((row) => (
+                  <TableRow key={row.materialId}>
                     <TableCell className="font-medium text-muted-foreground">
-                      {materials.find(m => m.id === log.materialId)?.code}
+                      {row.materialCode}
                     </TableCell>
-                    <TableCell className="font-semibold">{log.materialName}</TableCell>
-                    <TableCell>
-                      <span
-                        className={cn(
-                          "rounded-md px-2.5 py-1 text-xs font-semibold",
-                          log.type === 'inbound' ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
-                        )}
-                      >
-                        {log.type === 'inbound' ? 'Nhập' : 'Xuất'}
-                      </span>
+                    <TableCell className="font-semibold">{row.materialName}</TableCell>
+                    <TableCell className="text-right">{row.openingStock.toLocaleString("vi-VN")}</TableCell>
+                    <TableCell className={cn("text-right font-bold text-green-600")}>
+                      {row.inboundQuantity > 0 ? `+${row.inboundQuantity.toLocaleString("vi-VN")}` : 0}
                     </TableCell>
-                    <TableCell className="text-muted-foreground">{log.actor}</TableCell>
-                    <TableCell className={cn("text-right font-bold", log.type === 'inbound' ? 'text-green-600' : 'text-red-600')}>
-                      {log.type === 'inbound' ? '+' : '-'}{log.quantity.toLocaleString("vi-VN")}
+                     <TableCell className={cn("text-right font-bold text-red-600")}>
+                      {row.outboundQuantity > 0 ? `-${row.outboundQuantity.toLocaleString("vi-VN")}`: 0}
                     </TableCell>
+                    <TableCell className="text-right font-bold">{row.closingStock.toLocaleString("vi-VN")}</TableCell>
                   </TableRow>
                 ))
               ) : (
@@ -238,7 +267,7 @@ export function InventoryReportClient({
                     colSpan={6}
                     className="h-24 text-center text-muted-foreground"
                   >
-                    Không có giao dịch nào phù hợp với bộ lọc.
+                    Không có dữ liệu phù hợp với bộ lọc.
                   </TableCell>
                 </TableRow>
               )}
@@ -247,7 +276,8 @@ export function InventoryReportClient({
         </CardContent>
         <CardFooter className="flex items-center justify-between pt-4">
           <div className="text-sm text-muted-foreground">
-            Hiển thị {filteredLogs.length > 0 ? startItem : 0}-{endItem} trên {filteredLogs.length} bản ghi
+            Hiển thị {reportData.length > 0 ? startItem : 0}-{endItem} trên{" "}
+            {reportData.length} bản ghi
           </div>
           <div className="flex items-center space-x-1">
             <Button
