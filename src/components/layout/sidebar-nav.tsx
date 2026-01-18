@@ -30,8 +30,16 @@ const navItems = [
   {
     group: "KẾ HOẠCH & MUA SẮM",
     items: [
-      { href: "/material-requests", label: "Yêu cầu Vật tư", icon: ClipboardCheck },
-      { href: "/purchase-requests", label: "Yêu cầu Mua sắm", icon: ShoppingBasket },
+      {
+        href: "/material-requests",
+        label: "Yêu cầu Vật tư",
+        icon: ClipboardCheck,
+      },
+      {
+        href: "/purchase-requests",
+        label: "Yêu cầu Mua sắm",
+        icon: ShoppingBasket,
+      },
       { href: "/biddings", label: "Quản lý Đấu thầu", icon: Gavel },
     ],
   },
@@ -57,10 +65,10 @@ export function SidebarNav() {
 
   return (
     <SidebarContent className="pt-4">
-      <SidebarMenu>
-        {navItems.map((group) => (
-          <SidebarGroup key={group.group} className="p-1">
-            <SidebarGroupLabel>{group.group}</SidebarGroupLabel>
+      {navItems.map((group) => (
+        <SidebarGroup key={group.group} className="p-1">
+          <SidebarGroupLabel>{group.group}</SidebarGroupLabel>
+          <SidebarMenu>
             {group.items.map((item) => (
               <SidebarMenuItem key={item.href}>
                 <SidebarMenuButton
@@ -75,9 +83,9 @@ export function SidebarNav() {
                 </SidebarMenuButton>
               </SidebarMenuItem>
             ))}
-          </SidebarGroup>
-        ))}
-      </SidebarMenu>
+          </SidebarMenu>
+        </SidebarGroup>
+      ))}
     </SidebarContent>
   );
 }
