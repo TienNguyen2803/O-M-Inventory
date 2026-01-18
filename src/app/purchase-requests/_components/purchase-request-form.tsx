@@ -205,27 +205,27 @@ export function PurchaseRequestForm({
               <TableBody>
                 {fields.map((item, index) => (
                   <TableRow key={item.id}>
-                    <TableCell className="font-medium align-top">
+                    <TableCell className="font-medium align-top p-1">
                        <Textarea {...form.register(`items.${index}.name`)} disabled={viewMode} className={cn("border-0 p-0 h-auto", form.formState.errors?.items?.[index]?.name && "text-destructive")} />
                        {form.formState.errors?.items?.[index]?.name && <p className="text-xs text-destructive mt-1">{form.formState.errors.items[index]?.name?.message}</p>}
                     </TableCell>
-                    <TableCell className="align-top">
+                    <TableCell className="align-top p-1">
                       <Input {...form.register(`items.${index}.unit`)} disabled={viewMode} className="border-0 p-0 w-16" />
                     </TableCell>
-                    <TableCell className="align-top">
+                    <TableCell className="align-top p-1">
                       <Input type="number" {...form.register(`items.${index}.quantity`)} disabled={viewMode} className="border-0 p-0 text-right w-20" />
                     </TableCell>
-                    <TableCell className="align-top">
+                    <TableCell className="align-top p-1">
                        <Input type="number" {...form.register(`items.${index}.estimatedPrice`)} disabled={viewMode} className="border-0 p-0 text-right w-32" />
                     </TableCell>
-                    <TableCell className="text-right font-medium align-top">
+                    <TableCell className="text-right font-medium align-top p-1">
                       {((items[index]?.quantity || 0) * (items[index]?.estimatedPrice || 0)).toLocaleString('vi-VN')}
                     </TableCell>
-                    <TableCell className="align-top">
+                    <TableCell className="align-top p-1">
                       <Input {...form.register(`items.${index}.suggestedSupplier`)} disabled={viewMode} className="border-0 p-0" />
                     </TableCell>
                     {!viewMode && (
-                        <TableCell className="align-top">
+                        <TableCell className="align-top p-1">
                             <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive/80 hover:text-destructive" onClick={() => remove(index)}>
                                 <Trash2 className="h-4 w-4" />
                             </Button>
@@ -246,9 +246,9 @@ export function PurchaseRequestForm({
               </TableBody>
               <TableFooter>
                 <TableRow>
-                  <TableCell colSpan={4} className="text-right font-bold">Tổng cộng (VNĐ):</TableCell>
-                  <TableCell className="text-right font-bold text-red-600">{totalAmount.toLocaleString('vi-VN')}</TableCell>
-                  <TableCell colSpan={viewMode ? 1 : 2}></TableCell>
+                  <TableCell colSpan={4} className="text-right font-bold p-2">Tổng cộng (VNĐ):</TableCell>
+                  <TableCell className="text-right font-bold text-red-600 p-2">{totalAmount.toLocaleString('vi-VN')}</TableCell>
+                  <TableCell colSpan={viewMode ? 1 : 2} className="p-2"></TableCell>
                 </TableRow>
               </TableFooter>
             </Table>
