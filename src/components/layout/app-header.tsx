@@ -19,6 +19,7 @@ export function AppHeader() {
               alt="SKG Logo"
               width={98}
               height={38}
+              priority
           />
           
           <div className="hidden h-8 items-center gap-4 md:flex">
