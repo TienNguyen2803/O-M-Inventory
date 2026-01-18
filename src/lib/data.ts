@@ -456,12 +456,13 @@ export const materials: Material[] = [
 ];
 
 
-export const inventoryLogs: InventoryLog[] = Array.from({ length: 25 }, (_, i) => {
+export const inventoryLogs: InventoryLog[] = Array.from({ length: 100 }, (_, i) => {
   const material = materials[i % materials.length];
   const type = i % 3 === 0 ? "outbound" : "inbound";
-  const quantity = type === 'inbound' ? Math.floor(Math.random() * 100) + 20 : Math.floor(Math.random() * 20) + 1;
+  const quantity = type === 'inbound' ? Math.floor(Math.random() * 50) + 10 : Math.floor(Math.random() * 15) + 1;
   const date = new Date();
-  date.setDate(date.getDate() - (i % 28)); // Dates within the last month
+  // Spread dates over the last 2.5 years (900 days) to ensure some items are slow-moving
+  date.setDate(date.getDate() - Math.floor(Math.random() * 900)); 
   const dateString = date.toISOString().split('T')[0];
 
 
