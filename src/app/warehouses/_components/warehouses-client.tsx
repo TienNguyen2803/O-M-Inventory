@@ -11,6 +11,7 @@ import {
   Eye,
   ChevronLeft,
   ChevronRight,
+  Save,
 } from "lucide-react";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import {
@@ -21,6 +22,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -42,6 +49,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { WarehouseForm, type WarehouseFormValues } from "./warehouse-form";
 
 type WarehousesClientProps = {
   initialLocations: WarehouseLocation[];
@@ -58,6 +66,10 @@ const Breadcrumbs = () => (
 export function WarehousesClient({ initialLocations }: WarehousesClientProps) {
   const [locations, setLocations] =
     useState<WarehouseLocation[]>(initialLocations);
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [selectedLocation, setSelectedLocation] =
+    useState<WarehouseLocation | null>(null);
+  const [viewMode, setViewMode] = useState(false);
   const { toast } = useToast();
 
   const [currentPage, setCurrentPage] = useState(1);
@@ -71,6 +83,24 @@ export function WarehousesClient({ initialLocations }: WarehousesClientProps) {
   const startItem = (currentPage - 1) * itemsPerPage + 1;
   const endItem = Math.min(currentPage * itemsPerPage, locations.length);
 
+  const handleAdd = () => {
+    setSelectedLocation(null);
+    setViewMode(false);
+    setIsFormOpen(true);
+  };
+
+  const handleEdit = (location: WarehouseLocation) => {
+    setSelectedLocation(location);
+    setViewMode(false);
+    setIsFormOpen(true);
+  };
+
+  const handleView = (location: WarehouseLocation) => {
+    setSelectedLocation(location);
+    setViewMode(true);
+    setIsFormOpen(true);
+  };
+
   const handleDelete = (locationId: string) => {
     setLocations(locations.filter((l) => l.id !== locationId));
     toast({
@@ -80,10 +110,50 @@ export function WarehousesClient({ initialLocations }: WarehousesClientProps) {
     });
   };
 
+  const handleFormSubmit = (values: WarehouseFormValues) => {
+    if (viewMode) {
+      setIsFormOpen(false);
+      return;
+    }
+    const isEditing = !!selectedLocation;
+
+    if (isEditing) {
+      const updatedLocation: WarehouseLocation = {
+        ...selectedLocation,
+        ...values,
+        status: selectedLocation.status, // Keep original status
+      };
+      setLocations(
+        locations.map((l) =>
+          l.id === selectedLocation.id ? updatedLocation : l
+        )
+      );
+    } else {
+      const newLocation: WarehouseLocation = {
+        id: `wh-${Date.now()}`,
+        status: "Active", // Default status
+        items: [],
+        ...values,
+      };
+      setLocations([newLocation, ...locations]);
+    }
+    setIsFormOpen(false);
+    toast({
+      title: "Thành công",
+      description: isEditing
+        ? "Đã cập nhật vị trí kho."
+        : "Đã thêm vị trí kho mới.",
+    });
+  };
+
+  const handleCancel = () => {
+    setIsFormOpen(false);
+  };
+
   return (
     <>
       <PageHeader title="Danh mục Kho" breadcrumbs={<Breadcrumbs />}>
-        <Button>
+        <Button onClick={handleAdd}>
           <Plus className="mr-2 h-4 w-4" />
           Thêm mới
         </Button>
@@ -136,7 +206,10 @@ export function WarehousesClient({ initialLocations }: WarehousesClientProps) {
                   <TableCell className="text-center">
                     {startItem + index}
                   </TableCell>
-                  <TableCell className="font-medium text-primary hover:underline cursor-pointer">
+                  <TableCell
+                    className="font-medium text-primary hover:underline cursor-pointer"
+                    onClick={() => handleView(location)}
+                  >
                     {location.code}
                   </TableCell>
                   <TableCell>{location.name}</TableCell>
@@ -155,7 +228,9 @@ export function WarehousesClient({ initialLocations }: WarehousesClientProps) {
                           : "bg-red-100 text-red-800"
                       )}
                     >
-                      {location.status}
+                      {location.status === "Active"
+                        ? "Hoạt động"
+                        : "Không hoạt động"}
                     </span>
                   </TableCell>
                   <TableCell>
@@ -164,6 +239,7 @@ export function WarehousesClient({ initialLocations }: WarehousesClientProps) {
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8 text-muted-foreground"
+                        onClick={() => handleView(location)}
                       >
                         <Eye className="h-4 w-4" />
                       </Button>
@@ -171,6 +247,7 @@ export function WarehousesClient({ initialLocations }: WarehousesClientProps) {
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8 text-muted-foreground"
+                        onClick={() => handleEdit(location)}
                       >
                         <Pencil className="h-4 w-4" />
                       </Button>
@@ -241,7 +318,9 @@ export function WarehousesClient({ initialLocations }: WarehousesClientProps) {
               variant="outline"
               size="icon"
               className="h-8 w-8"
-              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              onClick={() =>
+                setCurrentPage((p) => Math.min(totalPages, p + 1))
+              }
               disabled={currentPage === totalPages}
             >
               <ChevronRight className="h-4 w-4" />
@@ -249,6 +328,26 @@ export function WarehousesClient({ initialLocations }: WarehousesClientProps) {
           </div>
         </CardFooter>
       </Card>
+
+      <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+        <DialogContent className="sm:max-w-4xl">
+          <DialogHeader>
+            <DialogTitle>
+              {viewMode
+                ? `Chi tiết Vị trí kho: ${selectedLocation?.name}`
+                : selectedLocation
+                ? "Cập nhật Vị trí kho"
+                : "Tạo Vị trí kho mới"}
+            </DialogTitle>
+          </DialogHeader>
+          <WarehouseForm
+            location={selectedLocation}
+            onSubmit={handleFormSubmit}
+            onCancel={handleCancel}
+            viewMode={viewMode}
+          />
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

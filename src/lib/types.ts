@@ -32,6 +32,15 @@ export interface InventoryLog {
   actor: string; // Could be supplier or department
 }
 
+export interface WarehouseItem {
+  materialId: string;
+  materialCode: string;
+  materialName: string;
+  quantity: number;
+  unit: string;
+  batchSerial: string;
+}
+
 export interface WarehouseLocation {
   id: string;
   code: string; // Mã vị trí
@@ -39,4 +48,8 @@ export interface WarehouseLocation {
   area: string; // Khu vực
   type: string; // Loại
   status: "Active" | "Inactive"; // Trạng thái
+  barcode?: string;
+  maxWeight?: number;
+  dimensions?: string;
+  items?: WarehouseItem[];
 }

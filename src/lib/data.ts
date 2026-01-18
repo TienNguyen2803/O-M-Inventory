@@ -1,4 +1,4 @@
-import type { Material, InventoryLog, WarehouseLocation } from "./types";
+import type { Material, InventoryLog, WarehouseLocation, WarehouseItem } from "./types";
 
 export const materials: Material[] = [
   {
@@ -165,18 +165,37 @@ export const inventoryLogs: InventoryLog[] = [
   },
 ];
 
+const warehouseItems: WarehouseItem[] = [
+  {
+    materialId: "mat-001",
+    materialCode: "1.51.45.004",
+    materialName: "Dầu bôi trơn Turbo",
+    quantity: 5,
+    unit: "Phuy",
+    batchSerial: "Lô 2023-01",
+  },
+  {
+    materialId: "mat-002",
+    materialCode: "5.12.99.105",
+    materialName: "Cảm biến rung",
+    quantity: 5,
+    unit: "Cái",
+    batchSerial: "SN: 88990...",
+  },
+];
+
 export const warehouseLocations: WarehouseLocation[] = [
-  { id: 'wh-1', code: 'A1-01-01', name: 'Kệ 01 - Tầng 1 - Dãy A', area: 'Khu A', type: 'Kệ Pallet', status: 'Active' },
-  { id: 'wh-2', code: 'A1-02-01', name: 'Kệ 02 - Tầng 1 - Dãy A', area: 'Khu A', type: 'Kệ Pallet', status: 'Active' },
-  { id: 'wh-3', code: 'A1-03-01', name: 'Kệ 03 - Tầng 1 - Dãy A', area: 'Khu A', type: 'Kệ Pallet', status: 'Active' },
-  { id: 'wh-4', code: 'A1-04-01', name: 'Kệ 04 - Tầng 1 - Dãy A', area: 'Khu A', type: 'Kệ Pallet', status: 'Active' },
-  { id: 'wh-5', code: 'A1-05-01', name: 'Kệ 05 - Tầng 1 - Dãy A', area: 'Khu A', type: 'Kệ Pallet', status: 'Active' },
-  { id: 'wh-6', code: 'A1-06-01', name: 'Kệ 06 - Tầng 1 - Dãy A', area: 'Khu B', type: 'Kệ Pallet', status: 'Active' },
-  { id: 'wh-7', code: 'A1-07-01', name: 'Kệ 07 - Tầng 1 - Dãy A', area: 'Khu B', type: 'Kệ Pallet', status: 'Active' },
-  { id: 'wh-8', code: 'A1-08-01', name: 'Kệ 08 - Tầng 1 - Dãy A', area: 'Khu B', type: 'Kệ Pallet', status: 'Active' },
-  { id: 'wh-9', code: 'A1-09-01', name: 'Kệ 09 - Tầng 1 - Dãy A', area: 'Khu B', type: 'Kệ Pallet', status: 'Active' },
-  { id: 'wh-10', code: 'A1-010-01', name: 'Kệ 010 - Tầng 1 - Dãy A', area: 'Khu B', type: 'Kệ Pallet', status: 'Active' },
-  { id: 'wh-11', code: 'A1-11-01', name: 'Kệ 11 - Tầng 1 - Dãy B', area: 'Khu B', type: 'Kệ Pallet', status: 'Active' },
+  { id: 'wh-1', code: 'A1-01-01', name: 'Kệ 01 - Tầng 1 - Dãy A', area: 'Khu A', type: 'Kệ Pallet', status: 'Active', barcode: 'LOC-A10101', maxWeight: 2000, dimensions: '2.7m x 1.2m', items: warehouseItems },
+  { id: 'wh-2', code: 'A1-02-01', name: 'Kệ 02 - Tầng 1 - Dãy A', area: 'Khu A', type: 'Kệ Pallet', status: 'Active', items: [] },
+  { id: 'wh-3', code: 'A1-03-01', name: 'Kệ 03 - Tầng 1 - Dãy A', area: 'Khu A', type: 'Kệ Pallet', status: 'Active', items: [] },
+  { id: 'wh-4', code: 'A1-04-01', name: 'Kệ 04 - Tầng 1 - Dãy A', area: 'Khu A', type: 'Kệ Pallet', status: 'Inactive', items: [] },
+  { id: 'wh-5', code: 'A1-05-01', name: 'Kệ 05 - Tầng 1 - Dãy A', area: 'Khu A', type: 'Kệ Pallet', status: 'Active', items: [] },
+  { id: 'wh-6', code: 'A1-06-01', name: 'Kệ 06 - Tầng 1 - Dãy A', area: 'Khu B', type: 'Kệ Pallet', status: 'Active', items: [] },
+  { id: 'wh-7', code: 'A1-07-01', name: 'Kệ 07 - Tầng 1 - Dãy A', area: 'Khu B', type: 'Kệ Pallet', status: 'Active', items: [] },
+  { id: 'wh-8', code: 'A1-08-01', name: 'Kệ 08 - Tầng 1 - Dãy A', area: 'Khu B', type: 'Kệ Pallet', status: 'Active', items: [] },
+  { id: 'wh-9', code: 'A1-09-01', name: 'Kệ 09 - Tầng 1 - Dãy A', area: 'Khu B', type: 'Kệ Pallet', status: 'Inactive', items: [] },
+  { id: 'wh-10', code: 'A1-010-01', name: 'Kệ 010 - Tầng 1 - Dãy A', area: 'Khu B', type: 'Kệ Pallet', status: 'Active', items: [] },
+  { id: 'wh-11', code: 'A1-11-01', name: 'Kệ 11 - Tầng 1 - Dãy B', area: 'Khu B', type: 'Kệ Pallet', status: 'Active', items: [] },
 ];
 
 
