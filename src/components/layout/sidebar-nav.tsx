@@ -85,11 +85,11 @@ export function SidebarNav() {
   const pathname = usePathname();
 
   return (
-    <SidebarContent className="pt-4">
+    <SidebarContent className="pt-4 gap-1">
       {navItems.map((group) => (
-        <SidebarGroup key={group.group} className="p-0 gap-2">
-          <SidebarGroupLabel className="px-2">{group.group}</SidebarGroupLabel>
-          <SidebarMenu className="px-2 gap-2">
+        <SidebarGroup key={group.group} className="py-0 px-2">
+          <SidebarGroupLabel>{group.group}</SidebarGroupLabel>
+          <SidebarMenu>
             {group.items.map((item) => (
               <SidebarMenuItem key={item.label}>
                 <SidebarMenuButton
