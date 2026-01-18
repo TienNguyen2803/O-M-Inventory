@@ -3,66 +3,69 @@ import type { Material, InventoryLog } from "./types";
 export const materials: Material[] = [
   {
     id: "mat-001",
-    name: "Than Antraxit",
-    code: "TA-01",
-    category: "Nhiên liệu",
-    unit: "Tấn",
-    description: "Than Antraxit chất lượng cao, nhiệt trị 7500 kcal/kg.",
-    stock: 1500,
+    name: "Mỡ hàn Amtech 100g",
+    code: "1.51.45.001.USA",
+    partNo: "NC-559-ASM",
+    managementType: "Batch",
+    category: "Vật tư tiêu hao",
+    unit: "Hộp",
+    description: "Mỡ hàn Amtech 100g.",
+    stock: 150,
   },
   {
     id: "mat-002",
-    name: "Dầu DO",
-    code: "DO-01",
-    category: "Nhiên liệu",
-    unit: "Lít",
-    description: "Dầu Diesel Oil dùng để khởi động lò.",
-    stock: 50000,
+    name: "Gioăng đệm chịu nhiệt",
+    code: "1.51.45.002.USA",
+    partNo: "GASKET-XYZ",
+    managementType: "Serial",
+    category: "Phụ tùng",
+    unit: "Cái",
+    description: "Gioăng đệm chịu nhiệt cho đường ống hơi.",
+    stock: 88,
   },
   {
     id: "mat-003",
-    name: "Vòng bi SKF 6205",
-    code: "VB-SKF-6205",
-    category: "Phụ tùng",
-    unit: "Cái",
-    description: "Vòng bi cho động cơ quạt gió.",
-    stock: 45,
+    name: "Mỡ hàn Amtech 100g",
+    code: "1.51.45.003.USA",
+    partNo: "NC-559-ASM",
+    managementType: "Batch",
+    category: "Vật tư tiêu hao",
+    unit: "Hộp",
+    description: "Mỡ hàn Amtech 100g.",
+    stock: 20,
   },
   {
     id: "mat-004",
-    name: "Bơm nước ly tâm",
-    code: "BN-LT-01",
-    category: "Thiết bị",
+    name: "Gioăng đệm chịu nhiệt",
+    code: "1.51.45.004.USA",
+    partNo: "GASKET-XYZ",
+    managementType: "Serial",
+    category: "Phụ tùng",
     unit: "Cái",
-    description: "Bơm nước làm mát tuần hoàn.",
-    stock: 15,
+    description: "Gioăng đệm chịu nhiệt cho đường ống hơi.",
+    stock: 120,
   },
-  {
+   {
     id: "mat-005",
-    name: "Cáp điện 3 pha",
-    code: "CD-3P-01",
-    category: "Vật tư điện",
-    unit: "Mét",
-    description: "Cáp điện 3 pha, lõi đồng 25mm2.",
-    stock: 2500,
+    name: "Mỡ hàn Amtech 100g",
+    code: "1.51.45.005.USA",
+    partNo: "NC-559-ASM",
+    managementType: "Batch",
+    category: "Vật tư tiêu hao",
+    unit: "Hộp",
+    description: "Mỡ hàn Amtech 100g.",
+    stock: 0,
   },
   {
     id: "mat-006",
-    name: "Van cầu DN50",
-    code: "VC-DN50",
+    name: "Gioăng đệm chịu nhiệt",
+    code: "1.51.45.006.USA",
+    partNo: "GASKET-XYZ",
+    managementType: "Serial",
     category: "Phụ tùng",
     unit: "Cái",
-    description: "Van cầu chịu áp lực cao PN25.",
-    stock: 80,
-  },
-  {
-    id: "mat-007",
-    name: "Dầu bôi trơn Shell",
-    code: "DBT-SH-01",
-    category: "Vật tư tiêu hao",
-    unit: "Lít",
-    description: "Dầu bôi trơn cho hộp số.",
-    stock: 1200,
+    description: "Gioăng đệm chịu nhiệt cho đường ống hơi.",
+    stock: 300,
   },
 ];
 
@@ -70,7 +73,7 @@ export const inventoryLogs: InventoryLog[] = [
   {
     id: "log-001",
     materialId: "mat-001",
-    materialName: "Than Antraxit",
+    materialName: "Mỡ hàn Amtech 100g",
     quantity: 500,
     type: "inbound",
     date: "2024-07-20",
@@ -88,7 +91,7 @@ export const inventoryLogs: InventoryLog[] = [
   {
     id: "log-003",
     materialId: "mat-002",
-    materialName: "Dầu DO",
+    materialName: "Gioăng đệm chịu nhiệt",
     quantity: 2000,
     type: "outbound",
     date: "2024-07-21",
@@ -143,12 +146,13 @@ export const inventoryLogs: InventoryLog[] = [
 
 export const getMaterials = async (): Promise<Material[]> => {
   // Simulate API delay
-  await new Promise((resolve) => setTimeout(resolve, 200));
-  return materials;
+  await new Promise((resolve) => setTimeout(resolve, 100));
+  // sort by code
+  return [...materials].sort((a, b) => a.code.localeCompare(b.code));
 };
 
 export const getInventoryLogs = async (): Promise<InventoryLog[]> => {
   // Simulate API delay
-  await new Promise((resolve) => setTimeout(resolve, 200));
+  await new Promise((resolve) => setTimeout(resolve, 100));
   return inventoryLogs;
 };

@@ -2,6 +2,8 @@ export interface Material {
   id: string;
   name: string;
   code: string;
+  partNo: string;
+  managementType: "Batch" | "Serial";
   category: string;
   unit: string;
   description: string;

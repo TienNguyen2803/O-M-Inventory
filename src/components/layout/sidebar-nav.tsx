@@ -8,6 +8,7 @@ import {
   SidebarContent,
   SidebarFooter,
   SidebarGroup,
+  SidebarGroupLabel,
 } from "@/components/ui/sidebar";
 import {
   Zap,
@@ -15,6 +16,14 @@ import {
   Package,
   ArrowDownToLine,
   ArrowUpFromLine,
+  Warehouse,
+  Factory,
+  ShoppingCart,
+  Users,
+  ShieldCheck,
+  FileText,
+  History,
+  ClipboardList,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -22,10 +31,21 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 
 const navItems = [
-  { href: "/", label: "Tổng quan", icon: LayoutDashboard },
-  { href: "/materials", label: "Quản lý vật tư", icon: Package },
-  { href: "/inbound", label: "Nhập kho", icon: ArrowDownToLine },
-  { href: "/outbound", label: "Xuất kho", icon: ArrowUpFromLine },
+  {
+    group: "BÁO CÁO & PHÂN TÍCH",
+    items: [{ href: "/", label: "Tổng quan", icon: LayoutDashboard }],
+  },
+  {
+    group: "DỮ LIỆU DANH MỤC",
+    items: [{ href: "/materials", label: "Danh mục Vật tư", icon: Package }],
+  },
+  {
+    group: "VẬN HÀNH KHO",
+    items: [
+      { href: "/inbound", label: "Nhập kho", icon: ArrowDownToLine },
+      { href: "/outbound", label: "Xuất kho", icon: ArrowUpFromLine },
+    ],
+  },
 ];
 
 export function SidebarNav() {
@@ -44,41 +64,44 @@ export function SidebarNav() {
       </SidebarHeader>
       <SidebarContent>
         <SidebarMenu>
-          {navItems.map((item) => (
-            <SidebarMenuItem key={item.href}>
-              <SidebarMenuButton
-                asChild
-                isActive={pathname === item.href}
-                className="justify-start"
-              >
-                <Link href={item.href}>
-                  <item.icon className="h-4 w-4" />
-                  <span>{item.label}</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
+          {navItems.map((group) => (
+            <SidebarGroup key={group.group}>
+              <SidebarGroupLabel>{group.group}</SidebarGroupLabel>
+              {group.items.map((item) => (
+                <SidebarMenuItem key={item.href}>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={pathname === item.href}
+                    className="justify-start"
+                  >
+                    <Link href={item.href}>
+                      <item.icon className="h-4 w-4" />
+                      <span>{item.label}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarGroup>
           ))}
         </SidebarMenu>
       </SidebarContent>
       <SidebarFooter>
-        <SidebarGroup>
-          <div className="flex w-full items-center gap-3 rounded-md p-2 hover:bg-sidebar-accent">
-            <Avatar className="h-10 w-10">
-              <AvatarImage
-                src={userAvatar?.imageUrl}
-                alt="User"
-                data-ai-hint={userAvatar?.imageHint}
-              />
-              <AvatarFallback>AD</AvatarFallback>
-            </Avatar>
-            <div className="flex flex-col text-left">
-              <span className="font-semibold text-sm">Quản trị viên</span>
-              <span className="text-xs text-muted-foreground">
-                admin@powertrack.vn
-              </span>
-            </div>
+        <div className="flex w-full items-center gap-3 rounded-md p-2 hover:bg-sidebar-accent">
+          <Avatar className="h-10 w-10">
+            <AvatarImage
+              src={userAvatar?.imageUrl}
+              alt="User"
+              data-ai-hint={userAvatar?.imageHint}
+            />
+            <AvatarFallback>VA</AvatarFallback>
+          </Avatar>
+          <div className="flex flex-col text-left">
+            <span className="font-semibold text-sm">Nguyễn Văn A</span>
+            <span className="text-xs text-muted-foreground">
+              Trưởng bộ phận Kho
+            </span>
           </div>
-        </SidebarGroup>
+        </div>
       </SidebarFooter>
     </>
   );
