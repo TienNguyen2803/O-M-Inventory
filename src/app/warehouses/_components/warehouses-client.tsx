@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo, useEffect } from "react";
 import type { WarehouseLocation } from "@/lib/types";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
@@ -72,16 +72,53 @@ export function WarehousesClient({ initialLocations }: WarehousesClientProps) {
   const [viewMode, setViewMode] = useState(false);
   const { toast } = useToast();
 
+  // Filter and search states
+  const [searchQuery, setSearchQuery] = useState("");
+  const [areaFilter, setAreaFilter] = useState("all");
+  const [typeFilter, setTypeFilter] = useState("all");
+
+  const areas = useMemo(
+    () => [...new Set(locations.map((l) => l.area))],
+    [locations]
+  );
+  const types = useMemo(
+    () => [...new Set(locations.map((l) => l.type))],
+    [locations]
+  );
+
+  const filteredLocations = useMemo(() => {
+    return locations.filter((location) => {
+      const searchLower = searchQuery.toLowerCase();
+      const matchesSearch =
+        !searchQuery ||
+        location.code.toLowerCase().includes(searchLower) ||
+        location.name.toLowerCase().includes(searchLower);
+
+      const matchesArea = areaFilter === "all" || location.area === areaFilter;
+      const matchesType = typeFilter === "all" || location.type === typeFilter;
+
+      return matchesSearch && matchesArea && matchesType;
+    });
+  }, [locations, searchQuery, areaFilter, typeFilter]);
+
+  // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  const totalPages = Math.ceil(locations.length / itemsPerPage);
-  const paginatedLocations = locations.slice(
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, areaFilter, typeFilter]);
+
+  const totalPages = Math.ceil(filteredLocations.length / itemsPerPage);
+  const paginatedLocations = filteredLocations.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
   const startItem = (currentPage - 1) * itemsPerPage + 1;
-  const endItem = Math.min(currentPage * itemsPerPage, locations.length);
+  const endItem = Math.min(
+    currentPage * itemsPerPage,
+    filteredLocations.length
+  );
 
   const handleAdd = () => {
     setSelectedLocation(null);
@@ -151,7 +188,7 @@ export function WarehousesClient({ initialLocations }: WarehousesClientProps) {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 w-full">
       <PageHeader
         title="Danh mục Kho"
         breadcrumbs={<Breadcrumbs />}
@@ -165,24 +202,35 @@ export function WarehousesClient({ initialLocations }: WarehousesClientProps) {
       <Card>
         <CardContent className="pt-6">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <Select>
+            <Select value={areaFilter} onValueChange={setAreaFilter}>
               <SelectTrigger>
-                <SelectValue placeholder="-- Tất cả --" />
+                <SelectValue placeholder="-- Tất cả khu vực --" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">-- Tất cả --</SelectItem>
-                <SelectItem value="khu-a">Khu A</SelectItem>
-                <SelectItem value="khu-b">Khu B</SelectItem>
+                <SelectItem value="all">-- Tất cả khu vực --</SelectItem>
+                {areas.map((area) => (
+                  <SelectItem key={area} value={area}>
+                    {area}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
-            <Input placeholder="Mã vị trí, Tên..." />
-            <Select>
+            <Input
+              placeholder="Mã vị trí, Tên..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            <Select value={typeFilter} onValueChange={setTypeFilter}>
               <SelectTrigger>
-                <SelectValue placeholder="Tất cả" />
+                <SelectValue placeholder="-- Tất cả loại --" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Tất cả</SelectItem>
-                <SelectItem value="pallet">Kệ Pallet</SelectItem>
+                <SelectItem value="all">-- Tất cả loại --</SelectItem>
+                 {types.map((type) => (
+                  <SelectItem key={type} value={type}>
+                    {type}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -204,97 +252,108 @@ export function WarehousesClient({ initialLocations }: WarehousesClientProps) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {paginatedLocations.map((location, index) => (
-                <TableRow key={location.id}>
-                  <TableCell className="text-center">
-                    {startItem + index}
-                  </TableCell>
-                  <TableCell
-                    className="font-medium text-primary hover:underline cursor-pointer"
-                    onClick={() => handleView(location)}
-                  >
-                    {location.code}
-                  </TableCell>
-                  <TableCell>{location.name}</TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {location.area}
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {location.type}
-                  </TableCell>
-                  <TableCell>
-                    <span
-                      className={cn(
-                        "rounded-md px-2.5 py-1 text-xs font-semibold",
-                        location.status === "Active"
-                          ? "bg-green-100 text-green-800"
-                          : "bg-red-100 text-red-800"
-                      )}
+              {paginatedLocations.length > 0 ? (
+                paginatedLocations.map((location, index) => (
+                  <TableRow key={location.id}>
+                    <TableCell className="text-center">
+                      {startItem + index}
+                    </TableCell>
+                    <TableCell
+                      className="font-medium text-primary hover:underline cursor-pointer"
+                      onClick={() => handleView(location)}
                     >
-                      {location.status === "Active"
-                        ? "Hoạt động"
-                        : "Không hoạt động"}
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center space-x-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-muted-foreground"
-                        onClick={() => handleView(location)}
+                      {location.code}
+                    </TableCell>
+                    <TableCell>{location.name}</TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {location.area}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {location.type}
+                    </TableCell>
+                    <TableCell>
+                      <span
+                        className={cn(
+                          "rounded-md px-2.5 py-1 text-xs font-semibold",
+                          location.status === "Active"
+                            ? "bg-green-100 text-green-800"
+                            : "bg-red-100 text-red-800"
+                        )}
                       >
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-muted-foreground"
-                        onClick={() => handleEdit(location)}
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-destructive/80 hover:text-destructive"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>
-                              Bạn có chắc chắn muốn xóa?
-                            </AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Hành động này không thể được hoàn tác. Vị trí "
-                              {location.name}" sẽ bị xóa vĩnh viễn.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Hủy</AlertDialogCancel>
-                            <AlertDialogAction
-                              onClick={() => handleDelete(location.id)}
-                              className="bg-destructive hover:bg-destructive/90"
+                        {location.status === "Active"
+                          ? "Hoạt động"
+                          : "Không hoạt động"}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center space-x-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-muted-foreground"
+                          onClick={() => handleView(location)}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-muted-foreground"
+                          onClick={() => handleEdit(location)}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-destructive/80 hover:text-destructive"
                             >
-                              Xóa
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </div>
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>
+                                Bạn có chắc chắn muốn xóa?
+                              </AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Hành động này không thể được hoàn tác. Vị trí "
+                                {location.name}" sẽ bị xóa vĩnh viễn.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Hủy</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => handleDelete(location.id)}
+                                className="bg-destructive hover:bg-destructive/90"
+                              >
+                                Xóa
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell
+                    colSpan={7}
+                    className="h-24 text-center text-muted-foreground"
+                  >
+                    Không tìm thấy vị trí nào.
                   </TableCell>
                 </TableRow>
-              ))}
+              )}
             </TableBody>
           </Table>
         </CardContent>
         <CardFooter className="flex items-center justify-between pt-4">
           <div className="text-sm text-muted-foreground">
-            Hiển thị {startItem}-{endItem} trên {locations.length} bản ghi
+            Hiển thị {filteredLocations.length > 0 ? startItem : 0}-{endItem} trên {filteredLocations.length} bản ghi
           </div>
           <div className="flex items-center space-x-1">
             <Button

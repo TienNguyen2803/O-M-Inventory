@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo, useEffect } from "react";
 import type { Supplier } from "@/lib/types";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
@@ -63,17 +63,36 @@ export function SuppliersClient({ initialSuppliers }: SuppliersClientProps) {
     useState<Supplier | null>(null);
   const [viewMode, setViewMode] = useState(false);
   const { toast } = useToast();
+  
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const filteredSuppliers = useMemo(() => {
+    return suppliers.filter((supplier) => {
+      const searchLower = searchQuery.toLowerCase();
+      return (
+        !searchQuery ||
+        supplier.name.toLowerCase().includes(searchLower) ||
+        supplier.code.toLowerCase().includes(searchLower) ||
+        supplier.taxCode.toLowerCase().includes(searchLower) ||
+        supplier.address.toLowerCase().includes(searchLower)
+      );
+    });
+  }, [suppliers, searchQuery]);
 
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
+  
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
 
-  const totalPages = Math.ceil(suppliers.length / itemsPerPage);
-  const paginatedSuppliers = suppliers.slice(
+  const totalPages = Math.ceil(filteredSuppliers.length / itemsPerPage);
+  const paginatedSuppliers = filteredSuppliers.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
   const startItem = (currentPage - 1) * itemsPerPage + 1;
-  const endItem = Math.min(currentPage * itemsPerPage, suppliers.length);
+  const endItem = Math.min(currentPage * itemsPerPage, filteredSuppliers.length);
 
   const handleAdd = () => {
     setSelectedSupplier(null);
@@ -157,7 +176,11 @@ export function SuppliersClient({ initialSuppliers }: SuppliersClientProps) {
         <Card>
           <CardContent className="pt-6">
             <div className="grid grid-cols-1 gap-4">
-              <Input placeholder="Tìm kiếm..." />
+              <Input 
+                placeholder="Tìm kiếm mã, tên, MST, địa chỉ..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
             </div>
           </CardContent>
         </Card>
@@ -176,94 +199,105 @@ export function SuppliersClient({ initialSuppliers }: SuppliersClientProps) {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {paginatedSuppliers.map((supplier, index) => (
-                  <TableRow key={supplier.id}>
-                    <TableCell className="text-center">
-                      {startItem + index}
-                    </TableCell>
-                    <TableCell
-                      className="font-medium text-primary hover:underline cursor-pointer"
-                      onClick={() => handleView(supplier)}
-                    >
-                      {supplier.code}
-                    </TableCell>
-                    <TableCell>{supplier.name}</TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {supplier.address}
-                    </TableCell>
-                    <TableCell>
-                      <span
-                        className={cn(
-                          "rounded-md px-2.5 py-1 text-xs font-semibold",
-                          supplier.status === "Active"
-                            ? "bg-green-100 text-green-800"
-                            : "bg-red-100 text-red-800"
-                        )}
+                {paginatedSuppliers.length > 0 ? (
+                  paginatedSuppliers.map((supplier, index) => (
+                    <TableRow key={supplier.id}>
+                      <TableCell className="text-center">
+                        {startItem + index}
+                      </TableCell>
+                      <TableCell
+                        className="font-medium text-primary hover:underline cursor-pointer"
+                        onClick={() => handleView(supplier)}
                       >
-                        {supplier.status === "Active"
-                          ? "Hoạt động"
-                          : "Không hoạt động"}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center space-x-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-muted-foreground"
-                          onClick={() => handleView(supplier)}
+                        {supplier.code}
+                      </TableCell>
+                      <TableCell>{supplier.name}</TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {supplier.address}
+                      </TableCell>
+                      <TableCell>
+                        <span
+                          className={cn(
+                            "rounded-md px-2.5 py-1 text-xs font-semibold",
+                            supplier.status === "Active"
+                              ? "bg-green-100 text-green-800"
+                              : "bg-red-100 text-red-800"
+                          )}
                         >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-muted-foreground"
-                          onClick={() => handleEdit(supplier)}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-destructive/80 hover:text-destructive"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>
-                                Bạn có chắc chắn muốn xóa?
-                              </AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Hành động này không thể được hoàn tác. Nhà cung cấp "
-                                {supplier.name}" sẽ bị xóa vĩnh viễn.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Hủy</AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() => handleDelete(supplier.id)}
-                                className="bg-destructive hover:bg-destructive/90"
+                          {supplier.status === "Active"
+                            ? "Hoạt động"
+                            : "Không hoạt động"}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center space-x-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-muted-foreground"
+                            onClick={() => handleView(supplier)}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-muted-foreground"
+                            onClick={() => handleEdit(supplier)}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-destructive/80 hover:text-destructive"
                               >
-                                Xóa
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </div>
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>
+                                  Bạn có chắc chắn muốn xóa?
+                                </AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Hành động này không thể được hoàn tác. Nhà cung cấp "
+                                  {supplier.name}" sẽ bị xóa vĩnh viễn.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Hủy</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => handleDelete(supplier.id)}
+                                  className="bg-destructive hover:bg-destructive/90"
+                                >
+                                  Xóa
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell
+                      colSpan={6}
+                      className="h-24 text-center text-muted-foreground"
+                    >
+                      Không tìm thấy nhà cung cấp nào.
                     </TableCell>
                   </TableRow>
-                ))}
+                )}
               </TableBody>
             </Table>
           </CardContent>
           <CardFooter className="flex items-center justify-between pt-4">
             <div className="text-sm text-muted-foreground">
-              Hiển thị {startItem}-{endItem} trên {suppliers.length} bản ghi
+              Hiển thị {filteredSuppliers.length > 0 ? startItem : 0}-{endItem} trên {filteredSuppliers.length} bản ghi
             </div>
             <div className="flex items-center space-x-1">
               <Button
