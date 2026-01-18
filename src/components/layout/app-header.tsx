@@ -17,8 +17,8 @@ export function AppHeader() {
           <Image
               src="https://skg.com.vn/wp-content/uploads/2024/10/SKG_Only-1400x546.png"
               alt="SKG Logo"
-              width={140}
-              height={55}
+              width={98}
+              height={39}
               priority
           />
           
