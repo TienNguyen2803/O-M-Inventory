@@ -58,7 +58,7 @@ export function OutboundClient({
   };
 
   return (
-    <>
+    <div className="flex-1 space-y-4 pt-6">
       <PageHeader
         title="Xuất kho"
         description="Ghi nhận vật tư xuất kho cho các hoạt động của nhà máy."
@@ -119,6 +119,6 @@ export function OutboundClient({
           />
         </DialogContent>
       </Dialog>
-    </>
+    </div>
   );
 }

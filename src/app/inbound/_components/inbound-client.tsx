@@ -55,7 +55,7 @@ export function InboundClient({ initialLogs, materials }: InboundClientProps) {
   };
 
   return (
-    <>
+    <div className="flex-1 space-y-4 pt-6">
       <PageHeader
         title="Nhập kho"
         description="Ghi nhận các lô vật tư, hàng hóa nhập vào kho."
@@ -116,6 +116,6 @@ export function InboundClient({ initialLogs, materials }: InboundClientProps) {
           />
         </DialogContent>
       </Dialog>
-    </>
+    </div>
   );
 }

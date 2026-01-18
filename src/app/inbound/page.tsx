@@ -6,11 +6,9 @@ export default async function InboundPage() {
   const materials = await getMaterials();
 
   return (
-    <div className="flex-1 space-y-4 pt-6">
-      <InboundClient
-        initialLogs={logs}
-        materials={materials}
-      />
-    </div>
+    <InboundClient
+      initialLogs={logs}
+      materials={materials}
+    />
   );
 }

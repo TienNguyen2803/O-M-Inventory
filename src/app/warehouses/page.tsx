@@ -4,9 +4,5 @@ import { WarehousesClient } from "./_components/warehouses-client";
 export default async function WarehousesPage() {
   const locations = await getWarehouseLocations();
 
-  return (
-    <div className="flex-1 space-y-4 pt-6">
-      <WarehousesClient initialLocations={locations} />
-    </div>
-  );
+  return <WarehousesClient initialLocations={locations} />;
 }
