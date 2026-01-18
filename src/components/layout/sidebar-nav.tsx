@@ -38,7 +38,7 @@ const navItems = [
         label: "Báo cáo nhập, xuất, tồn",
         icon: ClipboardList,
       },
-      { href: "#", label: "Vật tư chậm luân chuyển", icon: ShoppingBasket },
+      { href: "/reports/slow-moving", label: "Vật tư chậm luân chuyển", icon: ShoppingBasket },
       { href: "#", label: "Định mức tồn kho an toàn", icon: Hammer },
     ],
   },
