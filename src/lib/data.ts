@@ -1,4 +1,4 @@
-import type { Material, InventoryLog, WarehouseLocation, WarehouseItem, Supplier, MaterialRequest, MaterialRequestItem, PurchaseRequest, PurchaseRequestItem, BiddingPackage, BiddingItem, BiddingResult, InboundReceipt } from "./types";
+import type { Material, InventoryLog, WarehouseLocation, WarehouseItem, Supplier, MaterialRequest, MaterialRequestItem, PurchaseRequest, PurchaseRequestItem, BiddingPackage, BiddingItem, BiddingResult, InboundReceipt, InboundReceiptItem, InboundReceiptDocument } from "./types";
 
 export const materials: Material[] = [
   {
@@ -945,15 +945,27 @@ export const biddingPackages: BiddingPackage[] = Array.from({ length: 25 }, (_, 
 export const inboundReceipts: InboundReceipt[] = Array.from({ length: 25 }, (_, i) => {
   const id = i + 1;
   const types: InboundReceipt['inboundType'][] = ['Theo PO', 'Sau Sửa chữa', 'Hàng Mượn', 'Hoàn trả'];
-  const statuses: InboundReceipt['status'][] = ['Hoàn thành', 'Đang nhập'];
+  const statuses: InboundReceipt['status'][] = ['Hoàn thành', 'Đang nhập', 'KCS & Hồ sơ', 'Yêu cầu nhập'];
+  
+  const items: InboundReceiptItem[] = [
+      { id: 'item-1', materialCode: '5.12.99.102', materialName: 'Card điều khiển Siemens', orderedQuantity: 2, receivedQuantity: 0, receivingQuantity: 2, serialBatch: 'SN-999, SN-888', location: 'A1-02-05', kcs: true },
+      { id: 'item-2', materialCode: '1.51.45.004', materialName: 'Dầu bôi trơn Turbo', orderedQuantity: 10, receivedQuantity: 0, receivingQuantity: 10, serialBatch: 'Lô 2025-01', location: 'Khu A-01', kcs: true },
+  ];
+
+  const documents: InboundReceiptDocument[] = [
+      { id: 'doc-1', type: 'CO (Certificate of Origin)', fileName: 'CO_Siemens_2025.pdf' },
+  ];
 
   return {
-      id: `PNK-2025-${String(id).padStart(2, '0')}`,
-      inboundType: types[id % types.length],
+      id: `PNK-2025-${String(id).padStart(3, '0')}`,
+      inboundType: id === 1 ? 'Theo PO' : types[id % types.length],
       reference: `PO-2025-${String(id + 9).padStart(2, '0')}`,
-      inboundDate: new Date(2025, 7, Math.min(id, 28)).toISOString(),
-      partner: 'Siemens Energy',
-      status: statuses[id % statuses.length],
+      inboundDate: new Date(2025, 7, 15).toISOString(),
+      partner: id === 1 ? 'Siemens Energy Global' : 'Nhà cung cấp khác',
+      status: id === 1 ? 'KCS & Hồ sơ' : statuses[id % statuses.length],
+      step: id === 1 ? 3 : (id % 4) + 1,
+      items: id === 1 ? items : [],
+      documents: id === 1 ? documents : [],
   };
 });
 

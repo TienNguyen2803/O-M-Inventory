@@ -118,12 +118,15 @@ export function InboundClient({ initialReceipts }: InboundClientProps) {
   // Handlers
   const handleAdd = () => {
     const newReceiptTemplate: InboundReceipt = {
-      id: `PNK-2025-${String(receipts.length + 1).padStart(2, "0")}`,
+      id: `PNK-2025-${String(receipts.length + 1).padStart(3, "0")}`,
       inboundType: "Theo PO",
       reference: "",
       inboundDate: new Date().toISOString(),
       partner: "",
-      status: "Đang nhập",
+      status: "Yêu cầu nhập",
+      step: 1,
+      items: [],
+      documents: [],
     };
     setSelectedReceipt(newReceiptTemplate);
     setViewMode(false);
@@ -153,6 +156,8 @@ export function InboundClient({ initialReceipts }: InboundClientProps) {
 
   const handleFormSubmit = (values: InboundFormValues) => {
     const submittedReceipt: InboundReceipt = {
+      // This needs to be spread from the original object to preserve non-form fields like step
+      ...selectedReceipt!,
       ...values,
       inboundDate: values.inboundDate.toISOString(),
     };
@@ -201,6 +206,10 @@ export function InboundClient({ initialReceipts }: InboundClientProps) {
         return "bg-green-100 text-green-800";
       case "Đang nhập":
         return "bg-yellow-100 text-yellow-800";
+      case "KCS & Hồ sơ":
+        return "bg-cyan-100 text-cyan-800";
+      case "Yêu cầu nhập":
+         return "bg-blue-100 text-blue-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
@@ -211,7 +220,7 @@ export function InboundClient({ initialReceipts }: InboundClientProps) {
       <PageHeader title="Nhập kho" breadcrumbs={<Breadcrumbs />}>
         <Button onClick={handleAdd}>
           <Plus className="mr-2 h-4 w-4" />
-          Thêm mới
+          Tạo Phiếu nhập
         </Button>
       </PageHeader>
 
@@ -236,7 +245,7 @@ export function InboundClient({ initialReceipts }: InboundClientProps) {
             <div className="space-y-1">
               <label className="text-sm font-medium">Tìm kiếm</label>
               <Input
-                placeholder="Số Phiếu, PO, Nhà cung cấp..."
+                placeholder="Số Phiếu, PO, Đối tác..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
@@ -251,6 +260,8 @@ export function InboundClient({ initialReceipts }: InboundClientProps) {
                   <SelectItem value="all">Tất cả</SelectItem>
                   <SelectItem value="Hoàn thành">Hoàn thành</SelectItem>
                   <SelectItem value="Đang nhập">Đang nhập</SelectItem>
+                  <SelectItem value="KCS & Hồ sơ">KCS & Hồ sơ</SelectItem>
+                  <SelectItem value="Yêu cầu nhập">Yêu cầu nhập</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -423,13 +434,13 @@ export function InboundClient({ initialReceipts }: InboundClientProps) {
       </Card>
 
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-        <DialogContent className="sm:max-w-2xl">
+        <DialogContent className="sm:max-w-7xl">
           <DialogHeader>
             <DialogTitle>
               {viewMode
                 ? `Chi tiết Phiếu nhập: ${selectedReceipt?.id}`
-                : receipts.some((r) => r.id === selectedReceipt?.id)
-                ? "Cập nhật Phiếu nhập"
+                : selectedReceipt?.id && receipts.some((r) => r.id === selectedReceipt.id)
+                ? `Cập nhật Phiếu nhập: ${selectedReceipt?.id}`
                 : "Tạo Phiếu nhập mới"}
             </DialogTitle>
           </DialogHeader>

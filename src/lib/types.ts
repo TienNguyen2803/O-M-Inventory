@@ -150,11 +150,33 @@ export interface BiddingPackage {
   result?: BiddingResult; // Kết quả lựa chọn
 }
 
+
+export interface InboundReceiptItem {
+  id: string;
+  materialCode: string;
+  materialName: string;
+  orderedQuantity: number;
+  receivedQuantity: number;
+  receivingQuantity: number;
+  serialBatch: string;
+  location: string;
+  kcs: boolean;
+}
+
+export interface InboundReceiptDocument {
+  id: string;
+  type: string;
+  fileName: string;
+}
+
 export interface InboundReceipt {
   id: string; // SỐ PHIẾU
   inboundType: 'Theo PO' | 'Sau Sửa chữa' | 'Hàng Mượn' | 'Hoàn trả'; // LOẠI NHẬP
   reference: string; // THAM CHIẾU
   inboundDate: string; // NGÀY NHẬP
   partner: string; // ĐỐI TÁC
-  status: 'Hoàn thành' | 'Đang nhập'; // TRẠNG THÁI
+  status: 'Hoàn thành' | 'Đang nhập' | 'KCS & Hồ sơ' | 'Yêu cầu nhập'; // TRẠNG THÁI
+  step: number;
+  items?: InboundReceiptItem[];
+  documents?: InboundReceiptDocument[];
 }
