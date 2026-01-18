@@ -227,3 +227,12 @@ export interface StockTake {
   leader: string;
   results?: StockTakeResult[];
 }
+
+export interface User {
+  id: string;
+  employeeCode: string; // MÃ NV
+  name: string; // HỌ TÊN
+  department: string; // PHÒNG BAN
+  role: string; // VAI TRÒ
+  status: 'Active' | 'Inactive'; // TRẠNG THÁI
+}

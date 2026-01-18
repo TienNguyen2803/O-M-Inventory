@@ -39,6 +39,12 @@ const nextConfig: NextConfig = {
         hostname: 'skg.com.vn',
         port: '',
         pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'vts-solution.com.vn',
+        port: '',
+        pathname: '/**',
       }
     ],
   },

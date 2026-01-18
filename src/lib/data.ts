@@ -1,4 +1,4 @@
-import type { Material, InventoryLog, WarehouseLocation, WarehouseItem, Supplier, MaterialRequest, MaterialRequestItem, PurchaseRequest, PurchaseRequestItem, BiddingPackage, BiddingItem, BiddingResult, InboundReceipt, InboundReceiptItem, InboundReceiptDocument, OutboundVoucher, OutboundVoucherItem, StockTake, StockTakeResult } from "./types";
+import type { Material, InventoryLog, WarehouseLocation, WarehouseItem, Supplier, MaterialRequest, MaterialRequestItem, PurchaseRequest, PurchaseRequestItem, BiddingPackage, BiddingItem, BiddingResult, InboundReceipt, InboundReceiptItem, InboundReceiptDocument, OutboundVoucher, OutboundVoucherItem, StockTake, StockTakeResult, User } from "./types";
 
 export const materials: Material[] = [
   {
@@ -1090,6 +1090,21 @@ export const stockTakes: StockTake[] = Array.from({ length: 25 }, (_, i) => {
   };
 });
 
+export const users: User[] = Array.from({ length: 25 }, (_, i) => {
+    const id = i + 1;
+    const departments = ['Phòng Kỹ thuật', 'PX Vận hành', 'Phòng Kế hoạch', 'Ban Giám đốc', 'Phòng Tài chính'];
+    const roles = ['Staff', 'Manager', 'Technician', 'Admin'];
+
+    return {
+        id: `user-${id}`,
+        employeeCode: `NV${String(id).padStart(3, '0')}`,
+        name: `Nguyễn Văn ${String.fromCharCode(65 + i)}`,
+        department: departments[i % departments.length],
+        role: roles[i % roles.length],
+        status: i % 10 === 0 ? 'Inactive' : 'Active',
+    };
+});
+
 
 export const getMaterials = async (): Promise<Material[]> => {
   // Simulate API delay
@@ -1144,4 +1159,9 @@ export const getOutboundVouchers = async (): Promise<OutboundVoucher[]> => {
 export const getStockTakes = async (): Promise<StockTake[]> => {
   await new Promise(resolve => setTimeout(resolve, 100));
   return stockTakes.sort((a,b) => b.id.localeCompare(a.id));
+};
+
+export const getUsers = async (): Promise<User[]> => {
+    await new Promise(resolve => setTimeout(resolve, 100));
+    return users;
 };
