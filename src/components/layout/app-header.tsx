@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { SidebarTrigger } from "@/components/ui/sidebar";
@@ -14,12 +13,11 @@ export function AppHeader() {
         <div className="flex items-center gap-4">
           <SidebarTrigger className="md:hidden" />
           
-          <Image
+          <img
               src="https://skg.com.vn/wp-content/uploads/2024/10/SKG_Only-1400x546.png"
               alt="SKG Logo"
               width={98}
               height={38}
-              priority
           />
           
           <div className="hidden h-8 items-center gap-4 md:flex">
