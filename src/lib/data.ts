@@ -1094,11 +1094,14 @@ export const users: User[] = Array.from({ length: 25 }, (_, i) => {
     const id = i + 1;
     const departments = ['Phòng Kỹ thuật', 'PX Vận hành', 'Phòng Kế hoạch', 'Ban Giám đốc', 'Phòng Tài chính'];
     const roles = ['Staff', 'Manager', 'Technician', 'Admin'];
-
+    const char = String.fromCharCode(65 + i);
+    
     return {
         id: `user-${id}`,
         employeeCode: `NV${String(id).padStart(3, '0')}`,
-        name: `Nguyễn Văn ${String.fromCharCode(65 + i)}`,
+        name: `Nguyễn Văn ${char}`,
+        email: `nguyen.van.${char.toLowerCase()}@phumypower.vn`,
+        phone: `090${String(id).padStart(3, '0')}${String(id*3).padStart(4,'0')}`.slice(0,10),
         department: departments[i % departments.length],
         role: roles[i % roles.length],
         status: i % 10 === 0 ? 'Inactive' : 'Active',
@@ -1277,7 +1280,7 @@ export const getStockTakes = async (): Promise<StockTake[]> => {
 
 export const getUsers = async (): Promise<User[]> => {
     await new Promise(resolve => setTimeout(resolve, 100));
-    return users;
+    return users.sort((a,b) => a.employeeCode.localeCompare(b.employeeCode));
 };
 
 export const getRoles = async (): Promise<Role[]> => {

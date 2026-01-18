@@ -232,6 +232,8 @@ export interface User {
   id: string;
   employeeCode: string; // MÃ NV
   name: string; // HỌ TÊN
+  email: string;
+  phone?: string;
   department: string; // PHÒNG BAN
   role: string; // VAI TRÒ
   status: 'Active' | 'Inactive'; // TRẠNG THÁI

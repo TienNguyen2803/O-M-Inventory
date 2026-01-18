@@ -32,9 +32,17 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { UserForm, type UserFormValues } from "./user-form";
+import { getRoles } from "@/lib/data";
 
 const Breadcrumbs = () => (
   <div className="text-sm text-muted-foreground mb-1">
@@ -46,11 +54,24 @@ const Breadcrumbs = () => (
 
 export function UsersClient({ initialUsers }: { initialUsers: User[] }) {
   const [users, setUsers] = useState<User[]>(initialUsers);
+  const [roles, setRoles] = useState<string[]>([]);
   const { toast } = useToast();
+  
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [viewMode, setViewMode] = useState(false);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
+  
+  useEffect(() => {
+    async function fetchRoles() {
+      const fetchedRoles = await getRoles();
+      setRoles(fetchedRoles.map(r => r.name));
+    }
+    fetchRoles();
+  }, []);
 
   const filteredUsers = useMemo(() => {
     return users.filter((user) => {
@@ -81,13 +102,29 @@ export function UsersClient({ initialUsers }: { initialUsers: User[] }) {
   );
   
   const handleAdd = () => {
-    toast({ title: "Chức năng đang được phát triển" });
+    setSelectedUser({
+      id: `user-${Date.now()}`,
+      employeeCode: `NV${String(users.length + 1).padStart(3, '0')}`,
+      name: '',
+      email: '',
+      department: '',
+      role: '',
+      status: 'Active',
+    });
+    setViewMode(false);
+    setIsFormOpen(true);
   };
+  
   const handleEdit = (user: User) => {
-    toast({ title: "Chức năng đang được phát triển" });
+    setSelectedUser(user);
+    setViewMode(false);
+    setIsFormOpen(true);
   };
+  
   const handleView = (user: User) => {
-    toast({ title: "Chức năng đang được phát triển" });
+    setSelectedUser(user);
+    setViewMode(true);
+    setIsFormOpen(true);
   };
 
   const handleDelete = (userId: string) => {
@@ -98,6 +135,30 @@ export function UsersClient({ initialUsers }: { initialUsers: User[] }) {
       variant: "destructive",
     });
   };
+
+  const handleFormSubmit = (values: UserFormValues) => {
+     if (viewMode) {
+      setIsFormOpen(false);
+      return;
+    }
+    const isEditing = users.some((u) => u.id === selectedUser?.id);
+    
+    if (isEditing) {
+      setUsers(users.map((u) => u.id === selectedUser!.id ? { ...selectedUser!, ...values } : u));
+    } else {
+      const newUser: User = {
+        id: `user-${Date.now()}`,
+        ...values,
+      };
+      setUsers([newUser, ...users].sort((a,b) => a.employeeCode.localeCompare(b.employeeCode)));
+    }
+    
+    setIsFormOpen(false);
+    toast({
+      title: 'Thành công!',
+      description: isEditing ? 'Đã cập nhật thông tin người dùng.' : 'Đã tạo người dùng mới thành công.',
+    });
+  }
 
   const getStatusBadgeClass = (status: User["status"]) => {
     switch (status) {
@@ -125,7 +186,7 @@ export function UsersClient({ initialUsers }: { initialUsers: User[] }) {
             <label htmlFor="search" className="text-sm font-medium">Tìm kiếm</label>
             <Input
               id="search"
-              placeholder="Tìm kiếm..."
+              placeholder="Tìm kiếm theo mã, tên, phòng ban, vai trò..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="mt-1"
@@ -161,7 +222,7 @@ export function UsersClient({ initialUsers }: { initialUsers: User[] }) {
                     <TableCell>{user.role}</TableCell>
                     <TableCell>
                       <span className={cn("rounded-md px-2.5 py-1 text-xs font-semibold", getStatusBadgeClass(user.status))}>
-                        {user.status}
+                        {user.status === 'Active' ? 'Hoạt động' : 'Vô hiệu'}
                       </span>
                     </TableCell>
                     <TableCell>
@@ -263,7 +324,28 @@ export function UsersClient({ initialUsers }: { initialUsers: User[] }) {
           </div>
         </CardFooter>
       </Card>
-      
+      <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+        <DialogContent className="sm:max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>
+              {viewMode
+                ? `Chi tiết người dùng: ${selectedUser?.name}`
+                : users.some(u => u.id === selectedUser?.id)
+                ? 'Cập nhật Người dùng'
+                : 'Tạo Người dùng mới'}
+            </DialogTitle>
+          </DialogHeader>
+          {isFormOpen && (
+            <UserForm
+              user={selectedUser}
+              roles={roles}
+              onSubmit={handleFormSubmit}
+              onCancel={() => setIsFormOpen(false)}
+              viewMode={viewMode}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
