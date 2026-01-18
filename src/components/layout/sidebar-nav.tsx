@@ -15,6 +15,9 @@ import {
   ArrowUpFromLine,
   Warehouse,
   Users,
+  ClipboardCheck,
+  ShoppingBasket,
+  Gavel,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -23,6 +26,14 @@ const navItems = [
   {
     group: "BÁO CÁO & PHÂN TÍCH",
     items: [{ href: "/", label: "Tổng quan", icon: LayoutDashboard }],
+  },
+  {
+    group: "KẾ HOẠCH & MUA SẮM",
+    items: [
+      { href: "#", label: "Yêu cầu Vật tư", icon: ClipboardCheck },
+      { href: "#", label: "Yêu cầu Mua sắm", icon: ShoppingBasket },
+      { href: "#", label: "Quản lý Đấu thầu", icon: Gavel },
+    ],
   },
   {
     group: "DỮ LIỆU DANH MỤC",
