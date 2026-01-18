@@ -100,3 +100,13 @@ export interface MaterialRequest {
   approver?: string; // Người duyệt kỹ thuật
   items: MaterialRequestItem[];
 }
+
+export interface PurchaseRequest {
+  id: string; // MÃ PR
+  requesterName: string; 
+  requesterDept: string; 
+  content: string; // NỘI DUNG
+  source: 'Trong nước' | 'Nhập khẩu'; // NGUỒN GỐC
+  totalAmount: number; // TỔNG TIỀN
+  status: 'Approved' | 'Pending'; // TRẠNG THÁI
+}

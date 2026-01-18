@@ -31,7 +31,7 @@ const navItems = [
     group: "KẾ HOẠCH & MUA SẮM",
     items: [
       { href: "/material-requests", label: "Yêu cầu Vật tư", icon: ClipboardCheck },
-      { href: "#", label: "Yêu cầu Mua sắm", icon: ShoppingBasket },
+      { href: "/purchase-requests", label: "Yêu cầu Mua sắm", icon: ShoppingBasket },
       { href: "#", label: "Quản lý Đấu thầu", icon: Gavel },
     ],
   },

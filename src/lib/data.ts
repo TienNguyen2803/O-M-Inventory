@@ -1,4 +1,4 @@
-import type { Material, InventoryLog, WarehouseLocation, WarehouseItem, Supplier, MaterialRequest, MaterialRequestItem } from "./types";
+import type { Material, InventoryLog, WarehouseLocation, WarehouseItem, Supplier, MaterialRequest, MaterialRequestItem, PurchaseRequest } from "./types";
 
 export const materials: Material[] = [
   {
@@ -889,6 +889,19 @@ export const materialRequests: MaterialRequest[] = Array.from({ length: 25 }, (_
     };
 });
 
+export const purchaseRequests: PurchaseRequest[] = Array.from({ length: 25 }, (_, i) => {
+    const id = i + 1;
+    return {
+        id: `PR-2025-${String(id).padStart(2, '0')}`,
+        requesterName: 'Kho Vật tư',
+        requesterDept: 'P.Kế hoạch',
+        content: 'Mua bổ sung tồn kho',
+        source: id % 2 !== 0 ? 'Trong nước' : 'Nhập khẩu',
+        totalAmount: 50000000,
+        status: id % 2 !== 0 ? 'Approved' : 'Pending',
+    };
+});
+
 
 export const getMaterials = async (): Promise<Material[]> => {
   // Simulate API delay
@@ -918,4 +931,9 @@ export const getSuppliers = async (): Promise<Supplier[]> => {
 export const getMaterialRequests = async (): Promise<MaterialRequest[]> => {
     await new Promise(resolve => setTimeout(resolve, 100));
     return materialRequests.sort((a, b) => b.id.localeCompare(a.id));
+}
+
+export const getPurchaseRequests = async (): Promise<PurchaseRequest[]> => {
+    await new Promise(resolve => setTimeout(resolve, 100));
+    return purchaseRequests.sort((a, b) => a.id.localeCompare(b.id));
 }
