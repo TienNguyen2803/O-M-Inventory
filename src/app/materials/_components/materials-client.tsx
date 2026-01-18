@@ -154,6 +154,7 @@ export function MaterialsClient({ initialMaterials }: MaterialsClientProps) {
       <PageHeader
         title="Danh mục Vật tư"
         breadcrumbs={<Breadcrumbs />}
+        className="px-4 md:px-8"
       >
         <Button onClick={handleAdd}>
           <Plus className="mr-2 h-4 w-4" />
@@ -161,7 +162,7 @@ export function MaterialsClient({ initialMaterials }: MaterialsClientProps) {
         </Button>
       </PageHeader>
 
-      <div className="space-y-4">
+      <div className="space-y-4 px-4 md:px-8">
         <Card>
           <CardContent className="pt-6">
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
