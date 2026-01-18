@@ -184,7 +184,7 @@ export function BiddingForm({
               <FormItem>
                 <FormLabel>Giá dự toán</FormLabel>
                 <FormControl>
-                  <Input type="text" value={field.value.toLocaleString('en-US')} disabled={viewMode} className="font-semibold text-right" onChange={(e) => {
+                  <Input type="text" value={field.value.toLocaleString('vi-VN')} disabled={viewMode} className="font-semibold text-right" onChange={(e) => {
                      const numValue = parseInt(e.target.value.replace(/,/g, ''), 10);
                      field.onChange(isNaN(numValue) ? 0 : numValue);
                   }} />
@@ -265,15 +265,15 @@ export function BiddingForm({
                   <TableRow key={item.id}>
                     <TableCell className="font-medium">{item.name}</TableCell>
                     <TableCell>{item.unit}</TableCell>
-                    <TableCell className="text-right">{item.quantity.toLocaleString('en-US')}</TableCell>
-                    <TableCell className="text-right">{item.amount.toLocaleString('en-US')}</TableCell>
+                    <TableCell className="text-right">{item.quantity.toLocaleString('vi-VN')}</TableCell>
+                    <TableCell className="text-right">{item.amount.toLocaleString('vi-VN')}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
               <TableFooter>
                 <TableRow>
                   <TableCell colSpan={3} className="text-right font-bold">Tổng cộng</TableCell>
-                  <TableCell className="text-right font-bold text-red-600">{totalAmount.toLocaleString('en-US')}</TableCell>
+                  <TableCell className="text-right font-bold text-red-600">{totalAmount.toLocaleString('vi-VN')}</TableCell>
                 </TableRow>
               </TableFooter>
             </Table>
@@ -303,7 +303,7 @@ export function BiddingForm({
                     <FormItem>
                       <FormLabel>Giá trúng thầu</FormLabel>
                       <FormControl>
-                        <Input value={field.value.toLocaleString('en-US')} disabled className="font-bold text-right bg-white" />
+                        <Input value={field.value.toLocaleString('vi-VN')} disabled className="font-bold text-right bg-white" />
                       </FormControl>
                     </FormItem>
                   )}
