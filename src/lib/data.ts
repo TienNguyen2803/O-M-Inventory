@@ -1,4 +1,4 @@
-import type { Material, InventoryLog, WarehouseLocation, WarehouseItem, Supplier, MaterialRequest, MaterialRequestItem, PurchaseRequest, PurchaseRequestItem } from "./types";
+import type { Material, InventoryLog, WarehouseLocation, WarehouseItem, Supplier, MaterialRequest, MaterialRequestItem, PurchaseRequest, PurchaseRequestItem, BiddingPackage } from "./types";
 
 export const materials: Material[] = [
   {
@@ -910,6 +910,21 @@ export const purchaseRequests: PurchaseRequest[] = Array.from({ length: 25 }, (_
     };
 });
 
+export const biddingPackages: BiddingPackage[] = Array.from({ length: 25 }, (_, i) => {
+    const id = i + 1;
+    const method = id % 2 === 0 ? 'Chỉ định thầu' : 'Đấu thầu rộng rãi';
+    const status = id < 6 ? 'Đang mời thầu' : id < 11 ? 'Đang chấm thầu' : 'Đã có kết quả';
+
+    return {
+        id: `TB-2025-${String(id).padStart(2, '0')}`,
+        name: `Gói thầu số ${String(id).padStart(2, '0')} - Mua sắm VTTB`,
+        purchaseRequestId: `PR-2025-${String(id).padStart(2, '0')}`,
+        estimatedPrice: 1200000000 + (id * 10000000),
+        method: method,
+        status: status,
+    };
+});
+
 
 export const getMaterials = async (): Promise<Material[]> => {
   // Simulate API delay
@@ -944,4 +959,9 @@ export const getMaterialRequests = async (): Promise<MaterialRequest[]> => {
 export const getPurchaseRequests = async (): Promise<PurchaseRequest[]> => {
     await new Promise(resolve => setTimeout(resolve, 100));
     return purchaseRequests.sort((a, b) => a.id.localeCompare(b.id));
+}
+
+export const getBiddingPackages = async (): Promise<BiddingPackage[]> => {
+    await new Promise(resolve => setTimeout(resolve, 100));
+    return biddingPackages;
 }

@@ -32,7 +32,7 @@ const navItems = [
     items: [
       { href: "/material-requests", label: "Yêu cầu Vật tư", icon: ClipboardCheck },
       { href: "/purchase-requests", label: "Yêu cầu Mua sắm", icon: ShoppingBasket },
-      { href: "#", label: "Quản lý Đấu thầu", icon: Gavel },
+      { href: "/biddings", label: "Quản lý Đấu thầu", icon: Gavel },
     ],
   },
   {

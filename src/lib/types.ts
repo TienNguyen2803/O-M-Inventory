@@ -121,3 +121,12 @@ export interface PurchaseRequest {
   status: 'Approved' | 'Pending' | 'Rejected'; // TRẠNG THÁI
   items: PurchaseRequestItem[];
 }
+
+export interface BiddingPackage {
+  id: string; // Mã gói
+  name: string; // Tên gói thầu
+  purchaseRequestId: string; // Căn cứ PR
+  estimatedPrice: number; // Giá dự toán
+  method: 'Đấu thầu rộng rãi' | 'Chỉ định thầu'; // Hình thức
+  status: 'Đang mời thầu' | 'Đang chấm thầu' | 'Đã có kết quả' | 'Đã hủy'; // Trạng thái
+}
