@@ -156,20 +156,25 @@ export interface OutboundVoucherItem {
   materialCode: string;
   materialName: string;
   unit: string;
-  quantity: number;
-  notes?: string;
+  requestedQuantity: number;
+  issuedQuantity: number;
+  pickLocationSuggestion: string;
+  actualSerial: string;
 }
 
 export interface OutboundVoucher {
-  id: string; // e.g., PXK-2025-01
+  id: string;
   purpose: 'Cấp O&M' | 'Khẩn cấp' | 'Cho mượn' | 'Đi Sửa chữa';
-  materialRequestId: string; // e.g., YCVT-2025-00
+  materialRequestId: string;
   department: string;
+  receiverName: string;
   reason: string;
-  status: 'Đã xuất' | 'Chờ xuất' | 'Đã hủy';
-  issueDate: string; // ISO date string
+  status: 'Đã xuất' | 'Chờ xuất' | 'Đã hủy' | 'Đang soạn hàng';
+  step: number;
+  issueDate: string;
   items?: OutboundVoucherItem[];
 }
+
 
 export interface InboundReceiptItem {
   id: string;

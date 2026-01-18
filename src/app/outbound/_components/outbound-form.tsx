@@ -1,10 +1,10 @@
 "use client";
 
+import * as React from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useFieldArray } from "react-hook-form";
 import * as z from "zod";
 import { format } from "date-fns";
-import { vi } from "date-fns/locale";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -24,7 +24,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Popover,
   PopoverContent,
@@ -40,27 +39,26 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { DialogFooter } from "@/components/ui/dialog";
-import { CalendarIcon, Save } from "lucide-react";
+import { CalendarIcon, Save, Check, Printer } from "lucide-react";
 import type { OutboundVoucher } from "@/lib/types";
 
 const formSchema = z.object({
   id: z.string(),
   issueDate: z.date(),
   purpose: z.string(),
-  department: z.string().min(1, "Bộ phận là bắt buộc."),
-  materialRequestId: z.string().optional(),
-  reason: z.string().min(1, "Lý do là bắt buộc."),
+  departmentAndReceiver: z.string(),
   items: z.array(
     z.object({
       id: z.string(),
       materialCode: z.string(),
       materialName: z.string(),
       unit: z.string(),
-      quantity: z.coerce.number().min(1, "SL phải > 0"),
-      notes: z.string().optional(),
+      requestedQuantity: z.number(),
+      issuedQuantity: z.coerce.number(),
+      pickLocationSuggestion: z.string(),
+      actualSerial: z.string(),
     })
-  ),
-  status: z.string(),
+  ).optional(),
 });
 
 export type OutboundFormValues = z.infer<typeof formSchema>;
@@ -72,8 +70,45 @@ type OutboundFormProps = {
   viewMode: boolean;
 };
 
+const Stepper = ({ currentStep }: { currentStep: number }) => {
+  const steps = [
+    { id: 1, name: "Yêu cầu VT" },
+    { id: 2, name: "Phê duyệt" },
+    { id: 3, name: "Soạn hàng (Picking)" },
+    { id: 4, name: "Xuất kho (Issue)" },
+  ];
+
+  return (
+    <div className="flex items-center mb-8">
+      {steps.map((step, index) => (
+        <React.Fragment key={step.id}>
+          <div className="flex flex-col items-center w-32">
+            <div
+              className={cn(
+                "w-8 h-8 rounded-full flex items-center justify-center font-bold text-lg",
+                step.id < currentStep
+                  ? "bg-green-500 text-white"
+                  : step.id === currentStep
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted text-muted-foreground"
+              )}
+            >
+              {step.id < currentStep ? <Check className="w-5 h-5" /> : step.id}
+            </div>
+            <p className={cn("text-xs mt-2 text-center", step.id <= currentStep ? 'font-semibold' : 'text-muted-foreground')}>{step.name}</p>
+          </div>
+          {index < steps.length - 1 && (
+            <div className={cn("flex-1 h-0.5 mb-6", step.id < currentStep ? 'bg-green-500' : 'bg-border')} />
+          )}
+        </React.Fragment>
+      ))}
+    </div>
+  );
+};
+
+
 const FormSectionHeader = ({ title }: { title: string }) => (
-  <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider text-primary border-b pb-2 mb-2">
+  <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider text-primary border-b pb-2 my-4">
     {title}
   </h3>
 );
@@ -90,36 +125,68 @@ export function OutboundForm({
       ? {
           ...voucher,
           issueDate: new Date(voucher.issueDate),
+          departmentAndReceiver: `${voucher.department} - ${voucher.receiverName}`,
+          items: voucher.items || [],
         }
       : {
           id: "",
           issueDate: new Date(),
           purpose: "Cấp O&M",
-          department: "",
-          materialRequestId: "",
-          reason: "",
+          departmentAndReceiver: "",
           items: [],
-          status: "Chờ xuất",
         },
+  });
+  
+  const { fields } = useFieldArray({
+    control: form.control,
+    name: "items",
   });
 
   return (
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmit)}
-        className="space-y-4 pt-2 max-h-[80vh] overflow-y-auto pr-4"
+        className="space-y-4 pt-2 max-h-[85vh] overflow-y-auto pr-4"
       >
-        <div className="grid grid-cols-3 gap-x-6 gap-y-4">
+        {voucher && <Stepper currentStep={voucher.step} />}
+
+        <div className="grid grid-cols-3 gap-x-6 gap-y-4 items-end">
           <FormField
             control={form.control}
             name="id"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Mã Phiếu</FormLabel>
+                <FormLabel>Số Phiếu Xuất</FormLabel>
                 <FormControl>
-                  <Input {...field} disabled />
+                  <Input {...field} disabled className="font-semibold text-primary bg-muted/50"/>
                 </FormControl>
-                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+           <FormField
+            control={form.control}
+            name="purpose"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Mục đích Xuất</FormLabel>
+                <Select
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                  disabled={viewMode}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Chọn mục đích" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="Cấp O&M">Cấp O&M</SelectItem>
+                    <SelectItem value="Khẩn cấp">Khẩn cấp</SelectItem>
+                    <SelectItem value="Cho mượn">Cho mượn</SelectItem>
+                    <SelectItem value="Đi Sửa chữa">Đi Sửa chữa</SelectItem>
+                  </SelectContent>
+                </Select>
               </FormItem>
             )}
           />
@@ -159,113 +226,56 @@ export function OutboundForm({
                     />
                   </PopoverContent>
                 </Popover>
-                <FormMessage />
               </FormItem>
             )}
           />
 
-          <FormField
-            control={form.control}
-            name="purpose"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Mục đích</FormLabel>
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                  disabled={viewMode}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Chọn mục đích" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="Cấp O&M">Cấp O&M</SelectItem>
-                    <SelectItem value="Khẩn cấp">Khẩn cấp</SelectItem>
-                    <SelectItem value="Cho mượn">Cho mượn</SelectItem>
-                    <SelectItem value="Đi Sửa chữa">Đi Sửa chữa</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="department"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Bộ phận</FormLabel>
-                <FormControl>
-                  <Input {...field} disabled={viewMode} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="materialRequestId"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Căn cứ YCVT</FormLabel>
-                <FormControl>
-                  <Input {...field} disabled={viewMode} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <div className="col-span-3">
+             <FormField
+                control={form.control}
+                name="departmentAndReceiver"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Đơn vị/Người nhận</FormLabel>
+                    <FormControl>
+                      <Input {...field} disabled={viewMode} />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+          </div>
         </div>
-        <div className="col-span-3">
-          <FormField
-            control={form.control}
-            name="reason"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Lý do / Mục đích</FormLabel>
-                <FormControl>
-                  <Textarea {...field} disabled={viewMode} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-
+       
         <div className="space-y-2 pt-2">
-          <FormSectionHeader title="Chi tiết vật tư xuất kho" />
+          <FormSectionHeader title="CHI TIẾT HÀNG XUẤT (PICKING LIST)" />
           <div className="rounded-md border">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Mã VT</TableHead>
-                  <TableHead>Tên Vật Tư</TableHead>
+                  <TableHead>MÃ VT</TableHead>
+                  <TableHead>TÊN VẬT TƯ</TableHead>
+                  <TableHead className="text-right">SL YC</TableHead>
+                  <TableHead className="text-right">SL XUẤT</TableHead>
                   <TableHead>ĐVT</TableHead>
-                  <TableHead className="text-right">SL Xuất</TableHead>
-                  <TableHead>Ghi Chú</TableHead>
+                  <TableHead>LẤY TỪ VỊ TRÍ (GỢI Ý)</TableHead>
+                  <TableHead>SERIAL THỰC XUẤT</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {form.getValues("items")?.map((item, index) => (
-                  <TableRow key={index}>
-                    <TableCell className="font-medium">
-                      {item.materialCode}
-                    </TableCell>
+                {fields.map((item, index) => (
+                  <TableRow key={item.id}>
+                    <TableCell className="font-medium text-xs">{item.materialCode}</TableCell>
                     <TableCell>{item.materialName}</TableCell>
+                    <TableCell className="text-right">{item.requestedQuantity}</TableCell>
+                    <TableCell><Input type="number" {...form.register(`items.${index}.issuedQuantity`)} disabled={viewMode} className="w-20 text-right"/></TableCell>
                     <TableCell>{item.unit}</TableCell>
-                    <TableCell className="text-right">
-                      {item.quantity}
-                    </TableCell>
-                    <TableCell>{item.notes}</TableCell>
+                    <TableCell>{item.pickLocationSuggestion}</TableCell>
+                    <TableCell><Input {...form.register(`items.${index}.actualSerial`)} disabled={viewMode} /></TableCell>
                   </TableRow>
                 ))}
-                 {form.getValues("items")?.length === 0 && (
+                 {fields.length === 0 && (
                     <TableRow>
-                        <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">Chưa có vật tư nào.</TableCell>
+                        <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">Chưa có vật tư nào.</TableCell>
                     </TableRow>
                 )}
               </TableBody>
@@ -274,23 +284,9 @@ export function OutboundForm({
         </div>
 
         <DialogFooter className="!justify-between items-center pt-4 sticky bottom-0 bg-background py-4 -mx-4 px-4 border-t">
-          <div className="flex items-center gap-4">
-             <div className="text-sm text-muted-foreground">
-              {voucher?.status && (
-                <span>
-                  Tình trạng:{" "}
-                  <span
-                    className={cn("font-semibold", {
-                      "text-green-600": voucher.status === "Đã xuất",
-                      "text-yellow-600": voucher.status === "Chờ xuất",
-                       "text-red-600": voucher.status === "Đã hủy",
-                    })}
-                  >
-                    {voucher.status}
-                  </span>
-                </span>
-              )}
-            </div>
+          <div className="flex gap-2">
+             <Button type="button" variant="outline"><Printer className="mr-2 h-4 w-4"/> In Phiếu Xuất</Button>
+             <Button type="button" variant="outline"><Printer className="mr-2 h-4 w-4"/> In BB Bàn Giao</Button>
           </div>
           <div className="flex items-center gap-2">
             <Button type="button" variant="outline" onClick={onCancel}>

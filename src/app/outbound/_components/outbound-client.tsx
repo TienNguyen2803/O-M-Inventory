@@ -117,12 +117,14 @@ export function OutboundClient({ initialVouchers }: OutboundClientProps) {
 
   const handleAdd = () => {
     const newVoucherTemplate: OutboundVoucher = {
-      id: `PXK-2025-${String(vouchers.length + 1).padStart(2, "0")}`,
+      id: `PXK-2025-${String(vouchers.length + 1).padStart(3, "0")}`,
       purpose: "Cấp O&M",
-      materialRequestId: "",
-      department: "",
-      reason: "",
-      status: "Chờ xuất",
+      materialRequestId: `YCVT-2025-${String(vouchers.length + 1).padStart(3, "0")}`,
+      department: "PX Vận hành 1",
+      receiverName: "Nguyễn Văn B",
+      reason: "Bảo dưỡng định kỳ",
+      status: "Đang soạn hàng",
+      step: 1,
       issueDate: new Date().toISOString(),
       items: [],
     };
@@ -153,10 +155,11 @@ export function OutboundClient({ initialVouchers }: OutboundClientProps) {
   };
 
   const handleFormSubmit = (values: OutboundFormValues) => {
-    const submittedVoucher: OutboundVoucher = {
-        ...selectedVoucher!,
-        ...values,
-        issueDate: values.issueDate.toISOString(),
+     const submittedVoucher: OutboundVoucher = {
+      ...selectedVoucher!,
+      purpose: values.purpose,
+      issueDate: values.issueDate.toISOString(),
+      items: values.items || [],
     };
 
     if (viewMode) {
@@ -197,6 +200,8 @@ export function OutboundClient({ initialVouchers }: OutboundClientProps) {
     switch (status) {
       case "Đã xuất":
         return "bg-green-100 text-green-800";
+      case "Đang soạn hàng":
+        return "bg-blue-100 text-blue-800";
       case "Chờ xuất":
         return "bg-yellow-100 text-yellow-800";
       case "Đã hủy":
@@ -251,6 +256,7 @@ export function OutboundClient({ initialVouchers }: OutboundClientProps) {
                     <SelectItem value="all">Tất cả</SelectItem>
                     <SelectItem value="Đã xuất">Đã xuất</SelectItem>
                     <SelectItem value="Chờ xuất">Chờ xuất</SelectItem>
+                    <SelectItem value="Đang soạn hàng">Đang soạn hàng</SelectItem>
                     <SelectItem value="Đã hủy">Đã hủy</SelectItem>
                 </SelectContent>
                 </Select>
@@ -423,7 +429,7 @@ export function OutboundClient({ initialVouchers }: OutboundClientProps) {
       </Card>
 
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-        <DialogContent className="max-w-4xl">
+        <DialogContent className="max-w-6xl">
           <DialogHeader>
             <DialogTitle>
               {viewMode

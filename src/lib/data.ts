@@ -1,4 +1,4 @@
-import type { Material, InventoryLog, WarehouseLocation, WarehouseItem, Supplier, MaterialRequest, MaterialRequestItem, PurchaseRequest, PurchaseRequestItem, BiddingPackage, BiddingItem, BiddingResult, InboundReceipt, InboundReceiptItem, InboundReceiptDocument, OutboundVoucher } from "./types";
+import type { Material, InventoryLog, WarehouseLocation, WarehouseItem, Supplier, MaterialRequest, MaterialRequestItem, PurchaseRequest, PurchaseRequestItem, BiddingPackage, BiddingItem, BiddingResult, InboundReceipt, InboundReceiptItem, InboundReceiptDocument, OutboundVoucher, OutboundVoucherItem } from "./types";
 
 export const materials: Material[] = [
   {
@@ -461,8 +461,8 @@ export const inventoryLogs: InventoryLog[] = Array.from({ length: 100 }, (_, i) 
   const type = i % 3 === 0 ? "outbound" : "inbound";
   const quantity = type === 'inbound' ? Math.floor(Math.random() * 50) + 10 : Math.floor(Math.random() * 15) + 1;
   const date = new Date();
-  // Spread dates over the last 2.5 years (900 days) to ensure some items are slow-moving
-  date.setDate(date.getDate() - Math.floor(Math.random() * 900)); 
+  // Spread dates over the last 30 days
+  date.setDate(date.getDate() - Math.floor(Math.random() * 30)); 
   const dateString = date.toISOString().split('T')[0];
 
 
@@ -1015,16 +1015,18 @@ export const inboundReceipts: InboundReceipt[] = Array.from({ length: 25 }, (_, 
 export const outboundVouchers: OutboundVoucher[] = Array.from({ length: 25 }, (_, i) => {
     const id = i + 1;
     const purposes: OutboundVoucher['purpose'][] = ['Cấp O&M', 'Khẩn cấp', 'Cho mượn', 'Đi Sửa chữa'];
-    const statuses: OutboundVoucher['status'][] = ['Đã xuất', 'Chờ xuất', 'Đã hủy'];
+    const statuses: OutboundVoucher['status'][] = ['Đã xuất', 'Chờ xuất', 'Đã hủy', 'Đang soạn hàng'];
     const materialRequest = materialRequests[i];
 
     return {
-        id: `PXK-2025-${String(id).padStart(2, '0')}`,
+        id: `PXK-2025-${String(id).padStart(3, '0')}`,
         purpose: purposes[i % purposes.length],
         materialRequestId: materialRequest.id,
         department: materialRequest.requesterDept,
+        receiverName: "Nguyễn Văn A",
         reason: 'Sửa chữa thường xuyên',
         status: statuses[i % statuses.length],
+        step: (i % 4) + 1,
         issueDate: new Date(2025, i % 7, id % 28 + 1).toISOString(),
         items: materialRequest.items.map((item, index) => ({
             id: `out-item-${id}-${index}`,
@@ -1032,8 +1034,10 @@ export const outboundVouchers: OutboundVoucher[] = Array.from({ length: 25 }, (_
             materialCode: item.materialCode,
             materialName: item.materialName,
             unit: item.unit,
-            quantity: item.requestedQuantity,
-            notes: item.notes,
+            requestedQuantity: item.requestedQuantity,
+            issuedQuantity: item.requestedQuantity,
+            pickLocationSuggestion: `Khu A-${index + 1} (Tồn: ${item.stock})`,
+            actualSerial: index % 2 === 0 ? `Lô ${2023 + index}` : `-`
         })),
     };
 });
