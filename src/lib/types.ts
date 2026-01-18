@@ -205,3 +205,10 @@ export interface InboundReceipt {
   items?: InboundReceiptItem[];
   documents?: InboundReceiptDocument[];
 }
+
+export interface StockTake {
+  id: string; // MÃ SỐ
+  name: string; // TÊN/THAM CHIẾU
+  date: string; // THÔNG TIN (Date)
+  status: 'Đã hoàn thành' | 'Đang tiến hành' | 'Đã hủy'; // TRẠNG THÁI
+}

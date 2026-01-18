@@ -72,7 +72,7 @@ const navItems = [
     items: [
       { href: "/inbound", label: "Nhập kho (Inbound)", icon: ArrowDownToLine },
       { href: "/outbound", label: "Xuất kho (Outbound)", icon: ArrowUpFromLine },
-      { href: "#", label: "Kiểm kê (Stock Take)", icon: ClipboardList },
+      { href: "/stock-take", label: "Kiểm kê (Stock Take)", icon: ClipboardList },
       { href: "/lifecycle", label: "Truy vết Vòng đời", icon: History },
     ],
   },

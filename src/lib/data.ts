@@ -1,4 +1,4 @@
-import type { Material, InventoryLog, WarehouseLocation, WarehouseItem, Supplier, MaterialRequest, MaterialRequestItem, PurchaseRequest, PurchaseRequestItem, BiddingPackage, BiddingItem, BiddingResult, InboundReceipt, InboundReceiptItem, InboundReceiptDocument, OutboundVoucher, OutboundVoucherItem } from "./types";
+import type { Material, InventoryLog, WarehouseLocation, WarehouseItem, Supplier, MaterialRequest, MaterialRequestItem, PurchaseRequest, PurchaseRequestItem, BiddingPackage, BiddingItem, BiddingResult, InboundReceipt, InboundReceiptItem, InboundReceiptDocument, OutboundVoucher, OutboundVoucherItem, StockTake } from "./types";
 
 export const materials: Material[] = [
   {
@@ -461,10 +461,8 @@ export const inventoryLogs: InventoryLog[] = Array.from({ length: 100 }, (_, i) 
   const type = i % 3 === 0 ? "outbound" : "inbound";
   const quantity = type === 'inbound' ? Math.floor(Math.random() * 50) + 10 : Math.floor(Math.random() * 15) + 1;
   const date = new Date();
-  // Spread dates over the last 30 days
-  date.setDate(date.getDate() - Math.floor(Math.random() * 30)); 
+  date.setDate(date.getDate() - Math.floor(Math.random() * (365 * 2.5))); // Spread dates over the last 2.5 years
   const dateString = date.toISOString().split('T')[0];
-
 
   return {
     id: `log-${String(i + 1).padStart(3, '0')}`,
@@ -1042,6 +1040,19 @@ export const outboundVouchers: OutboundVoucher[] = Array.from({ length: 25 }, (_
     };
 });
 
+export const stockTakes: StockTake[] = Array.from({ length: 25 }, (_, i) => {
+  const id = i + 1;
+  const quarter = Math.floor(i / 6) + 1;
+  const statuses: StockTake['status'][] = ['Đã hoàn thành', 'Đang tiến hành', 'Đã hủy'];
+  return {
+    id: `KK-2025-Q${quarter}-${String(id % 6 + 1).padStart(2, '0')}`,
+    name: `Kho A - Toàn bộ - Lần ${id % 6 + 1}`,
+    date: new Date(2025, quarter * 3 - 1, 28).toISOString(),
+    status: statuses[i % statuses.length],
+  };
+});
+
+
 export const getMaterials = async (): Promise<Material[]> => {
   // Simulate API delay
   await new Promise((resolve) => setTimeout(resolve, 100));
@@ -1091,3 +1102,8 @@ export const getOutboundVouchers = async (): Promise<OutboundVoucher[]> => {
     await new Promise(resolve => setTimeout(resolve, 100));
     return outboundVouchers.sort((a, b) => a.id.localeCompare(b.id));
 }
+
+export const getStockTakes = async (): Promise<StockTake[]> => {
+  await new Promise(resolve => setTimeout(resolve, 100));
+  return stockTakes.sort((a,b) => b.id.localeCompare(a.id));
+};
