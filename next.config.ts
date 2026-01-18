@@ -33,6 +33,12 @@ const nextConfig: NextConfig = {
         hostname: 'solutions.viettel.vn',
         port: '',
         pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'skg.com.vn',
+        port: '',
+        pathname: '/**',
       }
     ],
   },
