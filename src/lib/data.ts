@@ -1,4 +1,4 @@
-import type { Material, InventoryLog, WarehouseLocation, WarehouseItem, Supplier, MaterialRequest, MaterialRequestItem, PurchaseRequest } from "./types";
+import type { Material, InventoryLog, WarehouseLocation, WarehouseItem, Supplier, MaterialRequest, MaterialRequestItem, PurchaseRequest, PurchaseRequestItem } from "./types";
 
 export const materials: Material[] = [
   {
@@ -891,14 +891,22 @@ export const materialRequests: MaterialRequest[] = Array.from({ length: 25 }, (_
 
 export const purchaseRequests: PurchaseRequest[] = Array.from({ length: 25 }, (_, i) => {
     const id = i + 1;
+    const items: PurchaseRequestItem[] = [
+        { id: 'item-1', name: 'Card điều khiển Siemens (6DD1607-0AA2)', unit: 'Cái', quantity: 2, estimatedPrice: 100000000, suggestedSupplier: 'Siemens Energy' },
+        { id: 'item-2', name: 'Module nguồn 24VDC', unit: 'Bộ', quantity: 5, estimatedPrice: 5000000, suggestedSupplier: 'Đại lý VN' },
+    ];
+    const totalAmount = items.reduce((acc, item) => acc + (item.quantity * item.estimatedPrice), 0);
+
     return {
-        id: `PR-2025-${String(id).padStart(2, '0')}`,
+        id: `PR-2025-${String(id).padStart(3, '0')}`,
         requesterName: 'Kho Vật tư',
         requesterDept: 'P.Kế hoạch',
-        content: 'Mua bổ sung tồn kho',
+        description: `Mua sắm vật tư dự phòng cho hệ thống điều khiển Tua bin khí GT${id}`,
         source: id % 2 !== 0 ? 'Trong nước' : 'Nhập khẩu',
-        totalAmount: 50000000,
-        status: id % 2 !== 0 ? 'Approved' : 'Pending',
+        fundingSource: 'SCL',
+        totalAmount: totalAmount,
+        status: id % 3 === 0 ? 'Rejected' : (id % 2 !== 0 ? 'Approved' : 'Pending'),
+        items: items,
     };
 });
 

@@ -11,7 +11,6 @@ import {
   Eye,
   ChevronLeft,
   ChevronRight,
-  Filter,
 } from "lucide-react";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import {
@@ -33,6 +32,12 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
 import {
@@ -43,6 +48,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { PurchaseRequestForm, type PurchaseRequestFormValues } from "./purchase-request-form";
 
 type PurchaseRequestsClientProps = {
   initialRequests: PurchaseRequest[];
@@ -62,6 +68,11 @@ export function PurchaseRequestsClient({
   const [requests, setRequests] = useState<PurchaseRequest[]>(initialRequests);
   const { toast } = useToast();
 
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [selectedRequest, setSelectedRequest] =
+    useState<PurchaseRequest | null>(null);
+  const [viewMode, setViewMode] = useState(false);
+
   const [searchQuery, setSearchQuery] = useState("");
   const [sourceFilter, setSourceFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -73,7 +84,7 @@ export function PurchaseRequestsClient({
         !searchQuery ||
         request.id.toLowerCase().includes(searchLower) ||
         request.requesterName.toLowerCase().includes(searchLower) ||
-        request.content.toLowerCase().includes(searchLower);
+        request.description.toLowerCase().includes(searchLower);
 
       const matchesSource =
         sourceFilter === "all" || request.source === sourceFilter;
@@ -103,6 +114,35 @@ export function PurchaseRequestsClient({
     filteredRequests.length
   );
 
+  const handleAdd = () => {
+    const newRequestTemplate: PurchaseRequest = {
+      id: `PR-${new Date().getFullYear()}-${String(requests.length + 1).padStart(3, "0")}`,
+      requesterName: "Kho Vật tư", // Placeholder
+      requesterDept: "P.Kế hoạch", // Placeholder
+      description: "",
+      fundingSource: "SCL",
+      source: "Trong nước",
+      status: "Pending",
+      items: [],
+      totalAmount: 0,
+    };
+    setSelectedRequest(newRequestTemplate);
+    setViewMode(false);
+    setIsFormOpen(true);
+  };
+  
+  const handleEdit = (request: PurchaseRequest) => {
+    setSelectedRequest(request);
+    setViewMode(false);
+    setIsFormOpen(true);
+  };
+
+  const handleView = (request: PurchaseRequest) => {
+    setSelectedRequest(request);
+    setViewMode(true);
+    setIsFormOpen(true);
+  };
+
   const handleDelete = (id: string) => {
     setRequests(requests.filter((r) => r.id !== id));
     toast({
@@ -112,12 +152,42 @@ export function PurchaseRequestsClient({
     });
   };
 
+  const handleFormSubmit = (values: PurchaseRequestFormValues) => {
+    const totalAmount = values.items.reduce((sum, item) => sum + item.quantity * item.estimatedPrice, 0);
+
+    const submittedRequest: PurchaseRequest = {
+      ...selectedRequest!,
+      ...values,
+      totalAmount: totalAmount,
+    };
+    
+    if (viewMode) {
+      setIsFormOpen(false);
+      return;
+    }
+  
+    const isEditing = requests.some(r => r.id === submittedRequest.id);
+  
+    if (isEditing) {
+      setRequests(requests.map((r) => (r.id === submittedRequest.id ? submittedRequest : r)));
+    } else {
+      setRequests([submittedRequest, ...requests]);
+    }
+    setIsFormOpen(false);
+    toast({
+      title: "Thành công",
+      description: isEditing ? "Đã cập nhật yêu cầu." : "Đã tạo yêu cầu mới.",
+    });
+  };
+
   const getStatusBadgeClass = (status: PurchaseRequest["status"]) => {
     switch (status) {
       case "Approved":
         return "bg-green-100 text-green-800";
       case "Pending":
         return "bg-yellow-100 text-yellow-800";
+      case "Rejected":
+        return "bg-red-100 text-red-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
@@ -126,7 +196,7 @@ export function PurchaseRequestsClient({
   return (
     <div className="w-full space-y-2">
       <PageHeader title="Yêu cầu Mua sắm" breadcrumbs={<Breadcrumbs />}>
-        <Button>
+        <Button onClick={handleAdd}>
           <Plus className="mr-2 h-4 w-4" />
           Thêm mới
         </Button>
@@ -134,7 +204,12 @@ export function PurchaseRequestsClient({
 
       <Card>
         <CardContent className="pt-6">
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4 items-end">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+            <Input
+              placeholder="Tìm kiếm Số PR, Người đề nghị, Nội dung..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
             <Select value={sourceFilter} onValueChange={setSourceFilter}>
               <SelectTrigger>
                 <SelectValue placeholder="-- Nguồn gốc --" />
@@ -145,11 +220,6 @@ export function PurchaseRequestsClient({
                 <SelectItem value="Nhập khẩu">Nhập khẩu</SelectItem>
               </SelectContent>
             </Select>
-            <Input
-              placeholder="Tìm kiếm Số PR, Người đề nghị..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger>
                 <SelectValue placeholder="-- Tất cả trạng thái --" />
@@ -158,12 +228,9 @@ export function PurchaseRequestsClient({
                 <SelectItem value="all">-- Tất cả trạng thái --</SelectItem>
                 <SelectItem value="Approved">Approved</SelectItem>
                 <SelectItem value="Pending">Pending</SelectItem>
+                <SelectItem value="Rejected">Rejected</SelectItem>
               </SelectContent>
             </Select>
-            <Button variant="outline">
-              <Filter className="mr-2 h-4 w-4" />
-              Lọc kết quả
-            </Button>
           </div>
         </CardContent>
       </Card>
@@ -186,7 +253,10 @@ export function PurchaseRequestsClient({
               {paginatedRequests.length > 0 ? (
                 paginatedRequests.map((request) => (
                   <TableRow key={request.id}>
-                    <TableCell className="font-medium text-primary hover:underline cursor-pointer">
+                    <TableCell
+                      className="font-medium text-primary hover:underline cursor-pointer"
+                      onClick={() => handleView(request)}
+                    >
                       {request.id}
                     </TableCell>
                     <TableCell>
@@ -196,11 +266,11 @@ export function PurchaseRequestsClient({
                       </div>
                     </TableCell>
                     <TableCell className="text-muted-foreground">
-                      {request.content}
+                      {request.description}
                     </TableCell>
                     <TableCell>{request.source}</TableCell>
                     <TableCell className="text-right font-medium">
-                      {request.totalAmount.toLocaleString("vi-VN")}
+                      {request.totalAmount.toLocaleString("vi-VN", { style: 'currency', currency: 'VND' })}
                     </TableCell>
                     <TableCell>
                       <span
@@ -218,6 +288,7 @@ export function PurchaseRequestsClient({
                           variant="ghost"
                           size="icon"
                           className="h-8 w-8 text-muted-foreground"
+                          onClick={() => handleView(request)}
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
@@ -225,6 +296,7 @@ export function PurchaseRequestsClient({
                           variant="ghost"
                           size="icon"
                           className="h-8 w-8 text-muted-foreground"
+                          onClick={() => handleEdit(request)}
                         >
                           <Pencil className="h-4 w-4" />
                         </Button>
@@ -317,6 +389,25 @@ export function PurchaseRequestsClient({
           </div>
         </CardFooter>
       </Card>
+      <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+        <DialogContent className="max-w-4xl">
+          <DialogHeader>
+            <DialogTitle>
+              {viewMode
+                ? `Chi tiết Phiếu mua: ${selectedRequest?.id}`
+                : requests.some((r) => r.id === selectedRequest?.id)
+                ? "Cập nhật Phiếu mua"
+                : "Tạo Phiếu mua mới"}
+            </DialogTitle>
+          </DialogHeader>
+          <PurchaseRequestForm
+            request={selectedRequest}
+            onSubmit={handleFormSubmit}
+            onCancel={() => setIsFormOpen(false)}
+            viewMode={viewMode}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

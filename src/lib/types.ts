@@ -101,12 +101,23 @@ export interface MaterialRequest {
   items: MaterialRequestItem[];
 }
 
+export interface PurchaseRequestItem {
+  id: string;
+  name: string;
+  unit: string;
+  quantity: number;
+  estimatedPrice: number;
+  suggestedSupplier: string;
+}
+
 export interface PurchaseRequest {
   id: string; // MÃ PR
   requesterName: string; 
   requesterDept: string; 
-  content: string; // NỘI DUNG
+  description: string; // NỘI DUNG / Diễn giải mua sắm
   source: 'Trong nước' | 'Nhập khẩu'; // NGUỒN GỐC
+  fundingSource: string; // Nguồn vốn
   totalAmount: number; // TỔNG TIỀN
-  status: 'Approved' | 'Pending'; // TRẠNG THÁI
+  status: 'Approved' | 'Pending' | 'Rejected'; // TRẠNG THÁI
+  items: PurchaseRequestItem[];
 }
