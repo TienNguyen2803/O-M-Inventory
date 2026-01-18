@@ -283,7 +283,7 @@ export function BiddingForm({
         {showResults && biddingPackage?.result && (
           <div className="space-y-4 pt-2">
             <FormSectionHeader title="Kết quả lựa chọn" />
-            <div className="bg-blue-50/50 p-4 rounded-lg border border-blue-200 grid grid-cols-2 gap-x-6 gap-y-4">
+            <div className="bg-yellow-50/50 p-4 rounded-lg border border-yellow-200 grid grid-cols-2 gap-x-6 gap-y-4">
                <FormField
                   control={form.control}
                   name="result.winner"
