@@ -4,13 +4,24 @@ export const materials: Material[] = [
   {
     id: "mat-001",
     name: "Mỡ hàn Amtech 100g",
-    code: "1.51.45.001.USA",
+    nameEn: "Amtech Solder Paste 100g",
+    code: "PM-MAT-2508-001",
+    evnCode: "Chưa cấp",
     partNo: "NC-559-ASM",
     managementType: "Batch",
     category: "Vật tư tiêu hao",
     unit: "Hộp",
-    description: "Mỡ hàn Amtech 100g.",
+    description: "Ghi chú cho mỡ hàn.",
     stock: 150,
+    manufacturer: "AMTECH Inc.",
+    origin: "USA",
+    minStock: 10,
+    maxStock: 200,
+    technicalSpecs: [
+      { property: "Trọng lượng", value: "100g" },
+      { property: "Loại Flux", value: "No-Clean" },
+      { property: "Nhiệt độ bảo quản", value: "20°C - 25°C" },
+    ],
   },
   {
     id: "mat-002",
@@ -22,6 +33,8 @@ export const materials: Material[] = [
     unit: "Cái",
     description: "Gioăng đệm chịu nhiệt cho đường ống hơi.",
     stock: 88,
+    minStock: 50,
+    maxStock: 200,
   },
   {
     id: "mat-003",
@@ -33,6 +46,8 @@ export const materials: Material[] = [
     unit: "Hộp",
     description: "Mỡ hàn Amtech 100g.",
     stock: 20,
+    minStock: 10,
+    maxStock: 50,
   },
   {
     id: "mat-004",
@@ -44,8 +59,10 @@ export const materials: Material[] = [
     unit: "Cái",
     description: "Gioăng đệm chịu nhiệt cho đường ống hơi.",
     stock: 120,
+    minStock: 100,
+    maxStock: 300,
   },
-   {
+  {
     id: "mat-005",
     name: "Mỡ hàn Amtech 100g",
     code: "1.51.45.005.USA",
@@ -55,6 +72,8 @@ export const materials: Material[] = [
     unit: "Hộp",
     description: "Mỡ hàn Amtech 100g.",
     stock: 0,
+    minStock: 10,
+    maxStock: 50,
   },
   {
     id: "mat-006",
@@ -66,6 +85,8 @@ export const materials: Material[] = [
     unit: "Cái",
     description: "Gioăng đệm chịu nhiệt cho đường ống hơi.",
     stock: 300,
+    minStock: 100,
+    maxStock: 500,
   },
 ];
 

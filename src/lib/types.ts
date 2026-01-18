@@ -1,13 +1,25 @@
+export interface TechnicalSpec {
+  property: string;
+  value: string;
+}
+
 export interface Material {
   id: string;
-  name: string;
-  code: string;
-  partNo: string;
-  managementType: "Batch" | "Serial";
+  name: string; // Tên Vật tư (Tiếng Việt)
+  nameEn?: string; // Tên Vật tư (Tiếng Anh)
+  code: string; // Mã nội bộ (PhuMyTPC)
+  evnCode?: string; // Mã Vật tư (EVN eCat)
+  partNo: string; // Part Number
+  managementType: "Batch" | "Serial"; // Quản lý theo Serial/IMEI (Checkbox)
   category: string;
-  unit: string;
-  description: string;
+  unit: string; // Đơn vị tính
+  description?: string; // Ghi chú
   stock: number;
+  manufacturer?: string; // Nhà sản xuất
+  origin?: string; // Xuất xứ
+  minStock?: number; // Tồn kho Tối thiểu
+  maxStock?: number; // Tồn kho Tối đa
+  technicalSpecs?: TechnicalSpec[];
 }
 
 export interface InventoryLog {

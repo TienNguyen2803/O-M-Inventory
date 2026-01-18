@@ -6,14 +6,13 @@ import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import {
   Plus,
-  MoreHorizontal,
   Pencil,
   Trash2,
   Eye,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
-import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -23,15 +22,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -46,7 +38,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { MaterialForm } from "./material-form";
+import { MaterialForm, type MaterialFormValues } from "./material-form";
 import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
 import {
@@ -76,6 +68,7 @@ export function MaterialsClient({ initialMaterials }: MaterialsClientProps) {
   const [selectedMaterial, setSelectedMaterial] = useState<Material | null>(
     null
   );
+  const [viewMode, setViewMode] = useState(false);
   const { toast } = useToast();
 
   const [currentPage, setCurrentPage] = useState(1);
@@ -91,11 +84,19 @@ export function MaterialsClient({ initialMaterials }: MaterialsClientProps) {
 
   const handleAdd = () => {
     setSelectedMaterial(null);
+    setViewMode(false);
     setIsFormOpen(true);
   };
 
   const handleEdit = (material: Material) => {
     setSelectedMaterial(material);
+    setViewMode(false);
+    setIsFormOpen(true);
+  };
+
+  const handleView = (material: Material) => {
+    setSelectedMaterial(material);
+    setViewMode(true);
     setIsFormOpen(true);
   };
 
@@ -108,10 +109,19 @@ export function MaterialsClient({ initialMaterials }: MaterialsClientProps) {
     });
   };
 
-  const handleFormSubmit = (values: Omit<Material, "id" | "stock">) => {
+  const handleFormSubmit = (values: MaterialFormValues) => {
+    if (viewMode) {
+      setIsFormOpen(false);
+      return;
+    }
     const isEditing = !!selectedMaterial;
+
     if (isEditing) {
-      const updatedMaterial = { ...selectedMaterial, ...values };
+      const updatedMaterial: Material = {
+        ...selectedMaterial,
+        ...values,
+        managementType: values.isSerial ? "Serial" : "Batch",
+      };
       setMaterials(
         materials.map((m) =>
           m.id === selectedMaterial.id ? updatedMaterial : m
@@ -119,9 +129,12 @@ export function MaterialsClient({ initialMaterials }: MaterialsClientProps) {
       );
     } else {
       const newMaterial: Material = {
-        ...values,
         id: `mat-${Date.now()}`,
         stock: 0,
+        category: "Vật tư tiêu hao", // default
+        ...values,
+        managementType: values.isSerial ? "Serial" : "Batch",
+        description: values.description || "",
       };
       setMaterials([newMaterial, ...materials]);
     }
@@ -130,6 +143,10 @@ export function MaterialsClient({ initialMaterials }: MaterialsClientProps) {
       title: "Thành công",
       description: isEditing ? "Đã cập nhật vật tư." : "Đã thêm vật tư mới.",
     });
+  };
+
+  const handleCancel = () => {
+    setIsFormOpen(false);
   };
 
   return (
@@ -217,7 +234,12 @@ export function MaterialsClient({ initialMaterials }: MaterialsClientProps) {
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center space-x-1">
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-muted-foreground"
+                        onClick={() => handleView(material)}
+                      >
                         <Eye className="h-4 w-4" />
                       </Button>
                       <Button
@@ -305,21 +327,21 @@ export function MaterialsClient({ initialMaterials }: MaterialsClientProps) {
       </Card>
 
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-        <DialogContent className="sm:max-w-[600px]">
+        <DialogContent className="sm:max-w-4xl">
           <DialogHeader>
             <DialogTitle>
-              {selectedMaterial ? "Chỉnh sửa vật tư" : "Thêm vật tư mới"}
+              {viewMode
+                ? "Chi tiết vật tư"
+                : selectedMaterial
+                ? "Cập nhật vật tư"
+                : "Thêm vật tư mới"}
             </DialogTitle>
-            <DialogDescription>
-              {selectedMaterial
-                ? "Cập nhật thông tin cho vật tư."
-                : "Điền thông tin chi tiết cho vật tư mới."}
-            </DialogDescription>
           </DialogHeader>
           <MaterialForm
             material={selectedMaterial}
             onSubmit={handleFormSubmit}
-            onCancel={() => setIsFormOpen(false)}
+            onCancel={handleCancel}
+            viewMode={viewMode}
           />
         </DialogContent>
       </Dialog>
