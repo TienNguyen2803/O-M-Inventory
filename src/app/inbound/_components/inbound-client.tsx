@@ -70,34 +70,36 @@ export function InboundClient({ initialLogs, materials }: InboundClientProps) {
         </Button>
       </PageHeader>
 
-      <Card>
-        <CardContent className="pt-6">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Ngày nhập</TableHead>
-                <TableHead>Tên vật tư</TableHead>
-                <TableHead>Nhà cung cấp</TableHead>
-                <TableHead className="text-right">Số lượng</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {logs.map((log) => (
-                <TableRow key={log.id}>
-                  <TableCell className="font-medium">
-                     {format(new Date(log.date), "dd/MM/yyyy")}
-                  </TableCell>
-                  <TableCell>{log.materialName}</TableCell>
-                  <TableCell className="text-muted-foreground">{log.actor}</TableCell>
-                  <TableCell className="text-right font-medium">
-                    +{log.quantity.toLocaleString()}
-                  </TableCell>
+      <div className="px-4 md:px-8">
+        <Card>
+          <CardContent className="pt-6">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Ngày nhập</TableHead>
+                  <TableHead>Tên vật tư</TableHead>
+                  <TableHead>Nhà cung cấp</TableHead>
+                  <TableHead className="text-right">Số lượng</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+              </TableHeader>
+              <TableBody>
+                {logs.map((log) => (
+                  <TableRow key={log.id}>
+                    <TableCell className="font-medium">
+                       {format(new Date(log.date), "dd/MM/yyyy")}
+                    </TableCell>
+                    <TableCell>{log.materialName}</TableCell>
+                    <TableCell className="text-muted-foreground">{log.actor}</TableCell>
+                    <TableCell className="text-right font-medium">
+                      +{log.quantity.toLocaleString()}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      </div>
 
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
         <DialogContent className="sm:max-w-[425px]">

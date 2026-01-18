@@ -163,175 +163,177 @@ export function WarehousesClient({ initialLocations }: WarehousesClientProps) {
         </Button>
       </PageHeader>
 
-      <Card className="mb-4">
-        <CardContent className="pt-6">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <Select>
-              <SelectTrigger>
-                <SelectValue placeholder="-- Tất cả --" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">-- Tất cả --</SelectItem>
-                <SelectItem value="khu-a">Khu A</SelectItem>
-                <SelectItem value="khu-b">Khu B</SelectItem>
-              </SelectContent>
-            </Select>
-            <Input placeholder="Mã vị trí, Tên..." />
-            <Select>
-              <SelectTrigger>
-                <SelectValue placeholder="Tất cả" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tất cả</SelectItem>
-                <SelectItem value="pallet">Kệ Pallet</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="space-y-4 px-4 md:px-8">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <Select>
+                <SelectTrigger>
+                  <SelectValue placeholder="-- Tất cả --" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">-- Tất cả --</SelectItem>
+                  <SelectItem value="khu-a">Khu A</SelectItem>
+                  <SelectItem value="khu-b">Khu B</SelectItem>
+                </SelectContent>
+              </Select>
+              <Input placeholder="Mã vị trí, Tên..." />
+              <Select>
+                <SelectTrigger>
+                  <SelectValue placeholder="Tất cả" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tất cả</SelectItem>
+                  <SelectItem value="pallet">Kệ Pallet</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </CardContent>
+        </Card>
 
-      <Card>
-        <CardContent className="pt-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[50px]">STT</TableHead>
-                <TableHead>Mã vị trí</TableHead>
-                <TableHead>Tên vị trí</TableHead>
-                <TableHead>Khu vực</TableHead>
-                <TableHead>Loại</TableHead>
-                <TableHead>Trạng thái</TableHead>
-                <TableHead className="w-[120px]">Thao tác</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {paginatedLocations.map((location, index) => (
-                <TableRow key={location.id}>
-                  <TableCell className="text-center">
-                    {startItem + index}
-                  </TableCell>
-                  <TableCell
-                    className="font-medium text-primary hover:underline cursor-pointer"
-                    onClick={() => handleView(location)}
-                  >
-                    {location.code}
-                  </TableCell>
-                  <TableCell>{location.name}</TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {location.area}
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {location.type}
-                  </TableCell>
-                  <TableCell>
-                    <span
-                      className={cn(
-                        "rounded-md px-2.5 py-1 text-xs font-semibold",
-                        location.status === "Active"
-                          ? "bg-green-100 text-green-800"
-                          : "bg-red-100 text-red-800"
-                      )}
-                    >
-                      {location.status === "Active"
-                        ? "Hoạt động"
-                        : "Không hoạt động"}
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center space-x-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-muted-foreground"
-                        onClick={() => handleView(location)}
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-muted-foreground"
-                        onClick={() => handleEdit(location)}
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-destructive/80 hover:text-destructive"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>
-                              Bạn có chắc chắn muốn xóa?
-                            </AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Hành động này không thể được hoàn tác. Vị trí "
-                              {location.name}" sẽ bị xóa vĩnh viễn.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Hủy</AlertDialogCancel>
-                            <AlertDialogAction
-                              onClick={() => handleDelete(location.id)}
-                              className="bg-destructive hover:bg-destructive/90"
-                            >
-                              Xóa
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </div>
-                  </TableCell>
+        <Card>
+          <CardContent className="pt-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[50px]">STT</TableHead>
+                  <TableHead>Mã vị trí</TableHead>
+                  <TableHead>Tên vị trí</TableHead>
+                  <TableHead>Khu vực</TableHead>
+                  <TableHead>Loại</TableHead>
+                  <TableHead>Trạng thái</TableHead>
+                  <TableHead className="w-[120px]">Thao tác</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-        <CardFooter className="flex items-center justify-between pt-4">
-          <div className="text-sm text-muted-foreground">
-            Hiển thị {startItem}-{endItem} trên {locations.length} bản ghi
-          </div>
-          <div className="flex items-center space-x-1">
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-8 w-8"
-              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-              disabled={currentPage === 1}
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            {[...Array(totalPages)].map((_, i) => (
+              </TableHeader>
+              <TableBody>
+                {paginatedLocations.map((location, index) => (
+                  <TableRow key={location.id}>
+                    <TableCell className="text-center">
+                      {startItem + index}
+                    </TableCell>
+                    <TableCell
+                      className="font-medium text-primary hover:underline cursor-pointer"
+                      onClick={() => handleView(location)}
+                    >
+                      {location.code}
+                    </TableCell>
+                    <TableCell>{location.name}</TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {location.area}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {location.type}
+                    </TableCell>
+                    <TableCell>
+                      <span
+                        className={cn(
+                          "rounded-md px-2.5 py-1 text-xs font-semibold",
+                          location.status === "Active"
+                            ? "bg-green-100 text-green-800"
+                            : "bg-red-100 text-red-800"
+                        )}
+                      >
+                        {location.status === "Active"
+                          ? "Hoạt động"
+                          : "Không hoạt động"}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center space-x-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-muted-foreground"
+                          onClick={() => handleView(location)}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-muted-foreground"
+                          onClick={() => handleEdit(location)}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-destructive/80 hover:text-destructive"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>
+                                Bạn có chắc chắn muốn xóa?
+                              </AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Hành động này không thể được hoàn tác. Vị trí "
+                                {location.name}" sẽ bị xóa vĩnh viễn.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Hủy</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => handleDelete(location.id)}
+                                className="bg-destructive hover:bg-destructive/90"
+                              >
+                                Xóa
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+          <CardFooter className="flex items-center justify-between pt-4">
+            <div className="text-sm text-muted-foreground">
+              Hiển thị {startItem}-{endItem} trên {locations.length} bản ghi
+            </div>
+            <div className="flex items-center space-x-1">
               <Button
-                key={i}
-                variant={currentPage === i + 1 ? "default" : "outline"}
+                variant="outline"
                 size="icon"
                 className="h-8 w-8"
-                onClick={() => setCurrentPage(i + 1)}
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
               >
-                {i + 1}
+                <ChevronLeft className="h-4 w-4" />
               </Button>
-            ))}
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-8 w-8"
-              onClick={() =>
-                setCurrentPage((p) => Math.min(totalPages, p + 1))
-              }
-              disabled={currentPage === totalPages}
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
-        </CardFooter>
-      </Card>
+              {[...Array(totalPages)].map((_, i) => (
+                <Button
+                  key={i}
+                  variant={currentPage === i + 1 ? "default" : "outline"}
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => setCurrentPage(i + 1)}
+                >
+                  {i + 1}
+                </Button>
+              ))}
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() =>
+                  setCurrentPage((p) => Math.min(totalPages, p + 1))
+                }
+                disabled={currentPage === totalPages}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </CardFooter>
+        </Card>
+      </div>
 
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
         <DialogContent className="sm:max-w-4xl">
