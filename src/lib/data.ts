@@ -1,4 +1,4 @@
-import type { Material, InventoryLog, WarehouseLocation, WarehouseItem, Supplier, MaterialRequest } from "./types";
+import type { Material, InventoryLog, WarehouseLocation, WarehouseItem, Supplier, MaterialRequest, MaterialRequestItem } from "./types";
 
 export const materials: Material[] = [
   {
@@ -841,14 +841,51 @@ export const materialRequests: MaterialRequest[] = Array.from({ length: 25 }, (_
     const priority = id % 3 === 0 ? 'Khẩn cấp' : 'Bình thường';
     const status = id % 2 === 0 ? 'Đã duyệt' : 'Chờ duyệt';
     const dept = id % 4 === 0 ? 'PX Vận hành 2' : id % 4 === 1 ? 'PX Sửa chữa' : id % 4 === 2 ? 'PX Hóa' : 'PX Vận hành 1';
+    
+    const requestItems: MaterialRequestItem[] = [
+        {
+            materialId: 'mat-007',
+            materialCode: 'PM-CHEM-001',
+            materialName: 'Dầu bôi trơn Shell',
+            partNumber: 'SHELL-TELLUS-S2',
+            unit: 'Lít',
+            requestedQuantity: 5,
+            stock: 500,
+            notes: 'Thay dầu định kỳ'
+        },
+        {
+            materialId: 'mat-002',
+            materialCode: '1.51.45.002.USA',
+            materialName: 'Gioăng đệm chịu nhiệt',
+            partNumber: 'GASKET-XYZ',
+            unit: 'Cái',
+            requestedQuantity: 10,
+            stock: 88,
+            notes: 'Dự phòng rò rỉ'
+        },
+        {
+            materialId: 'mat-004',
+            materialCode: '1.51.45.004.VN',
+            materialName: 'Lọc khí nạp',
+            partNumber: 'CADIVI-3P-CU',
+            unit: 'Bộ',
+            requestedQuantity: 2,
+            stock: 120,
+            notes: 'Thay thế lọc bẩn'
+        }
+    ];
+
     return {
-        id: `YCVT-2025-${String(id).padStart(2, '0')}`,
+        id: `YCVT-2025-${String(id).padStart(3, '0')}`,
         requesterName: 'Nguyễn Văn A',
         requesterDept: dept,
-        content: 'Vật tư thay thế định kỳ',
-        neededDate: '2025-08-20',
+        reason: `Cấp vật tư thay thế định kỳ Tổ máy GT${id} (Lọc khí, Gioăng)`,
+        requestDate: new Date(2025, 7, id).toISOString(),
         priority: priority,
         status: status,
+        workOrder: `WO-2025-${String(id + 98).padStart(3, '0')}`,
+        approver: status === 'Đã duyệt' ? 'Lê Văn Kỹ (P.Kỹ thuật)' : undefined,
+        items: requestItems
     };
 });
 
@@ -880,5 +917,5 @@ export const getSuppliers = async (): Promise<Supplier[]> => {
 
 export const getMaterialRequests = async (): Promise<MaterialRequest[]> => {
     await new Promise(resolve => setTimeout(resolve, 100));
-    return materialRequests;
+    return materialRequests.sort((a, b) => b.id.localeCompare(a.id));
 }

@@ -77,12 +77,26 @@ export interface Supplier {
   contacts: ContactPerson[];
 }
 
+export interface MaterialRequestItem {
+  materialId: string;
+  materialCode: string;
+  materialName: string;
+  partNumber: string;
+  unit: string;
+  requestedQuantity: number;
+  stock: number;
+  notes?: string;
+}
+
 export interface MaterialRequest {
-  id: string;
+  id: string; // Mã Phiếu
   requesterName: string;
-  requesterDept: string;
-  content: string;
-  neededDate: string;
+  requesterDept: string; // Đơn vị sử dụng
+  reason: string; // Lý do / Mục đích
+  requestDate: string; // Ngày yêu cầu (ISO 8601 string)
+  workOrder?: string; // Mã WO/Công trình
   priority: "Khẩn cấp" | "Bình thường";
   status: "Đã duyệt" | "Chờ duyệt";
+  approver?: string; // Người duyệt kỹ thuật
+  items: MaterialRequestItem[];
 }

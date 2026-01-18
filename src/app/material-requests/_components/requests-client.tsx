@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import type { MaterialRequest } from "@/lib/types";
+import type { Material, MaterialRequest } from "@/lib/types";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import {
@@ -32,6 +32,12 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
 import {
@@ -43,9 +49,11 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
+import { RequestForm, type RequestFormValues } from "./request-form";
 
 type MaterialRequestsClientProps = {
   initialRequests: MaterialRequest[];
+  materials: Material[];
 };
 
 const Breadcrumbs = () => (
@@ -56,9 +64,17 @@ const Breadcrumbs = () => (
   </div>
 );
 
-export function MaterialRequestsClient({ initialRequests }: MaterialRequestsClientProps) {
+export function MaterialRequestsClient({
+  initialRequests,
+  materials,
+}: MaterialRequestsClientProps) {
   const [requests, setRequests] = useState<MaterialRequest[]>(initialRequests);
   const { toast } = useToast();
+
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [selectedRequest, setSelectedRequest] =
+    useState<MaterialRequest | null>(null);
+  const [viewMode, setViewMode] = useState(false);
 
   // Filter and search states
   const [searchQuery, setSearchQuery] = useState("");
@@ -78,18 +94,21 @@ export function MaterialRequestsClient({ initialRequests }: MaterialRequestsClie
         !searchQuery ||
         request.id.toLowerCase().includes(searchLower) ||
         request.requesterName.toLowerCase().includes(searchLower) ||
-        request.content.toLowerCase().includes(searchLower);
+        request.reason.toLowerCase().includes(searchLower);
 
       const matchesDepartment =
-        departmentFilter === "all" || request.requesterDept === departmentFilter;
-      
+        departmentFilter === "all" ||
+        request.requesterDept === departmentFilter;
+
       const matchesStatus =
         statusFilter === "all" || request.status === statusFilter;
 
       const matchesPriority =
         priorityFilter === "all" || request.priority === priorityFilter;
 
-      return matchesSearch && matchesDepartment && matchesStatus && matchesPriority;
+      return (
+        matchesSearch && matchesDepartment && matchesStatus && matchesPriority
+      );
     });
   }, [requests, searchQuery, departmentFilter, statusFilter, priorityFilter]);
 
@@ -111,13 +130,68 @@ export function MaterialRequestsClient({ initialRequests }: MaterialRequestsClie
     currentPage * itemsPerPage,
     filteredRequests.length
   );
-  
+
+  const handleAdd = () => {
+    const newRequestTemplate: MaterialRequest = {
+      id: `YCVT-${new Date().getFullYear()}-${String(requests.length + 1).padStart(3, "0")}`,
+      requesterName: "Nguyễn Văn A", // Placeholder for current user
+      requesterDept: "",
+      reason: "",
+      requestDate: new Date().toISOString(),
+      priority: "Bình thường",
+      status: "Chờ duyệt",
+      items: [],
+    };
+    setSelectedRequest(newRequestTemplate);
+    setViewMode(false);
+    setIsFormOpen(true);
+  };
+
+  const handleEdit = (request: MaterialRequest) => {
+    setSelectedRequest(request);
+    setViewMode(false);
+    setIsFormOpen(true);
+  };
+
+  const handleView = (request: MaterialRequest) => {
+    setSelectedRequest(request);
+    setViewMode(true);
+    setIsFormOpen(true);
+  };
+
   const handleDelete = (id: string) => {
     setRequests(requests.filter((r) => r.id !== id));
     toast({
       title: "Thành công",
       description: `Đã xóa yêu cầu ${id}.`,
       variant: "destructive",
+    });
+  };
+  
+  const handleFormSubmit = (values: RequestFormValues) => {
+    const submittedRequest: MaterialRequest = {
+      ...values,
+      requestDate: values.requestDate.toISOString(),
+      requesterName: selectedRequest?.requesterName || "Nguyễn Văn A", // Keep original requester name
+      items: values.items.map(item => ({...item})) // Ensure it's a new array
+    };
+    
+    if (viewMode) {
+      setIsFormOpen(false);
+      return;
+    }
+  
+    const isEditing = requests.some(r => r.id === submittedRequest.id);
+  
+    if (isEditing) {
+      setRequests(requests.map((r) => (r.id === submittedRequest.id ? submittedRequest : r)));
+    } else {
+      setRequests([submittedRequest, ...requests]);
+    }
+    setIsFormOpen(false);
+    toast({
+      title: "Thành công",
+      description: isEditing ? "Đã cập nhật yêu cầu." : "Đã tạo yêu cầu mới.",
     });
   };
 
@@ -131,8 +205,8 @@ export function MaterialRequestsClient({ initialRequests }: MaterialRequestsClie
         return "bg-gray-100 text-gray-800";
     }
   };
-  
-   const getPriorityClass = (priority: MaterialRequest["priority"]) => {
+
+  const getPriorityClass = (priority: MaterialRequest["priority"]) => {
     switch (priority) {
       case "Khẩn cấp":
         return "text-red-600 font-semibold";
@@ -143,20 +217,20 @@ export function MaterialRequestsClient({ initialRequests }: MaterialRequestsClie
 
   return (
     <div className="w-full space-y-2">
-      <PageHeader
-        title="Yêu cầu Vật tư"
-        breadcrumbs={<Breadcrumbs />}
-      >
-        <Button>
+      <PageHeader title="Yêu cầu Vật tư" breadcrumbs={<Breadcrumbs />}>
+        <Button onClick={handleAdd}>
           <Plus className="mr-2 h-4 w-4" />
           Thêm mới
         </Button>
       </PageHeader>
-      
+
       <Card>
         <CardContent className="pt-6">
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
-            <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
+            <Select
+              value={departmentFilter}
+              onValueChange={setDepartmentFilter}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="-- Tất cả bộ phận --" />
               </SelectTrigger>
@@ -206,8 +280,8 @@ export function MaterialRequestsClient({ initialRequests }: MaterialRequestsClie
                 <TableHead className="w-[50px]">STT</TableHead>
                 <TableHead>Mã phiếu</TableHead>
                 <TableHead>Người YC</TableHead>
-                <TableHead>Nội dung</TableHead>
-                <TableHead>Ngày cần</TableHead>
+                <TableHead>Lý do / Mục đích</TableHead>
+                <TableHead>Ngày yêu cầu</TableHead>
                 <TableHead>Ưu tiên</TableHead>
                 <TableHead>Trạng thái</TableHead>
                 <TableHead className="w-[120px]">Thao tác</TableHead>
@@ -220,19 +294,28 @@ export function MaterialRequestsClient({ initialRequests }: MaterialRequestsClie
                     <TableCell className="text-center">
                       {startItem + index}
                     </TableCell>
-                    <TableCell className="font-medium text-primary hover:underline cursor-pointer">
+                    <TableCell
+                      className="font-medium text-primary hover:underline cursor-pointer"
+                      onClick={() => handleView(request)}
+                    >
                       {request.id}
                     </TableCell>
                     <TableCell>
                       <div>{request.requesterName}</div>
-                      <div className="text-xs text-muted-foreground">{request.requesterDept}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {request.requesterDept}
+                      </div>
                     </TableCell>
                     <TableCell className="text-muted-foreground">
-                      {request.content}
+                      {request.reason}
                     </TableCell>
-                    <TableCell>{format(new Date(request.neededDate), "dd/MM/yyyy")}</TableCell>
-                    <TableCell className={cn(getPriorityClass(request.priority))}>{request.priority}</TableCell>
-                     <TableCell>
+                    <TableCell>
+                      {format(new Date(request.requestDate), "dd/MM/yyyy")}
+                    </TableCell>
+                    <TableCell className={cn(getPriorityClass(request.priority))}>
+                      {request.priority}
+                    </TableCell>
+                    <TableCell>
                       <span
                         className={cn(
                           "rounded-md px-2.5 py-1 text-xs font-semibold",
@@ -248,6 +331,7 @@ export function MaterialRequestsClient({ initialRequests }: MaterialRequestsClie
                           variant="ghost"
                           size="icon"
                           className="h-8 w-8 text-muted-foreground"
+                           onClick={() => handleView(request)}
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
@@ -255,6 +339,7 @@ export function MaterialRequestsClient({ initialRequests }: MaterialRequestsClie
                           variant="ghost"
                           size="icon"
                           className="h-8 w-8 text-muted-foreground"
+                           onClick={() => handleEdit(request)}
                         >
                           <Pencil className="h-4 w-4" />
                         </Button>
@@ -308,8 +393,7 @@ export function MaterialRequestsClient({ initialRequests }: MaterialRequestsClie
         </CardContent>
         <CardFooter className="flex items-center justify-between pt-4">
           <div className="text-sm text-muted-foreground">
-            Hiển thị {filteredRequests.length > 0 ? startItem : 0}-{endItem}{" "}
-            trên {filteredRequests.length} bản ghi
+            Hiển thị {filteredRequests.length > 0 ? startItem : 0}-{endItem} trên {filteredRequests.length} bản ghi
           </div>
           <div className="flex items-center space-x-1">
             <Button
@@ -321,17 +405,19 @@ export function MaterialRequestsClient({ initialRequests }: MaterialRequestsClie
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+              (page) => (
                 <Button
-                    key={page}
-                    variant={currentPage === page ? 'default' : 'outline'}
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={() => setCurrentPage(page)}
+                  key={page}
+                  variant={currentPage === page ? "default" : "outline"}
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => setCurrentPage(page)}
                 >
-                    {page}
+                  {page}
                 </Button>
-            ))}
+              )
+            )}
             <Button
               variant="outline"
               size="icon"
@@ -346,6 +432,27 @@ export function MaterialRequestsClient({ initialRequests }: MaterialRequestsClie
           </div>
         </CardFooter>
       </Card>
+      
+      <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+        <DialogContent className="max-w-4xl">
+          <DialogHeader>
+            <DialogTitle>
+              {viewMode
+                ? `Chi tiết Yêu cầu: ${selectedRequest?.id}`
+                : selectedRequest?.id && requests.some(r=>r.id === selectedRequest.id)
+                ? "Cập nhật Yêu cầu"
+                : "Tạo Yêu cầu mới"}
+            </DialogTitle>
+          </DialogHeader>
+          <RequestForm
+            request={selectedRequest}
+            materials={materials}
+            onSubmit={handleFormSubmit}
+            onCancel={() => setIsFormOpen(false)}
+            viewMode={viewMode}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
