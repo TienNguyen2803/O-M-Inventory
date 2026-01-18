@@ -112,7 +112,7 @@ export function BiddingForm({
   const showResults = biddingPackage?.status === "Đã có kết quả";
 
   return (
-    <div className="max-h-[75vh] overflow-y-auto pr-2">
+    <div className="max-h-[85vh] overflow-y-auto pr-2">
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit)}
