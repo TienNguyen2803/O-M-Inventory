@@ -65,7 +65,6 @@ const navItems = [
       { href: "/materials", label: "Danh mục Vật tư", icon: Package },
       { href: "/warehouses", label: "Danh mục Kho", icon: Warehouse },
       { href: "/suppliers", label: "Nhà cung cấp", icon: Users },
-      { href: "/users", label: "Quản lý Người dùng", icon: UserCog },
     ],
   },
   {
@@ -80,6 +79,7 @@ const navItems = [
   {
     group: "HỆ THỐNG & BẢO MẬT",
     items: [
+      { href: "/users", label: "Quản lý Người dùng", icon: UserCog },
       { href: "#", label: "Phân quyền Vai trò", icon: KeyRound },
       { href: "#", label: "Nhật ký Hoạt động", icon: ScrollText },
     ],
