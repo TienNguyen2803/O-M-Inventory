@@ -114,7 +114,7 @@ export function RequestForm({
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmit)}
-        className="space-y-4 pt-2 max-h-[70vh] overflow-y-auto pr-4"
+        className="space-y-4 pt-2 max-h-[80vh] overflow-y-auto pr-4"
       >
         <div className="grid grid-cols-3 gap-x-6 gap-y-4">
           <FormField
