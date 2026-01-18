@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo, useEffect } from "react";
 import type { Material } from "@/lib/types";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
@@ -71,16 +71,54 @@ export function MaterialsClient({ initialMaterials }: MaterialsClientProps) {
   const [viewMode, setViewMode] = useState(false);
   const { toast } = useToast();
 
+  // Filter and search states
+  const [searchQuery, setSearchQuery] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [managementTypeFilter, setManagementTypeFilter] = useState("all");
+
+  const categories = useMemo(
+    () => [...new Set(materials.map((m) => m.category))],
+    [materials]
+  );
+
+  const filteredMaterials = useMemo(() => {
+    return materials.filter((material) => {
+      const searchLower = searchQuery.toLowerCase();
+      const matchesSearch =
+        !searchQuery ||
+        material.name.toLowerCase().includes(searchLower) ||
+        material.code.toLowerCase().includes(searchLower) ||
+        (material.partNo && material.partNo.toLowerCase().includes(searchLower));
+
+      const matchesCategory =
+        categoryFilter === "all" || material.category === categoryFilter;
+
+      const matchesManagementType =
+        managementTypeFilter === "all" ||
+        material.managementType === managementTypeFilter;
+
+      return matchesSearch && matchesCategory && matchesManagementType;
+    });
+  }, [materials, searchQuery, categoryFilter, managementTypeFilter]);
+
+  // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  const totalPages = Math.ceil(materials.length / itemsPerPage);
-  const paginatedMaterials = materials.slice(
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, categoryFilter, managementTypeFilter]);
+
+  const totalPages = Math.ceil(filteredMaterials.length / itemsPerPage);
+  const paginatedMaterials = filteredMaterials.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
   const startItem = (currentPage - 1) * itemsPerPage + 1;
-  const endItem = Math.min(currentPage * itemsPerPage, materials.length);
+  const endItem = Math.min(
+    currentPage * itemsPerPage,
+    filteredMaterials.length
+  );
 
   const handleAdd = () => {
     setSelectedMaterial(null);
@@ -164,15 +202,24 @@ export function MaterialsClient({ initialMaterials }: MaterialsClientProps) {
       <Card>
         <CardContent className="pt-6">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <Select>
+            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
               <SelectTrigger>
                 <SelectValue placeholder="-- Tất cả nhóm --" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">-- Tất cả nhóm --</SelectItem>
+                {categories.map((category) => (
+                  <SelectItem key={category} value={category}>
+                    {category}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
-            <Input placeholder="Tìm kiếm..." />
+            <Input
+              placeholder="Tìm kiếm mã, tên, part no..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
             <Select>
               <SelectTrigger>
                 <SelectValue placeholder="-- Tất cả trạng thái --" />
@@ -181,7 +228,10 @@ export function MaterialsClient({ initialMaterials }: MaterialsClientProps) {
                 <SelectItem value="all">-- Tất cả trạng thái --</SelectItem>
               </SelectContent>
             </Select>
-            <Select>
+            <Select
+              value={managementTypeFilter}
+              onValueChange={setManagementTypeFilter}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="-- Tất cả loại quản lý --" />
               </SelectTrigger>
@@ -210,90 +260,102 @@ export function MaterialsClient({ initialMaterials }: MaterialsClientProps) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {paginatedMaterials.map((material, index) => (
-                <TableRow key={material.id}>
-                  <TableCell className="text-center">
-                    {startItem + index}
-                  </TableCell>
-                  <TableCell className="font-medium text-primary hover:underline cursor-pointer">
-                    {material.code}
-                  </TableCell>
-                  <TableCell>{material.name}</TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {material.partNo}
-                  </TableCell>
-                  <TableCell>{material.unit}</TableCell>
-                  <TableCell>
-                    <span
-                      className={cn(
-                        "rounded-md px-2.5 py-1 text-xs font-semibold",
-                        material.managementType === "Batch"
-                          ? "bg-sky-100 text-sky-800"
-                          : "bg-emerald-100 text-emerald-800"
-                      )}
-                    >
-                      {material.managementType}
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center space-x-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-muted-foreground"
-                        onClick={() => handleView(material)}
+              {paginatedMaterials.length > 0 ? (
+                paginatedMaterials.map((material, index) => (
+                  <TableRow key={material.id}>
+                    <TableCell className="text-center">
+                      {startItem + index}
+                    </TableCell>
+                    <TableCell className="font-medium text-primary hover:underline cursor-pointer">
+                      {material.code}
+                    </TableCell>
+                    <TableCell>{material.name}</TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {material.partNo}
+                    </TableCell>
+                    <TableCell>{material.unit}</TableCell>
+                    <TableCell>
+                      <span
+                        className={cn(
+                          "rounded-md px-2.5 py-1 text-xs font-semibold",
+                          material.managementType === "Batch"
+                            ? "bg-sky-100 text-sky-800"
+                            : "bg-emerald-100 text-emerald-800"
+                        )}
                       >
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-muted-foreground"
-                        onClick={() => handleEdit(material)}
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-destructive/80 hover:text-destructive"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>
-                              Bạn có chắc chắn muốn xóa?
-                            </AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Hành động này không thể được hoàn tác. Vật tư "
-                              {material.name}" sẽ bị xóa vĩnh viễn.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Hủy</AlertDialogCancel>
-                            <AlertDialogAction
-                              onClick={() => handleDelete(material.id)}
-                              className="bg-destructive hover:bg-destructive/90"
+                        {material.managementType}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center space-x-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-muted-foreground"
+                          onClick={() => handleView(material)}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-muted-foreground"
+                          onClick={() => handleEdit(material)}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-destructive/80 hover:text-destructive"
                             >
-                              Xóa
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </div>
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>
+                                Bạn có chắc chắn muốn xóa?
+                              </AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Hành động này không thể được hoàn tác. Vật tư "
+                                {material.name}" sẽ bị xóa vĩnh viễn.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Hủy</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => handleDelete(material.id)}
+                                className="bg-destructive hover:bg-destructive/90"
+                              >
+                                Xóa
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell
+                    colSpan={7}
+                    className="h-24 text-center text-muted-foreground"
+                  >
+                    Không tìm thấy vật tư nào.
                   </TableCell>
                 </TableRow>
-              ))}
+              )}
             </TableBody>
           </Table>
         </CardContent>
         <CardFooter className="flex items-center justify-between pt-4">
           <div className="text-sm text-muted-foreground">
-            Hiển thị {startItem}-{endItem} trên {materials.length} bản ghi
+            Hiển thị {filteredMaterials.length > 0 ? startItem : 0}-{endItem}{" "}
+            trên {filteredMaterials.length} bản ghi
           </div>
           <div className="flex items-center space-x-1">
             <Button
@@ -320,7 +382,9 @@ export function MaterialsClient({ initialMaterials }: MaterialsClientProps) {
               variant="outline"
               size="icon"
               className="h-8 w-8"
-              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              onClick={() =>
+                setCurrentPage((p) => Math.min(totalPages, p + 1))
+              }
               disabled={currentPage === totalPages}
             >
               <ChevronRight className="h-4 w-4" />
