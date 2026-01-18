@@ -1,4 +1,4 @@
-import type { Material, InventoryLog, WarehouseLocation, WarehouseItem, Supplier, MaterialRequest, MaterialRequestItem, PurchaseRequest, PurchaseRequestItem, BiddingPackage, BiddingItem, BiddingResult, InboundReceipt, InboundReceiptItem, InboundReceiptDocument, OutboundVoucher, OutboundVoucherItem, StockTake, StockTakeResult, User, Role } from "./types";
+import type { Material, InventoryLog, WarehouseLocation, WarehouseItem, Supplier, MaterialRequest, MaterialRequestItem, PurchaseRequest, PurchaseRequestItem, BiddingPackage, BiddingItem, BiddingResult, InboundReceipt, InboundReceiptItem, InboundReceiptDocument, OutboundVoucher, OutboundVoucherItem, StockTake, StockTakeResult, User, Role, ActivityLog } from "./types";
 
 export const materials: Material[] = [
   {
@@ -1189,6 +1189,37 @@ roles[0].permissions = Object.entries(allPermissions).reduce((acc, [group, perms
   return acc;
 }, {} as Role['permissions']);
 
+export const activityLogs: ActivityLog[] = Array.from({ length: 50 }, (_, i) => {
+    const id = i + 1;
+    const users = [
+        { name: 'Nguyễn Văn A', avatarUrl: 'https://i.pravatar.cc/150?u=a042581f4e29026704d' },
+        { name: 'Trần Thị B', avatarUrl: 'https://i.pravatar.cc/150?u=a042581f4e29026704e' },
+        { name: 'Lê Văn Kỹ', avatarUrl: 'https://i.pravatar.cc/150?u=a042581f4e29026704f' },
+        { name: 'Phạm Minh Khoa', avatarUrl: 'https://i.pravatar.cc/150?u=a042581f4e29026704g' }
+    ];
+    const actions: ActivityLog['action'][] = ['Tạo', 'Cập nhật', 'Xóa', 'Đăng nhập', 'Duyệt', 'Xuất file'];
+    const targets = [
+        { type: 'Yêu cầu Vật tư', id: `YCVT-2025-${String(id % 25 + 1).padStart(3, '0')}` },
+        { type: 'Phiếu nhập kho', id: `PNK-2025-${String(id % 25 + 1).padStart(3, '0')}` },
+        { type: 'Nhà cung cấp', id: `NCC-${String(id % 25 + 1).padStart(3, '0')}` },
+        { type: 'Vật tư', id: `PM-MECH-FIL-005` }
+    ];
+    const action = actions[i % actions.length];
+    const user = users[i % users.length];
+    const target = targets[i % targets.length];
+    const date = new Date();
+    date.setHours(date.getHours() - i * 2);
+
+    return {
+        id: `log-${id}`,
+        timestamp: date.toISOString(),
+        user: user,
+        action: action,
+        target: target,
+        details: `${user.name} đã ${action.toLowerCase()} ${target.type.toLowerCase()} với mã ${target.id}`
+    };
+});
+
 export const getMaterials = async (): Promise<Material[]> => {
   // Simulate API delay
   await new Promise((resolve) => setTimeout(resolve, 100));
@@ -1252,4 +1283,9 @@ export const getUsers = async (): Promise<User[]> => {
 export const getRoles = async (): Promise<Role[]> => {
     await new Promise(resolve => setTimeout(resolve, 100));
     return roles;
-}
+};
+
+export const getActivityLogs = async (): Promise<ActivityLog[]> => {
+    await new Promise(resolve => setTimeout(resolve, 100));
+    return activityLogs.sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+};

@@ -255,3 +255,18 @@ export interface Role {
     [group: string]: RolePermission[];
   };
 }
+
+export interface ActivityLog {
+  id: string;
+  timestamp: string; // ISO 8601
+  user: {
+    name: string;
+    avatarUrl?: string;
+  };
+  action: 'Tạo' | 'Cập nhật' | 'Xóa' | 'Đăng nhập' | 'Duyệt' | 'Xuất file';
+  target: {
+    type: string; // e.g., "Yêu cầu Vật tư", "Phiếu nhập kho"
+    id: string; // e.g., "YCVT-2025-001", "PNK-2025-003"
+  };
+  details: string;
+}

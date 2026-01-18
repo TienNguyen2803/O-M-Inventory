@@ -81,7 +81,7 @@ const navItems = [
     items: [
       { href: "/users", label: "Quản lý Người dùng", icon: UserCog },
       { href: "/roles", label: "Phân quyền Vai trò", icon: KeyRound },
-      { href: "#", label: "Nhật ký Hoạt động", icon: ScrollText },
+      { href: "/activity-log", label: "Nhật ký Hoạt động", icon: ScrollText },
     ],
   },
 ];

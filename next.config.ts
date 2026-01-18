@@ -45,6 +45,12 @@ const nextConfig: NextConfig = {
         hostname: 'vts-solution.com.vn',
         port: '',
         pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'i.pravatar.cc',
+        port: '',
+        pathname: '/**',
       }
     ],
   },
