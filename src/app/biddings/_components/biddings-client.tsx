@@ -283,7 +283,7 @@ export function BiddingsClient({
                       {bidding.purchaseRequestId}
                     </TableCell>
                     <TableCell className="text-right font-medium">
-                      {bidding.estimatedPrice.toLocaleString("vi-VN")}
+                      {bidding.estimatedPrice.toLocaleString("en-US")}
                     </TableCell>
                      <TableCell>{bidding.method}</TableCell>
                     <TableCell>

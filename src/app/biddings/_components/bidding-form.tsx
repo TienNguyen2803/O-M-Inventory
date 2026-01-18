@@ -4,7 +4,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { format } from "date-fns";
-import { vi } from "date-fns/locale";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -118,8 +117,8 @@ export function BiddingForm({
         onSubmit={form.handleSubmit(onSubmit)}
         className="space-y-4 pt-2 max-h-[80vh] overflow-y-auto pr-4"
       >
-        <div className="grid grid-cols-4 gap-x-6 gap-y-4">
-          <div className="col-span-4">
+        <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+          <div className="col-span-2">
             <FormField
               control={form.control}
               name="name"
@@ -185,7 +184,7 @@ export function BiddingForm({
               <FormItem>
                 <FormLabel>Giá dự toán</FormLabel>
                 <FormControl>
-                  <Input type="text" value={field.value.toLocaleString('vi-VN')} disabled={viewMode} className="font-semibold text-right" onChange={(e) => {
+                  <Input type="text" value={field.value.toLocaleString('en-US')} disabled={viewMode} className="font-semibold text-right" onChange={(e) => {
                      const numValue = parseInt(e.target.value.replace(/,/g, ''), 10);
                      field.onChange(isNaN(numValue) ? 0 : numValue);
                   }} />
@@ -194,8 +193,7 @@ export function BiddingForm({
             )}
           />
 
-          <div className="col-span-2">
-            <FormField
+          <FormField
               control={form.control}
               name="openingDate"
               render={({ field }) => (
@@ -221,10 +219,8 @@ export function BiddingForm({
                 </FormItem>
               )}
             />
-          </div>
 
-          <div className="col-span-2">
-            <FormField
+          <FormField
               control={form.control}
               name="closingDate"
               render={({ field }) => (
@@ -250,7 +246,6 @@ export function BiddingForm({
                 </FormItem>
               )}
             />
-          </div>
         </div>
 
         <div className="space-y-2 pt-2">
@@ -270,15 +265,15 @@ export function BiddingForm({
                   <TableRow key={item.id}>
                     <TableCell className="font-medium">{item.name}</TableCell>
                     <TableCell>{item.unit}</TableCell>
-                    <TableCell className="text-right">{item.quantity.toLocaleString('vi-VN')}</TableCell>
-                    <TableCell className="text-right">{item.amount.toLocaleString('vi-VN')}</TableCell>
+                    <TableCell className="text-right">{item.quantity.toLocaleString('en-US')}</TableCell>
+                    <TableCell className="text-right">{item.amount.toLocaleString('en-US')}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
               <TableFooter>
                 <TableRow>
                   <TableCell colSpan={3} className="text-right font-bold">Tổng cộng</TableCell>
-                  <TableCell className="text-right font-bold text-red-600">{totalAmount.toLocaleString('vi-VN')}</TableCell>
+                  <TableCell className="text-right font-bold text-red-600">{totalAmount.toLocaleString('en-US')}</TableCell>
                 </TableRow>
               </TableFooter>
             </Table>
@@ -308,7 +303,7 @@ export function BiddingForm({
                     <FormItem>
                       <FormLabel>Giá trúng thầu</FormLabel>
                       <FormControl>
-                        <Input value={field.value.toLocaleString('vi-VN')} disabled className="font-bold text-right bg-white" />
+                        <Input value={field.value.toLocaleString('en-US')} disabled className="font-bold text-right bg-white" />
                       </FormControl>
                     </FormItem>
                   )}
