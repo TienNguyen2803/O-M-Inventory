@@ -460,7 +460,10 @@ export const inventoryLogs: InventoryLog[] = Array.from({ length: 25 }, (_, i) =
   const material = materials[i % materials.length];
   const type = i % 3 === 0 ? "outbound" : "inbound";
   const quantity = type === 'inbound' ? Math.floor(Math.random() * 100) + 20 : Math.floor(Math.random() * 20) + 1;
-  const date = new Date(2024, 6, Math.floor(Math.random() * 30) + 1).toISOString().split('T')[0];
+  const date = new Date();
+  date.setDate(date.getDate() - (i % 28)); // Dates within the last month
+  const dateString = date.toISOString().split('T')[0];
+
 
   return {
     id: `log-${String(i + 1).padStart(3, '0')}`,
@@ -468,7 +471,7 @@ export const inventoryLogs: InventoryLog[] = Array.from({ length: 25 }, (_, i) =
     materialName: material.name,
     quantity: quantity,
     type: type,
-    date: date,
+    date: dateString,
     actor: type === 'inbound' ? `NCC ${i % 5 + 1}` : `PX Vận hành ${i % 3 + 1}`,
   };
 });
