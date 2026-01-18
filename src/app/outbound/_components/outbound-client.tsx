@@ -62,6 +62,7 @@ export function OutboundClient({
       <PageHeader
         title="Xuất kho"
         description="Ghi nhận vật tư xuất kho cho các hoạt động của nhà máy."
+        className="px-4 md:px-8"
       >
         <Button
           onClick={() => setIsFormOpen(true)}

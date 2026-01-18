@@ -59,6 +59,7 @@ export function InboundClient({ initialLogs, materials }: InboundClientProps) {
       <PageHeader
         title="Nhập kho"
         description="Ghi nhận các lô vật tư, hàng hóa nhập vào kho."
+        className="px-4 md:px-8"
       >
         <Button
           onClick={() => setIsFormOpen(true)}

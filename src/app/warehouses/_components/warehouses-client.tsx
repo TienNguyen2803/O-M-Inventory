@@ -152,7 +152,11 @@ export function WarehousesClient({ initialLocations }: WarehousesClientProps) {
 
   return (
     <>
-      <PageHeader title="Danh mục Kho" breadcrumbs={<Breadcrumbs />}>
+      <PageHeader
+        title="Danh mục Kho"
+        breadcrumbs={<Breadcrumbs />}
+        className="px-4 md:px-8"
+      >
         <Button onClick={handleAdd}>
           <Plus className="mr-2 h-4 w-4" />
           Thêm mới
