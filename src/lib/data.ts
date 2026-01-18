@@ -1,4 +1,4 @@
-import type { Material, InventoryLog, WarehouseLocation, WarehouseItem, Supplier, MaterialRequest, MaterialRequestItem, PurchaseRequest, PurchaseRequestItem, BiddingPackage, BiddingItem, BiddingResult } from "./types";
+import type { Material, InventoryLog, WarehouseLocation, WarehouseItem, Supplier, MaterialRequest, MaterialRequestItem, PurchaseRequest, PurchaseRequestItem, BiddingPackage, BiddingItem, BiddingResult, InboundReceipt } from "./types";
 
 export const materials: Material[] = [
   {
@@ -942,6 +942,20 @@ export const biddingPackages: BiddingPackage[] = Array.from({ length: 25 }, (_, 
     };
 });
 
+export const inboundReceipts: InboundReceipt[] = Array.from({ length: 25 }, (_, i) => {
+  const id = i + 1;
+  const types: InboundReceipt['inboundType'][] = ['Theo PO', 'Sau Sửa chữa', 'Hàng Mượn', 'Hoàn trả'];
+  const statuses: InboundReceipt['status'][] = ['Hoàn thành', 'Đang nhập'];
+
+  return {
+      id: `PNK-2025-${String(id).padStart(2, '0')}`,
+      inboundType: types[id % types.length],
+      reference: `PO-2025-${String(id + 9).padStart(2, '0')}`,
+      inboundDate: new Date(2025, 7, Math.min(id, 28)).toISOString(),
+      partner: 'Siemens Energy',
+      status: statuses[id % statuses.length],
+  };
+});
 
 export const getMaterials = async (): Promise<Material[]> => {
   // Simulate API delay
@@ -981,4 +995,9 @@ export const getPurchaseRequests = async (): Promise<PurchaseRequest[]> => {
 export const getBiddingPackages = async (): Promise<BiddingPackage[]> => {
     await new Promise(resolve => setTimeout(resolve, 100));
     return biddingPackages.sort((a, b) => a.id.localeCompare(b.id));
+}
+
+export const getInboundReceipts = async (): Promise<InboundReceipt[]> => {
+  await new Promise(resolve => setTimeout(resolve, 100));
+  return inboundReceipts.sort((a, b) => a.id.localeCompare(b.id));
 }

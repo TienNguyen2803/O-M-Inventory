@@ -149,3 +149,12 @@ export interface BiddingPackage {
   items?: BiddingItem[]; // Phạm vi cung cấp
   result?: BiddingResult; // Kết quả lựa chọn
 }
+
+export interface InboundReceipt {
+  id: string; // SỐ PHIẾU
+  inboundType: 'Theo PO' | 'Sau Sửa chữa' | 'Hàng Mượn' | 'Hoàn trả'; // LOẠI NHẬP
+  reference: string; // THAM CHIẾU
+  inboundDate: string; // NGÀY NHẬP
+  partner: string; // ĐỐI TÁC
+  status: 'Hoàn thành' | 'Đang nhập'; // TRẠNG THÁI
+}

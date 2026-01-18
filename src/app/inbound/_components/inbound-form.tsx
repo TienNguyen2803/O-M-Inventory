@@ -3,9 +3,8 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, Save } from "lucide-react";
 import { format } from "date-fns";
-import { vi } from "date-fns/locale";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -30,137 +29,180 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import type { Material } from "@/lib/types";
 import { DialogFooter } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import type { InboundReceipt } from "@/lib/types";
 
 const formSchema = z.object({
-  materialId: z.string({ required_error: "Vui lòng chọn một vật tư." }),
-  quantity: z.coerce.number().min(1, "Số lượng phải lớn hơn 0."),
-  actor: z.string().min(2, "Tên nhà cung cấp phải có ít nhất 2 ký tự."),
-  date: z.date({ required_error: "Vui lòng chọn ngày nhập kho." }),
+  id: z.string(),
+  inboundType: z.string({ required_error: "Vui lòng chọn loại nhập." }),
+  reference: z.string().optional(),
+  inboundDate: z.date({ required_error: "Vui lòng chọn ngày nhập." }),
+  partner: z.string().min(1, "Đối tác là bắt buộc."),
+  status: z.string({ required_error: "Vui lòng chọn trạng thái." }),
 });
 
-type InboundFormValues = z.infer<typeof formSchema>;
+export type InboundFormValues = z.infer<typeof formSchema>;
 
 type InboundFormProps = {
-  materials: Material[];
+  receipt: InboundReceipt | null;
   onSubmit: (values: InboundFormValues) => void;
   onCancel: () => void;
+  viewMode: boolean;
 };
 
-export function InboundForm({ materials, onSubmit, onCancel }: InboundFormProps) {
+export function InboundForm({
+  receipt,
+  onSubmit,
+  onCancel,
+  viewMode,
+}: InboundFormProps) {
   const form = useForm<InboundFormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      quantity: 1,
-      date: new Date(),
-    },
+    defaultValues: receipt
+      ? {
+          ...receipt,
+          inboundDate: new Date(receipt.inboundDate),
+        }
+      : {
+          id: "",
+          inboundType: "Theo PO",
+          reference: "",
+          inboundDate: new Date(),
+          partner: "",
+          status: "Đang nhập",
+        },
   });
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-4">
-        <FormField
-          control={form.control}
-          name="materialId"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Vật tư</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+        <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+          <FormField
+            control={form.control}
+            name="id"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Số Phiếu</FormLabel>
                 <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Chọn một loại vật tư" />
-                  </SelectTrigger>
+                  <Input {...field} disabled />
                 </FormControl>
-                <SelectContent>
-                  {materials.map((material) => (
-                    <SelectItem key={material.id} value={material.id}>
-                      {material.name} ({material.code})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="quantity"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Số lượng</FormLabel>
-              <FormControl>
-                <Input type="number" placeholder="0" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="actor"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Nhà cung cấp</FormLabel>
-              <FormControl>
-                <Input placeholder="Vd: Công ty TNHH BMT" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="date"
-          render={({ field }) => (
-            <FormItem className="flex flex-col">
-              <FormLabel>Ngày nhập kho</FormLabel>
-              <Popover>
-                <PopoverTrigger asChild>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+           <FormField
+            control={form.control}
+            name="inboundDate"
+            render={({ field }) => (
+              <FormItem className="flex flex-col">
+                <FormLabel>Ngày nhập</FormLabel>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <FormControl>
+                      <Button
+                        variant={"outline"}
+                        className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
+                        disabled={viewMode}
+                      >
+                        {field.value ? format(field.value, "dd/MM/yyyy") : <span>Chọn ngày</span>}
+                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                      </Button>
+                    </FormControl>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus />
+                  </PopoverContent>
+                </Popover>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="inboundType"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Loại nhập kho</FormLabel>
+                <Select
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                  disabled={viewMode}
+                >
                   <FormControl>
-                    <Button
-                      variant={"outline"}
-                      className={cn(
-                        "w-full pl-3 text-left font-normal",
-                        !field.value && "text-muted-foreground"
-                      )}
-                    >
-                      {field.value ? (
-                        format(field.value, "PPP", { locale: vi })
-                      ) : (
-                        <span>Chọn ngày</span>
-                      )}
-                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                    </Button>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Chọn loại nhập" />
+                    </SelectTrigger>
                   </FormControl>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={field.value}
-                    onSelect={field.onChange}
-                    disabled={(date) =>
-                      date > new Date() || date < new Date("1900-01-01")
-                    }
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+                  <SelectContent>
+                    <SelectItem value="Theo PO">Theo PO</SelectItem>
+                    <SelectItem value="Sau Sửa chữa">Sau Sửa chữa</SelectItem>
+                    <SelectItem value="Hàng Mượn">Hàng Mượn</SelectItem>
+                    <SelectItem value="Hoàn trả">Hoàn trả</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+           <FormField
+            control={form.control}
+            name="status"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Trạng thái</FormLabel>
+                <Select
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                  disabled={viewMode}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Chọn trạng thái" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="Đang nhập">Đang nhập</SelectItem>
+                    <SelectItem value="Hoàn thành">Hoàn thành</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="partner"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Đối tác</FormLabel>
+                <FormControl>
+                  <Input {...field} disabled={viewMode} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+           <FormField
+            control={form.control}
+            name="reference"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Tham chiếu</FormLabel>
+                <FormControl>
+                  <Input {...field} disabled={viewMode} placeholder="Vd: PO-2025-10"/>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
 
-        <DialogFooter>
+        <DialogFooter className="pt-4">
           <Button type="button" variant="outline" onClick={onCancel}>
             Hủy
           </Button>
-          <Button type="submit">Lưu</Button>
+          {!viewMode && <Button type="submit"><Save className="mr-2 h-4 w-4"/>Lưu</Button>}
         </DialogFooter>
       </form>
     </Form>
