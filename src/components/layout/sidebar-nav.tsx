@@ -68,7 +68,7 @@ const navItems = [
       { href: "/inbound", label: "Nhập kho (Inbound)", icon: ArrowDownToLine },
       { href: "/outbound", label: "Xuất kho (Outbound)", icon: ArrowUpFromLine },
       { href: "#", label: "Kiểm kê (Stock Take)", icon: ClipboardList },
-      { href: "#", label: "Truy vết Vòng đời", icon: History },
+      { href: "/lifecycle", label: "Truy vết Vòng đời", icon: History },
     ],
   },
   {
@@ -87,7 +87,7 @@ export function SidebarNav() {
   return (
     <SidebarContent className="pt-4">
       {navItems.map((group) => (
-        <SidebarGroup key={group.group} className="p-1.5">
+        <SidebarGroup key={group.group} className="p-2">
           <SidebarGroupLabel>{group.group}</SidebarGroupLabel>
           <SidebarMenu className="gap-2">
             {group.items.map((item) => (
