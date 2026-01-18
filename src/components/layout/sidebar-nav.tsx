@@ -33,7 +33,11 @@ const navItems = [
     group: "BÁO CÁO & PHÂN TÍCH",
     items: [
       { href: "/", label: "Tổng quan", icon: LayoutDashboard },
-      { href: "#", label: "Báo cáo nhập, xuất, tồn", icon: ClipboardList },
+      {
+        href: "/reports/inventory",
+        label: "Báo cáo nhập, xuất, tồn",
+        icon: ClipboardList,
+      },
       { href: "#", label: "Vật tư chậm luân chuyển", icon: ShoppingBasket },
       { href: "#", label: "Định mức tồn kho an toàn", icon: Hammer },
     ],
