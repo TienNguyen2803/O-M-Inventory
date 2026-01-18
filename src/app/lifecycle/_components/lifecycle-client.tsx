@@ -186,7 +186,7 @@ export function LifecycleClient() {
                     <CardContent>
                          <div className="relative pl-6">
                             {/* Vertical Line */}
-                             <div className="absolute left-[35px] top-0 h-full w-0.5 bg-border -translate-x-1/2"></div>
+                             <div className="absolute left-6 top-0 h-full w-0.5 bg-border -translate-x-1/2"></div>
                             
                              <div className="space-y-6">
                                 {timelineData.map((item, index) => {
