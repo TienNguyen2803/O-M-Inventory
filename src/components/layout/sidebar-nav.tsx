@@ -30,7 +30,7 @@ const navItems = [
   {
     group: "KẾ HOẠCH & MUA SẮM",
     items: [
-      { href: "#", label: "Yêu cầu Vật tư", icon: ClipboardCheck },
+      { href: "/material-requests", label: "Yêu cầu Vật tư", icon: ClipboardCheck },
       { href: "#", label: "Yêu cầu Mua sắm", icon: ShoppingBasket },
       { href: "#", label: "Quản lý Đấu thầu", icon: Gavel },
     ],
@@ -59,7 +59,7 @@ export function SidebarNav() {
     <SidebarContent className="pt-4">
       <SidebarMenu>
         {navItems.map((group) => (
-          <SidebarGroup key={group.group}>
+          <SidebarGroup key={group.group} className="p-1">
             <SidebarGroupLabel>{group.group}</SidebarGroupLabel>
             {group.items.map((item) => (
               <SidebarMenuItem key={item.href}>

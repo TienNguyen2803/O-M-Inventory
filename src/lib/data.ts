@@ -1,4 +1,4 @@
-import type { Material, InventoryLog, WarehouseLocation, WarehouseItem, Supplier } from "./types";
+import type { Material, InventoryLog, WarehouseLocation, WarehouseItem, Supplier, MaterialRequest } from "./types";
 
 export const materials: Material[] = [
   {
@@ -836,6 +836,22 @@ export const suppliers: Supplier[] = [
   }
 ];
 
+export const materialRequests: MaterialRequest[] = Array.from({ length: 25 }, (_, i) => {
+    const id = i + 1;
+    const priority = id % 3 === 0 ? 'Khẩn cấp' : 'Bình thường';
+    const status = id % 2 === 0 ? 'Đã duyệt' : 'Chờ duyệt';
+    const dept = id % 4 === 0 ? 'PX Vận hành 2' : id % 4 === 1 ? 'PX Sửa chữa' : id % 4 === 2 ? 'PX Hóa' : 'PX Vận hành 1';
+    return {
+        id: `YCVT-2025-${String(id).padStart(2, '0')}`,
+        requesterName: 'Nguyễn Văn A',
+        requesterDept: dept,
+        content: 'Vật tư thay thế định kỳ',
+        neededDate: '2025-08-20',
+        priority: priority,
+        status: status,
+    };
+});
+
 
 export const getMaterials = async (): Promise<Material[]> => {
   // Simulate API delay
@@ -861,3 +877,8 @@ export const getSuppliers = async (): Promise<Supplier[]> => {
   await new Promise(resolve => setTimeout(resolve, 100));
   return suppliers;
 };
+
+export const getMaterialRequests = async (): Promise<MaterialRequest[]> => {
+    await new Promise(resolve => setTimeout(resolve, 100));
+    return materialRequests;
+}

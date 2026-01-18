@@ -76,3 +76,13 @@ export interface Supplier {
   status: "Active" | "Inactive";
   contacts: ContactPerson[];
 }
+
+export interface MaterialRequest {
+  id: string;
+  requesterName: string;
+  requesterDept: string;
+  content: string;
+  neededDate: string;
+  priority: "Khẩn cấp" | "Bình thường";
+  status: "Đã duyệt" | "Chờ duyệt";
+}
