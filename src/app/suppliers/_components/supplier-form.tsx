@@ -162,6 +162,9 @@ export function SupplierForm({
                       <SelectItem value="USA">USA</SelectItem>
                       <SelectItem value="Germany">Germany</SelectItem>
                       <SelectItem value="Switzerland">Switzerland</SelectItem>
+                      <SelectItem value="France">France</SelectItem>
+                      <SelectItem value="Japan">Japan</SelectItem>
+                      <SelectItem value="Denmark">Denmark</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -208,6 +211,7 @@ export function SupplierForm({
                     </FormControl>
                     <SelectContent>
                       <SelectItem value="Net 30">Net 30</SelectItem>
+                      <SelectItem value="Net 45">Net 45</SelectItem>
                       <SelectItem value="Net 60">Net 60</SelectItem>
                       <SelectItem value="COD">COD</SelectItem>
                     </SelectContent>
@@ -230,6 +234,8 @@ export function SupplierForm({
                       <SelectItem value="VND">VND</SelectItem>
                       <SelectItem value="USD">USD</SelectItem>
                       <SelectItem value="EUR">EUR</SelectItem>
+                      <SelectItem value="JPY">JPY</SelectItem>
+                      <SelectItem value="CHF">CHF</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
