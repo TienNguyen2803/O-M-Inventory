@@ -54,10 +54,24 @@ export interface WarehouseLocation {
   items?: WarehouseItem[];
 }
 
+export interface ContactPerson {
+  id: string;
+  name: string;
+  position: string;
+  email: string;
+  phone: string;
+}
+
 export interface Supplier {
   id: string;
   code: string;
+  taxCode: string;
   name: string;
-  info: string;
+  address: string;
+  country: string;
+  type: string;
+  paymentTerm: string;
+  currency: string;
   status: "Active" | "Inactive";
+  contacts: ContactPerson[];
 }

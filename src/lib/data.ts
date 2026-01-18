@@ -219,17 +219,61 @@ export const warehouseLocations: WarehouseLocation[] = [
 ];
 
 export const suppliers: Supplier[] = [
-  { id: 'sup-1', code: 'NCC-001', name: 'Siemens Energy', info: 'Germany', status: 'Active' },
-  { id: 'sup-2', code: 'NCC-002', name: 'General Electric', info: 'USA', status: 'Active' },
-  { id: 'sup-3', code: 'NCC-003', name: 'Siemens Energy', info: 'Germany', status: 'Active' },
-  { id: 'sup-4', code: 'NCC-004', name: 'General Electric', info: 'USA', status: 'Inactive' },
-  { id: 'sup-5', code: 'NCC-005', name: 'Siemens Energy', info: 'Germany', status: 'Active' },
-  { id: 'sup-6', code: 'NCC-006', name: 'General Electric', info: 'USA', status: 'Active' },
-  { id: 'sup-7', code: 'NCC-007', name: 'Siemens Energy', info: 'Germany', status: 'Active' },
-  { id: 'sup-8', code: 'NCC-008', name: 'General Electric', info: 'USA', status: 'Inactive' },
-  { id: 'sup-9', code: 'NCC-009', name: 'Siemens Energy', info: 'Germany', status: 'Active' },
-  { id: 'sup-10', code: 'NCC-010', name: 'General Electric', info: 'USA', status: 'Active' },
-  { id: 'sup-11', code: 'NCC-011', name: 'ABB', info: 'Switzerland', status: 'Active' },
+  { 
+    id: 'sup-1', 
+    code: 'NCC-001', 
+    taxCode: '0101234567',
+    name: 'Siemens Energy Vietnam', 
+    address: 'Deutsches Haus, TP.HCM',
+    country: 'Vietnam',
+    type: 'OEM',
+    paymentTerm: 'Net 30',
+    currency: 'VND',
+    status: 'Active',
+    contacts: [
+      { id: 'cont-1-1', name: 'Mr. John', position: 'Sales Mgr', email: 'john@siemens.com', phone: '+84 909 123 456' },
+      { id: 'cont-1-2', name: 'Ms. Anna', position: 'Tech Support', email: 'anna@siemens.com', phone: '+84 918 654 321' },
+    ]
+  },
+  { 
+    id: 'sup-2', 
+    code: 'NCC-002', 
+    taxCode: '0300123456',
+    name: 'General Electric', 
+    address: 'New York, USA',
+    country: 'USA',
+    type: 'Manufacturer',
+    paymentTerm: 'Net 60',
+    currency: 'USD',
+    status: 'Active',
+    contacts: [] 
+  },
+  { 
+    id: 'sup-3', 
+    code: 'NCC-003', 
+    taxCode: '0101234568',
+    name: 'ABB', 
+    address: 'Zurich, Switzerland',
+    country: 'Switzerland',
+    type: 'OEM',
+    paymentTerm: 'Net 30',
+    currency: 'EUR',
+    status: 'Active',
+    contacts: []
+  },
+  { 
+    id: 'sup-4', 
+    code: 'NCC-004', 
+    taxCode: '0300123457',
+    name: 'Công ty TNHH BMT', 
+    address: 'Hanoi, Vietnam',
+    country: 'Vietnam',
+    type: 'Distributor',
+    paymentTerm: 'COD',
+    currency: 'VND',
+    status: 'Inactive',
+    contacts: []
+  },
 ];
 
 

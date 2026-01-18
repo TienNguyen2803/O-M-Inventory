@@ -123,6 +123,7 @@ export function SuppliersClient({ initialSuppliers }: SuppliersClientProps) {
       const newSupplier: Supplier = {
         id: `sup-${Date.now()}`,
         status: "Active", // Default status
+        contacts: [],
         ...values,
       };
       setSuppliers([newSupplier, ...suppliers]);
@@ -141,8 +142,8 @@ export function SuppliersClient({ initialSuppliers }: SuppliersClientProps) {
   };
 
   return (
-    <div className="w-full flex-1 space-y-4 pt-6">
-       <div className="px-4 md:px-8">
+    <div className="w-full">
+      <div className="px-4 md:px-8">
         <PageHeader
           title="Nhà cung cấp"
           breadcrumbs={<Breadcrumbs />}
@@ -167,9 +168,9 @@ export function SuppliersClient({ initialSuppliers }: SuppliersClientProps) {
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-[50px]">STT</TableHead>
-                  <TableHead>Mã số</TableHead>
-                  <TableHead>Tên/Tham chiếu</TableHead>
-                  <TableHead>Thông tin</TableHead>
+                  <TableHead>Mã NCC</TableHead>
+                  <TableHead>Tên Công ty</TableHead>
+                  <TableHead>Địa chỉ</TableHead>
                   <TableHead>Trạng thái</TableHead>
                   <TableHead className="w-[120px]">Thao tác</TableHead>
                 </TableRow>
@@ -188,7 +189,7 @@ export function SuppliersClient({ initialSuppliers }: SuppliersClientProps) {
                     </TableCell>
                     <TableCell>{supplier.name}</TableCell>
                     <TableCell className="text-muted-foreground">
-                      {supplier.info}
+                      {supplier.address}
                     </TableCell>
                     <TableCell>
                       <span
@@ -302,7 +303,7 @@ export function SuppliersClient({ initialSuppliers }: SuppliersClientProps) {
       </div>
 
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="sm:max-w-4xl">
           <DialogHeader>
             <DialogTitle>
               {viewMode
