@@ -1,4 +1,4 @@
-import type { Material, InventoryLog, WarehouseLocation, WarehouseItem, Supplier, MaterialRequest, MaterialRequestItem, PurchaseRequest, PurchaseRequestItem, BiddingPackage, BiddingItem, BiddingResult, InboundReceipt, InboundReceiptItem, InboundReceiptDocument, OutboundVoucher, OutboundVoucherItem, StockTake } from "./types";
+import type { Material, InventoryLog, WarehouseLocation, WarehouseItem, Supplier, MaterialRequest, MaterialRequestItem, PurchaseRequest, PurchaseRequestItem, BiddingPackage, BiddingItem, BiddingResult, InboundReceipt, InboundReceiptItem, InboundReceiptDocument, OutboundVoucher, OutboundVoucherItem, StockTake, StockTakeResult } from "./types";
 
 export const materials: Material[] = [
   {
@@ -1044,11 +1044,49 @@ export const stockTakes: StockTake[] = Array.from({ length: 25 }, (_, i) => {
   const id = i + 1;
   const quarter = Math.floor(i / 6) + 1;
   const statuses: StockTake['status'][] = ['Đã hoàn thành', 'Đang tiến hành', 'Đã hủy'];
+  const areas: StockTake['area'][] = ['Toàn bộ', 'Khu A', 'Khu B', 'Kho Lạnh'];
+
+  const results: StockTakeResult[] = [
+    {
+        id: `res-${id}-1`,
+        materialId: 'mat-001',
+        materialCode: 'PM-ELEC-GT-001',
+        materialName: 'Card điều khiển Tuabin khí Siemens SGT5-4000F',
+        location: 'A1-01-01',
+        bookQuantity: 10,
+        actualQuantity: 10,
+        notes: ''
+    },
+    {
+        id: `res-${id}-2`,
+        materialId: 'mat-002',
+        materialCode: 'PM-INST-GT-002',
+        materialName: 'Cảm biến nhiệt độ ống khói',
+        location: 'A1-01-02',
+        bookQuantity: 50,
+        actualQuantity: 48,
+        notes: 'Mất/Hỏng'
+    },
+     {
+        id: `res-${id}-3`,
+        materialId: 'mat-005',
+        materialCode: 'PM-MECH-FIL-005',
+        materialName: 'Lọc khí đầu vào tuabin (Air Inlet Filter)',
+        location: 'A1-02-01',
+        bookQuantity: 100,
+        actualQuantity: 102,
+        notes: 'Thừa 2 bộ'
+    }
+  ];
+
   return {
     id: `KK-2025-Q${quarter}-${String(id % 6 + 1).padStart(2, '0')}`,
-    name: `Kho A - Toàn bộ - Lần ${id % 6 + 1}`,
+    name: `Đợt kiểm kê Quý ${quarter}`,
     date: new Date(2025, quarter * 3 - 1, 28).toISOString(),
     status: statuses[i % statuses.length],
+    area: areas[i % areas.length],
+    leader: 'Trần Văn Kho',
+    results: statuses[i % statuses.length] === 'Đã hoàn thành' ? results : [],
   };
 });
 

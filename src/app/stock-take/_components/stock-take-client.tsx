@@ -32,11 +32,18 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
+import { StockTakeForm, type StockTakeFormValues } from "./stock-take-form";
 
 type StockTakesClientProps = {
   initialStockTakes: StockTake[];
@@ -55,6 +62,11 @@ export function StockTakeClient({
 }: StockTakesClientProps) {
   const [stockTakes, setStockTakes] = useState<StockTake[]>(initialStockTakes);
   const { toast } = useToast();
+
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [selectedStockTake, setSelectedStockTake] =
+    useState<StockTake | null>(null);
+  const [viewMode, setViewMode] = useState(false);
 
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -88,6 +100,32 @@ export function StockTakeClient({
     filteredStockTakes.length
   );
   
+  const handleAdd = () => {
+    setSelectedStockTake({
+      id: `KK-2025-Q4-${String(stockTakes.length + 1).padStart(2, '0')}`,
+      name: `Đợt kiểm kê cuối năm`,
+      date: new Date().toISOString(),
+      status: 'Đang tiến hành',
+      area: 'Toàn bộ',
+      leader: 'Trần Văn Kho',
+      results: [],
+    });
+    setViewMode(false);
+    setIsFormOpen(true);
+  };
+  
+  const handleEdit = (st: StockTake) => {
+    setSelectedStockTake(st);
+    setViewMode(false);
+    setIsFormOpen(true);
+  };
+
+  const handleView = (st: StockTake) => {
+    setSelectedStockTake(st);
+    setViewMode(true);
+    setIsFormOpen(true);
+  };
+
   const handleDelete = (id: string) => {
     setStockTakes(stockTakes.filter((st) => st.id !== id));
     toast({
@@ -96,6 +134,35 @@ export function StockTakeClient({
       variant: "destructive",
     });
   };
+
+  const handleFormSubmit = (values: StockTakeFormValues) => {
+    if (viewMode) {
+      setIsFormOpen(false);
+      return;
+    }
+    const isEditing = stockTakes.some(st => st.id === values.id);
+
+    const submittedData: StockTake = {
+      ...selectedStockTake!,
+      ...values,
+      date: values.date.toISOString(),
+      status: selectedStockTake?.status || 'Đang tiến hành',
+      results: values.results || [],
+    };
+
+    if (isEditing) {
+      setStockTakes(stockTakes.map((st) => st.id === values.id ? submittedData : st));
+    } else {
+      setStockTakes([submittedData, ...stockTakes]);
+    }
+    
+    setIsFormOpen(false);
+    toast({
+      title: "Thành công",
+      description: isEditing ? "Đã cập nhật phiên kiểm kê." : "Đã tạo phiên kiểm kê mới.",
+    });
+  };
+
 
   const getStatusBadgeClass = (status: StockTake["status"]) => {
     switch (status) {
@@ -114,7 +181,7 @@ export function StockTakeClient({
   return (
     <div className="w-full space-y-4">
       <PageHeader title="Kiểm kê kho" breadcrumbs={<Breadcrumbs />}>
-        <Button>
+        <Button onClick={handleAdd}>
           <Plus className="mr-2 h-4 w-4" />
           Thêm mới
         </Button>
@@ -153,6 +220,7 @@ export function StockTakeClient({
                   <TableRow key={st.id}>
                     <TableCell
                       className="font-medium text-primary hover:underline cursor-pointer"
+                       onClick={() => handleView(st)}
                     >
                       {st.id}
                     </TableCell>
@@ -179,6 +247,7 @@ export function StockTakeClient({
                           variant="ghost"
                           size="icon"
                           className="h-8 w-8 text-muted-foreground"
+                          onClick={() => handleView(st)}
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
@@ -186,6 +255,7 @@ export function StockTakeClient({
                           variant="ghost"
                           size="icon"
                           className="h-8 w-8 text-muted-foreground"
+                          onClick={() => handleEdit(st)}
                         >
                           <Pencil className="h-4 w-4" />
                         </Button>
@@ -278,6 +348,26 @@ export function StockTakeClient({
           </div>
         </CardFooter>
       </Card>
+
+      <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+        <DialogContent className="max-w-4xl">
+          <DialogHeader>
+            <DialogTitle>
+              {viewMode
+                ? `Chi tiết Đợt kiểm kê: ${selectedStockTake?.id}`
+                : stockTakes.some(st => st.id === selectedStockTake?.id)
+                ? `Cập nhật Đợt kiểm: ${selectedStockTake?.id}`
+                : "Tạo Đợt kiểm kê mới"}
+            </DialogTitle>
+          </DialogHeader>
+          <StockTakeForm
+            stockTake={selectedStockTake}
+            onSubmit={handleFormSubmit}
+            onCancel={() => setIsFormOpen(false)}
+            viewMode={viewMode}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

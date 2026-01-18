@@ -206,9 +206,24 @@ export interface InboundReceipt {
   documents?: InboundReceiptDocument[];
 }
 
+
+export interface StockTakeResult {
+    id: string;
+    materialId: string;
+    materialCode: string;
+    materialName: string;
+    location: string;
+    bookQuantity: number;
+    actualQuantity: number;
+    notes?: string;
+}
+
 export interface StockTake {
   id: string; // MÃ SỐ
   name: string; // TÊN/THAM CHIẾU
   date: string; // THÔNG TIN (Date)
   status: 'Đã hoàn thành' | 'Đang tiến hành' | 'Đã hủy'; // TRẠNG THÁI
+  area: 'Toàn bộ' | 'Khu A' | 'Khu B' | 'Kho Lạnh';
+  leader: string;
+  results?: StockTakeResult[];
 }
