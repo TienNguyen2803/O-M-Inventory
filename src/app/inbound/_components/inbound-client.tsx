@@ -55,7 +55,7 @@ export function InboundClient({ initialLogs, materials }: InboundClientProps) {
   };
 
   return (
-    <div className="flex-1 space-y-4 pt-6 px-4 md:px-8">
+    <div className="space-y-4">
       <PageHeader
         title="Nhập kho"
         description="Ghi nhận các lô vật tư, hàng hóa nhập vào kho."
