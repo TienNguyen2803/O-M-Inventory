@@ -99,11 +99,19 @@ export function RolesClient({ initialRoles }: { initialRoles: Role[] }) {
             </CardHeader>
             <CardContent className="space-y-2">
               {roles.map((role) => (
-                <button 
+                <div 
                   key={role.id}
                   onClick={() => setSelectedRole(role)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      setSelectedRole(role);
+                    }
+                  }}
+                  role="button"
+                  tabIndex={0}
                   className={cn(
-                    "w-full text-left p-3 rounded-lg border transition-colors",
+                    "w-full text-left p-3 rounded-lg border transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                     selectedRole?.id === role.id 
                       ? 'bg-primary/10 border-primary/50' 
                       : 'hover:bg-muted/50'
@@ -118,7 +126,7 @@ export function RolesClient({ initialRoles }: { initialRoles: Role[] }) {
                     <Users className="h-3 w-3 mr-1.5" />
                     <span>{role.userCount} người dùng</span>
                   </div>
-                </button>
+                </div>
               ))}
             </CardContent>
           </Card>
