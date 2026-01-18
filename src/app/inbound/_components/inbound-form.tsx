@@ -165,7 +165,7 @@ export function InboundForm({
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-2 max-h-[80vh] overflow-y-auto pr-4">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-2 max-h-[85vh] overflow-y-auto pr-4">
         {receipt && <Stepper currentStep={receipt.step} />}
         
         <div className="grid grid-cols-1 md:grid-cols-4 gap-x-6 gap-y-4">
