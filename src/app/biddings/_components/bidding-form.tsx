@@ -155,7 +155,7 @@ export function BiddingForm({
                 <FormItem>
                   <FormLabel>Căn cứ PR</FormLabel>
                   <FormControl>
-                     <Button variant="link" className="p-0 h-auto font-semibold text-base" type="button" disabled={viewMode}>{field.value}</Button>
+                    <Input {...field} disabled={viewMode} />
                   </FormControl>
                 </FormItem>
               )}
