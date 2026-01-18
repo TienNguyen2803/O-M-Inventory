@@ -165,28 +165,48 @@ export const inventoryLogs: InventoryLog[] = [
   },
 ];
 
-const warehouseItems: WarehouseItem[] = [
+const warehouseItems1: WarehouseItem[] = [
   {
     materialId: "mat-001",
-    materialCode: "1.51.45.004",
-    materialName: "Dầu bôi trơn Turbo",
-    quantity: 5,
-    unit: "Phuy",
-    batchSerial: "Lô 2023-01",
+    materialCode: "PM-MAT-2508-001",
+    materialName: "Mỡ hàn Amtech 100g",
+    quantity: 50,
+    unit: "Hộp",
+    batchSerial: "BATCH-20240701",
   },
   {
     materialId: "mat-002",
-    materialCode: "5.12.99.105",
-    materialName: "Cảm biến rung",
-    quantity: 5,
+    materialCode: "1.51.45.002.USA",
+    materialName: "Gioăng đệm chịu nhiệt",
+    quantity: 30,
     unit: "Cái",
-    batchSerial: "SN: 88990...",
+    batchSerial: "SN-Gasket-12345",
   },
 ];
 
+const warehouseItems2: WarehouseItem[] = [
+    {
+    materialId: "mat-004",
+    materialCode: "1.51.45.004.USA",
+    materialName: "Gioăng đệm chịu nhiệt",
+    quantity: 100,
+    unit: "Cái",
+    batchSerial: "SN-Gasket-67890",
+  },
+   {
+    materialId: "mat-005",
+    materialCode: "1.51.45.005.USA",
+    materialName: "Mỡ hàn Amtech 100g",
+    quantity: 0,
+    unit: "Hộp",
+    batchSerial: "BATCH-20240702",
+  },
+];
+
+
 export const warehouseLocations: WarehouseLocation[] = [
-  { id: 'wh-1', code: 'A1-01-01', name: 'Kệ 01 - Tầng 1 - Dãy A', area: 'Khu A', type: 'Kệ Pallet', status: 'Active', barcode: 'LOC-A10101', maxWeight: 2000, dimensions: '2.7m x 1.2m', items: warehouseItems },
-  { id: 'wh-2', code: 'A1-02-01', name: 'Kệ 02 - Tầng 1 - Dãy A', area: 'Khu A', type: 'Kệ Pallet', status: 'Active', items: [] },
+  { id: 'wh-1', code: 'A1-01-01', name: 'Kệ 01 - Tầng 1 - Dãy A', area: 'Khu A', type: 'Kệ Pallet', status: 'Active', barcode: 'LOC-A10101', maxWeight: 2000, dimensions: '2.7m x 1.2m', items: warehouseItems1 },
+  { id: 'wh-2', code: 'A1-02-01', name: 'Kệ 02 - Tầng 1 - Dãy A', area: 'Khu A', type: 'Kệ Pallet', status: 'Active', items: warehouseItems2 },
   { id: 'wh-3', code: 'A1-03-01', name: 'Kệ 03 - Tầng 1 - Dãy A', area: 'Khu A', type: 'Kệ Pallet', status: 'Active', items: [] },
   { id: 'wh-4', code: 'A1-04-01', name: 'Kệ 04 - Tầng 1 - Dãy A', area: 'Khu A', type: 'Kệ Pallet', status: 'Inactive', items: [] },
   { id: 'wh-5', code: 'A1-05-01', name: 'Kệ 05 - Tầng 1 - Dãy A', area: 'Khu A', type: 'Kệ Pallet', status: 'Active', items: [] },
