@@ -58,11 +58,10 @@ export function OutboundClient({
   };
 
   return (
-    <div className="flex-1 space-y-4 pt-6">
+    <div className="flex-1 space-y-4 pt-6 px-4 md:px-8">
       <PageHeader
         title="Xuất kho"
         description="Ghi nhận vật tư xuất kho cho các hoạt động của nhà máy."
-        className="px-4 md:px-8"
       >
         <Button
           onClick={() => setIsFormOpen(true)}
@@ -73,36 +72,34 @@ export function OutboundClient({
         </Button>
       </PageHeader>
 
-      <div className="px-4 md:px-8">
-        <Card>
-          <CardContent className="pt-6">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Ngày xuất</TableHead>
-                  <TableHead>Tên vật tư</TableHead>
-                  <TableHead>Bộ phận sử dụng</TableHead>
-                  <TableHead className="text-right">Số lượng</TableHead>
+      <Card>
+        <CardContent className="pt-6">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Ngày xuất</TableHead>
+                <TableHead>Tên vật tư</TableHead>
+                <TableHead>Bộ phận sử dụng</TableHead>
+                <TableHead className="text-right">Số lượng</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {logs.map((log) => (
+                <TableRow key={log.id}>
+                  <TableCell className="font-medium">
+                    {format(new Date(log.date), "dd/MM/yyyy")}
+                  </TableCell>
+                  <TableCell>{log.materialName}</TableCell>
+                  <TableCell className="text-muted-foreground">{log.actor}</TableCell>
+                  <TableCell className="text-right font-medium text-destructive">
+                    -{log.quantity.toLocaleString()}
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {logs.map((log) => (
-                  <TableRow key={log.id}>
-                    <TableCell className="font-medium">
-                      {format(new Date(log.date), "dd/MM/yyyy")}
-                    </TableCell>
-                    <TableCell>{log.materialName}</TableCell>
-                    <TableCell className="text-muted-foreground">{log.actor}</TableCell>
-                    <TableCell className="text-right font-medium text-destructive">
-                      -{log.quantity.toLocaleString()}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-      </div>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
 
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
         <DialogContent className="sm:max-w-[425px]">

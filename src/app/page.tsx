@@ -99,11 +99,10 @@ export default async function DashboardPage() {
   ];
 
   return (
-    <div className="flex-1 space-y-4 pt-6">
+    <div className="flex-1 space-y-4 pt-6 px-4 md:px-8">
       <PageHeader
         title="Dashboard Quản lý Kho"
         description="Tổng hợp tình hình hoạt động kho Phú Mỹ"
-        className="px-4 md:px-8"
       >
         <div className="flex items-center space-x-2">
           <Select defaultValue="this-month">
@@ -122,7 +121,7 @@ export default async function DashboardPage() {
           </Button>
         </div>
       </PageHeader>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 px-4 md:px-8">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium uppercase">
@@ -182,7 +181,7 @@ export default async function DashboardPage() {
 
       <DashboardCharts />
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 px-4 md:px-8">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-1">
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-base font-bold">
