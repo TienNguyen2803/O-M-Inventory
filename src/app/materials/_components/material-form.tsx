@@ -123,15 +123,18 @@ export function MaterialForm({
         return result;
     }
 
+    const countryCodes = ['VIE', 'JPN', 'GER', 'USA', 'CHN', 'KOR', '000'];
+    const qualityCodes = ['000', 'AXX', 'BXX', 'CXX', 'DXX', 'GXX'];
+
     const n1 = generateRandomString(1);
     const n2 = generateRandomString(2);
     const n3 = generateRandomString(2);
     const n4 = generateRandomString(3);
-    const n5 = generateRandomString(3);
+    const n5 = countryCodes[Math.floor(Math.random() * countryCodes.length)];
     const n6 = generateRandomString(2);
-    const n7 = generateRandomString(3);
+    const n7 = qualityCodes[Math.floor(Math.random() * qualityCodes.length)];
 
-    const newCode = `${n1}${n2}${n3}${n4}${n5}${n6}${n7}`;
+    const newCode = `${n1}.${n2}.${n3}.${n4}.${n5}.${n6}.${n7}`;
     form.setValue('evnCode', newCode);
   };
 
