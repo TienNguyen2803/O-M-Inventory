@@ -3,7 +3,7 @@
     {
       "id": "user-avatar",
       "description": "User avatar for the sidebar",
-      "imageUrl": "https://images.unsplash.com/photo-1520423465829-01b46353975b?q=80&w=400&h=400&fit=crop",
+      "imageUrl": "https://i.pravatar.cc/150?u=nguyen-van-a",
       "imageHint": "asian man suit"
     }
   ]
