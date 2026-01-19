@@ -35,8 +35,8 @@ export function AppHeader() {
           <img
               src="https://skg.com.vn/wp-content/uploads/2024/10/SKG_Only-1400x546.png"
               alt="SKG Logo"
-              width={70}
-              height={27}
+              width={77}
+              height={30}
           />
           
           <div className="hidden h-8 items-center gap-4 md:flex">
