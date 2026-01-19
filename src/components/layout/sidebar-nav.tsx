@@ -17,7 +17,7 @@ import {
   Users,
   ClipboardCheck,
   ShoppingBasket,
-  Gavel,
+  Award,
   ClipboardList,
   History,
   UserCog,
@@ -56,7 +56,7 @@ const navItems = [
         label: "Yêu cầu Mua sắm",
         icon: ShoppingBasket,
       },
-      { href: "/biddings", label: "Quản lý Đấu thầu", icon: Gavel },
+      { href: "/biddings", label: "Quản lý Đấu thầu", icon: Award },
     ],
   },
   {
