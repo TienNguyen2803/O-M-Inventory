@@ -125,6 +125,7 @@ export function BiddingsClient({
       estimatedPrice: 0,
       method: 'Đấu thầu rộng rãi',
       status: 'Đang mời thầu',
+      step: 1,
       items: [],
     };
     setSelectedBidding(newBiddingTemplate);
@@ -155,6 +156,7 @@ export function BiddingsClient({
 
   const handleFormSubmit = (values: BiddingFormValues) => {
     const submittedBidding: BiddingPackage = {
+      ...selectedBidding!,
       ...values,
       openingDate: values.openingDate?.toISOString(),
       closingDate: values.closingDate?.toISOString(),
@@ -185,9 +187,11 @@ export function BiddingsClient({
     switch (status) {
       case "Đang mời thầu":
         return "bg-blue-100 text-blue-800";
+      case "Đã mở thầu":
+        return "bg-cyan-100 text-cyan-800";
       case "Đang chấm thầu":
         return "bg-yellow-100 text-yellow-800";
-      case "Đã có kết quả":
+      case "Hoàn thành":
         return "bg-green-100 text-green-800";
       case "Đã hủy":
         return "bg-red-100 text-red-800";
@@ -238,8 +242,9 @@ export function BiddingsClient({
                 <SelectContent>
                     <SelectItem value="all">Tất cả</SelectItem>
                     <SelectItem value="Đang mời thầu">Đang mời thầu</SelectItem>
+                    <SelectItem value="Đã mở thầu">Đã mở thầu</SelectItem>
                     <SelectItem value="Đang chấm thầu">Đang chấm thầu</SelectItem>
-                    <SelectItem value="Đã có kết quả">Đã có kết quả</SelectItem>
+                    <SelectItem value="Hoàn thành">Hoàn thành</SelectItem>
                     <SelectItem value="Đã hủy">Đã hủy</SelectItem>
                 </SelectContent>
                 </Select>

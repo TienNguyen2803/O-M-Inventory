@@ -984,7 +984,14 @@ export const purchaseRequests: PurchaseRequest[] = Array.from({ length: 25 }, (_
 export const biddingPackages: BiddingPackage[] = Array.from({ length: 25 }, (_, i) => {
     const id = i + 1;
     const method = id % 3 === 0 ? 'Chỉ định thầu' : 'Đấu thầu rộng rãi';
-    const status = id < 6 ? 'Đang mời thầu' : id < 11 ? 'Đang chấm thầu' : id < 18 ? 'Đã có kết quả' : 'Đã hủy';
+    const statuses: BiddingPackage['status'][] = ['Đang mời thầu', 'Đã mở thầu', 'Đang chấm thầu', 'Hoàn thành', 'Đã hủy'];
+    const status = statuses[i % statuses.length];
+    
+    let step = 1;
+    if (status === 'Đã mở thầu') step = 2;
+    else if (status === 'Đang chấm thầu') step = 3;
+    else if (status === 'Hoàn thành') step = 4;
+    else if (status === 'Đã hủy') step = 0; // or some value to indicate it's off the path
 
     const items: BiddingItem[] = [
         { id: 'item-1', name: 'Gói dịch vụ Đại tu Tuabin khí', unit: 'Gói', quantity: 1, amount: 120000000000 },
@@ -992,11 +999,11 @@ export const biddingPackages: BiddingPackage[] = Array.from({ length: 25 }, (_, 
         { id: 'item-3', name: 'Chuyên gia kỹ thuật', unit: 'Man-day', quantity: 100, amount: 5000000000 },
     ];
     
-    const result: BiddingResult | undefined = status === 'Đã có kết quả' ? {
+    const result: BiddingResult | undefined = status === 'Hoàn thành' ? {
         winner: suppliers[i % suppliers.length].name,
         winningPrice: 204500000000,
         technicalScore: `${Math.floor(Math.random() * 15) + 85}/100`,
-        negotiationStatus: `Đã hoàn tất ${id}/${id%12+1}/2025`
+        negotiationStatus: `Đã hoàn tất ${id}/${(id%12)+1}/2025`
     } : undefined;
 
     return {
@@ -1006,6 +1013,7 @@ export const biddingPackages: BiddingPackage[] = Array.from({ length: 25 }, (_, 
         estimatedPrice: 210000000000,
         method: method,
         status: status,
+        step,
         openingDate: new Date(2025, 4, id, 9, 0).toISOString(),
         closingDate: new Date(2025, 8, id, 16, 0).toISOString(),
         items,

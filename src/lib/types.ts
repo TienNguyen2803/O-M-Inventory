@@ -145,7 +145,8 @@ export interface BiddingPackage {
   purchaseRequestId: string; // Căn cứ PR
   estimatedPrice: number; // Giá dự toán
   method: 'Đấu thầu rộng rãi' | 'Chỉ định thầu'; // Hình thức
-  status: 'Đang mời thầu' | 'Đang chấm thầu' | 'Đã có kết quả' | 'Đã hủy'; // Trạng thái
+  status: 'Đang mời thầu' | 'Đã mở thầu' | 'Đang chấm thầu' | 'Hoàn thành' | 'Đã hủy'; // Trạng thái
+  step: number;
   openingDate?: string; // Ngày mở thầu
   closingDate?: string; // Ngày đóng thầu
   items?: BiddingItem[]; // Phạm vi cung cấp

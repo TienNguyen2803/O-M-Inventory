@@ -1,5 +1,6 @@
 "use client";
 
+import * as React from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -39,7 +40,7 @@ import {
   TableFooter,
 } from "@/components/ui/table";
 import { DialogFooter } from "@/components/ui/dialog";
-import { CalendarIcon, Save } from "lucide-react";
+import { CalendarIcon, Save, Check } from "lucide-react";
 import type { BiddingPackage } from "@/lib/types";
 
 const formSchema = z.object({
@@ -77,6 +78,57 @@ type BiddingFormProps = {
   viewMode: boolean;
 };
 
+const Stepper = ({ currentStep }: { currentStep: number }) => {
+  const steps = [
+    { id: 1, name: "Mời thầu" },
+    { id: 2, name: "Mở thầu" },
+    { id: 3, name: "Chấm thầu" },
+    { id: 4, name: "Hoàn thành" },
+  ];
+
+  return (
+    <div className="flex items-center mb-8">
+      {steps.map((step, index) => (
+        <React.Fragment key={step.id}>
+          <div className="flex flex-col items-center w-32 text-center">
+            <div
+              className={cn(
+                "w-8 h-8 rounded-full flex items-center justify-center font-bold text-lg",
+                step.id < currentStep
+                  ? "bg-green-500 text-white"
+                  : step.id === currentStep
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted text-muted-foreground"
+              )}
+            >
+              {step.id < currentStep ? <Check className="w-5 h-5" /> : step.id}
+            </div>
+            <p
+              className={cn(
+                "text-xs mt-2",
+                step.id <= currentStep
+                  ? "font-semibold"
+                  : "text-muted-foreground"
+              )}
+            >
+              {step.name}
+            </p>
+          </div>
+          {index < steps.length - 1 && (
+            <div
+              className={cn(
+                "flex-1 h-0.5 mb-6",
+                step.id < currentStep ? "bg-green-500" : "bg-border"
+              )}
+            />
+          )}
+        </React.Fragment>
+      ))}
+    </div>
+  );
+};
+
+
 const FormSectionHeader = ({ title }: { title: string }) => (
   <h3 className="text-sm font-semibold text-primary uppercase tracking-wider border-b pb-2 my-4">
     {title}
@@ -109,10 +161,11 @@ export function BiddingForm({
   });
 
   const totalAmount = form.watch("items")?.reduce((sum, item) => sum + (item.amount || 0), 0) || 0;
-  const showResults = biddingPackage?.status === "Đã có kết quả";
+  const showResults = biddingPackage?.status === "Hoàn thành";
 
   return (
     <div className="max-h-[85vh] overflow-y-auto pr-2">
+      {biddingPackage?.step && <Stepper currentStep={biddingPackage.step} />}
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit)}
