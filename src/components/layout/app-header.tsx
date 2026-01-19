@@ -33,8 +33,8 @@ export function AppHeader() {
           <SidebarTrigger className="md:hidden" />
           
           <img
-              src="https://skg.com.vn/wp-content/uploads/2024/10/SKG_Only-1400x546.png"
-              alt="SKG Logo"
+              src="https://solutions.viettel.vn/storage/logo3.png"
+              alt="Viettel Solutions Logo"
               width={77}
               height={30}
           />
