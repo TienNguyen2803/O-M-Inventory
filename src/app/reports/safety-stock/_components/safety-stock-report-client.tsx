@@ -43,9 +43,8 @@ const Breadcrumbs = () => (
 
 type ReportData = {
   material: Material;
-  suggestedMin: number;
-  suggestedMax: number;
   status: 'Dưới mức an toàn' | 'Ổn định' | 'Vượt mức tối đa';
+  note: string;
 };
 
 export function SafetyStockReportClient({
@@ -67,10 +66,6 @@ export function SafetyStockReportClient({
             return matchesCategory;
         })
         .map((material) => {
-            // Mock suggested values for demonstration
-            const suggestedMin = Math.round((material.minStock || 10) * (1 + (Math.random() - 0.3) * 0.4));
-            const suggestedMax = Math.round((material.maxStock || 50) * (1 + (Math.random() - 0.4) * 0.3));
-
             let status: ReportData['status'] = 'Ổn định';
             if (material.stock < (material.minStock || 0)) {
                 status = 'Dưới mức an toàn';
@@ -78,11 +73,17 @@ export function SafetyStockReportClient({
                 status = 'Vượt mức tối đa';
             }
 
+            let note = '';
+            if (material.stock < (material.minStock || 0)) {
+                note = 'Cảnh báo thiếu tồn kho, xem xét mua bổ sung.';
+            } else if (material.stock > (material.minStock || 0) * 1.2) {
+                note = 'Dư tồn kho. ưu tiên xuất vật tư từ mã hàng này.';
+            }
+
             return {
                 material,
-                suggestedMin,
-                suggestedMax,
                 status,
+                note,
             };
         })
         .sort((a, b) => a.material.code.localeCompare(b.material.code));
@@ -175,14 +176,13 @@ export function SafetyStockReportClient({
                 <TableHead className="text-right">Tồn kho</TableHead>
                 <TableHead className="text-right">Min (Hiện tại)</TableHead>
                 <TableHead className="text-right">Max (Hiện tại)</TableHead>
-                <TableHead className="text-right font-semibold text-primary">Min (Đề xuất)</TableHead>
-                <TableHead className="text-right font-semibold text-primary">Max (Đề xuất)</TableHead>
                 <TableHead>Trạng thái</TableHead>
+                <TableHead>Ghi chú</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {paginatedData.length > 0 ? (
-                paginatedData.map(({ material, suggestedMin, suggestedMax, status }) => (
+                paginatedData.map(({ material, status, note }) => (
                   <TableRow key={material.id}>
                     <TableCell className="font-medium text-muted-foreground">
                       {material.code}
@@ -195,23 +195,18 @@ export function SafetyStockReportClient({
                      <TableCell className="text-right">
                        {(material.maxStock || 0).toLocaleString('vi-VN')}
                     </TableCell>
-                    <TableCell className="text-right font-bold text-primary">
-                       {suggestedMin.toLocaleString('vi-VN')}
-                    </TableCell>
-                    <TableCell className="text-right font-bold text-primary">
-                       {suggestedMax.toLocaleString('vi-VN')}
-                    </TableCell>
                     <TableCell>
                       <Badge variant="outline" className={cn("font-semibold", getStatusBadgeClass(status))}>
                         {status}
                       </Badge>
                     </TableCell>
+                    <TableCell className="text-muted-foreground">{note}</TableCell>
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
                   <TableCell
-                    colSpan={8}
+                    colSpan={7}
                     className="h-24 text-center text-muted-foreground"
                   >
                     Không có dữ liệu phù hợp.
