@@ -3,6 +3,25 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { SidebarTrigger } from "@/components/ui/sidebar";
+import { Bell } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
+const notifications = [
+    { id: 1, title: "Yêu cầu vật tư #YCVT-2025-026", description: "Cần được bạn phê duyệt." },
+    { id: 2, title: "Vật tư sắp hết hạn", description: "Mã VT PM-CHEM-OIL-006 còn 5 ngày." },
+    { id: 3, title: "Tồn kho dưới mức tối thiểu", description: "Mã VT PM-ELEC-GT-001 đã dưới mức min." },
+    { id: 4, title: "Phiếu nhập kho #PNK-2025-015", description: "Đã hoàn thành kiểm tra KCS." },
+    { id: 5, title: "Yêu cầu kiểm kê đột xuất", description: "Từ Ban Giám đốc cho Khu A." },
+];
+
 
 export function AppHeader() {
   const userAvatar = PlaceHolderImages.find((p) => p.id === "user-avatar");
@@ -16,8 +35,8 @@ export function AppHeader() {
           <img
               src="https://skg.com.vn/wp-content/uploads/2024/10/SKG_Only-1400x546.png"
               alt="SKG Logo"
-              width={98}
-              height={38}
+              width={70}
+              height={27}
           />
           
           <div className="hidden h-8 items-center gap-4 md:flex">
@@ -29,7 +48,33 @@ export function AppHeader() {
           </div>
         </div>
         
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4">
+           <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="relative h-9 w-9"
+              >
+                <Bell className="h-5 w-5" />
+                <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-600 text-xs font-bold text-white">
+                  5
+                </span>
+                <span className="sr-only">Toggle notifications</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-80">
+              <DropdownMenuLabel>Thông báo</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {notifications.map((notification) => (
+                <DropdownMenuItem key={notification.id} className="flex-col items-start cursor-pointer">
+                    <div className="font-semibold">{notification.title}</div>
+                    <p className="text-xs text-muted-foreground">{notification.description}</p>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
           <div className="hidden flex-col items-end sm:flex">
             <span className="font-semibold text-sm">Nguyễn Văn A</span>
             <span className="text-xs text-muted-foreground">
