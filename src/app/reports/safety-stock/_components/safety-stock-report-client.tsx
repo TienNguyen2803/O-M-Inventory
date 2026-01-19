@@ -43,7 +43,7 @@ const Breadcrumbs = () => (
 
 type ReportData = {
   material: Material;
-  status: 'Dưới mức an toàn' | 'Ổn định' | 'Vượt mức tối đa';
+  status: 'Dưới mức an toàn' | 'Ổn định' | 'Vượt mức tối đa' | 'Dư hơn 20%';
   note: string;
 };
 
@@ -66,17 +66,25 @@ export function SafetyStockReportClient({
             return matchesCategory;
         })
         .map((material) => {
-            let status: ReportData['status'] = 'Ổn định';
-            if (material.stock < (material.minStock || 0)) {
-                status = 'Dưới mức an toàn';
-            } else if (material.stock > (material.maxStock || Infinity)) {
-                status = 'Vượt mức tối đa';
-            }
-
+            let status: ReportData['status'];
             let note = '';
-            if (material.stock < (material.minStock || 0)) {
+            
+            const minStock = material.minStock || 0;
+            const maxStock = material.maxStock;
+
+            if (material.stock < minStock) {
+                status = 'Dưới mức an toàn';
+            } else if (maxStock !== undefined && material.stock > maxStock) {
+                status = 'Vượt mức tối đa';
+            } else if (material.stock > minStock * 1.2) {
+                status = 'Dư hơn 20%';
+            } else { 
+                status = 'Ổn định';
+            }
+            
+            if (material.stock < minStock) {
                 note = 'Cảnh báo thiếu tồn kho, xem xét mua bổ sung.';
-            } else if (material.stock > (material.minStock || 0) * 1.2) {
+            } else if (material.stock > minStock * 1.2) {
                 note = 'Dư tồn kho. ưu tiên xuất vật tư từ mã hàng này.';
             }
 
@@ -114,7 +122,9 @@ export function SafetyStockReportClient({
         return "bg-yellow-100 text-yellow-800 border-yellow-300";
       case "Vượt mức tối đa":
         return "bg-red-100 text-red-800 border-red-300";
-      default:
+      case "Dư hơn 20%":
+        return "bg-yellow-100 text-yellow-800 border-yellow-300";
+      default: // 'Ổn định'
         return "bg-green-100 text-green-800 border-green-300";
     }
   };
