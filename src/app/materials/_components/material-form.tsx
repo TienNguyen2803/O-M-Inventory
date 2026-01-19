@@ -113,6 +113,28 @@ export function MaterialForm({
         },
   });
 
+  const handleGenerateEvnCode = () => {
+    const generateRandomString = (length: number, chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789') => {
+        let result = '';
+        const charactersLength = chars.length;
+        for (let i = 0; i < length; i++) {
+            result += chars.charAt(Math.floor(Math.random() * charactersLength));
+        }
+        return result;
+    }
+
+    const n1 = generateRandomString(1);
+    const n2 = generateRandomString(2);
+    const n3 = generateRandomString(2);
+    const n4 = generateRandomString(3);
+    const n5 = generateRandomString(3);
+    const n6 = generateRandomString(2);
+    const n7 = generateRandomString(3);
+
+    const newCode = `${n1}${n2}${n3}${n4}${n5}${n6}${n7}`;
+    form.setValue('evnCode', newCode);
+  };
+
   return (
     <Form {...form}>
       <form
@@ -146,7 +168,7 @@ export function MaterialForm({
                       <Input {...field} disabled={viewMode} />
                     </FormControl>
                     {!viewMode && (
-                      <Button type="button">
+                      <Button type="button" onClick={handleGenerateEvnCode}>
                         <Globe className="mr-2" /> Xin cấp mã
                       </Button>
                     )}
