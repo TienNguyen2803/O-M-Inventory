@@ -16,7 +16,7 @@ export const materials: Material[] = [
     stock: 1,
     manufacturer: "Siemens",
     origin: "Germany",
-    minStock: 2,
+    minStock: 4,
     maxStock: 5,
     technicalSpecs: [ { property: "Model", value: "6DD1607-0AA2" }, { property: "Dùng cho", value: "SPPA-T3000" } ],
   },
@@ -87,7 +87,7 @@ export const materials: Material[] = [
     unit: "Bộ",
     status: "Mới",
     description: "Bộ lọc tinh cho hệ thống lọc khí đầu vào tuabin.",
-    stock: 15,
+    stock: 25,
     manufacturer: "Donaldson",
     origin: "USA",
     minStock: 20,
@@ -123,7 +123,7 @@ export const materials: Material[] = [
     unit: "Cái",
     status: "Mới",
     description: "Gioăng kim loại xoắn cho mặt bích đường ống hơi.",
-    stock: 110,
+    stock: 130,
     manufacturer: "Garlock",
     origin: "USA",
     minStock: 100,
@@ -159,7 +159,7 @@ export const materials: Material[] = [
     unit: "Bộ",
     status: "Mới",
     description: "Cảm biến đo tốc độ và độ rung trục tuabin.",
-    stock: 8,
+    stock: 9,
     manufacturer: "Bently Nevada",
     origin: "USA",
     minStock: 4,
@@ -876,7 +876,8 @@ export const suppliers: Supplier[] = [
 export const materialRequests: MaterialRequest[] = Array.from({ length: 25 }, (_, i) => {
     const id = i + 1;
     const priority = id % 5 === 0 ? 'Khẩn cấp' : 'Bình thường';
-    const status = id % 3 === 0 ? 'Đã duyệt' : 'Chờ duyệt';
+    const statusOptions: MaterialRequest['status'][] = ['Chờ duyệt', 'Đã duyệt', 'Hoàn thành'];
+    const status = statusOptions[i % statusOptions.length];
     const depts = ['PX Vận hành 1', 'PX Vận hành 2', 'PX Sửa chữa Cơ', 'PX Sửa chữa Điện', 'PX TĐH-ĐK'];
     const dept = depts[i % depts.length];
     
@@ -912,6 +913,13 @@ export const materialRequests: MaterialRequest[] = Array.from({ length: 25 }, (_
         });
     }
 
+    let step = 2;
+    if (status === 'Đã duyệt') {
+        step = 3;
+    } else if (status === 'Hoàn thành') {
+        step = 4;
+    }
+
     return {
         id: `YCVT-2025-${String(id).padStart(3, '0')}`,
         requesterName: 'Nguyễn Văn A',
@@ -920,8 +928,9 @@ export const materialRequests: MaterialRequest[] = Array.from({ length: 25 }, (_
         requestDate: new Date(2025, i % 6, id % 28 + 1).toISOString(),
         priority: priority,
         status: status,
+        step: step,
         workOrder: `WO-2025-${String(id + 98).padStart(3, '0')}`,
-        approver: status === 'Đã duyệt' ? 'Lê Văn Kỹ (P.Kỹ thuật)' : undefined,
+        approver: status === 'Đã duyệt' || status === 'Hoàn thành' ? 'Lê Văn Kỹ (P.Kỹ thuật)' : undefined,
         items: requestItems
     };
 });

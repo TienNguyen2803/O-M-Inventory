@@ -141,6 +141,7 @@ export function MaterialRequestsClient({
       priority: "Bình thường",
       status: "Chờ duyệt",
       items: [],
+      step: 1,
     };
     setSelectedRequest(newRequestTemplate);
     setViewMode(false);
@@ -169,24 +170,28 @@ export function MaterialRequestsClient({
   };
   
   const handleFormSubmit = (values: RequestFormValues) => {
-    const submittedRequest: MaterialRequest = {
-      ...values,
-      requestDate: values.requestDate.toISOString(),
-      requesterName: selectedRequest?.requesterName || "Nguyễn Văn A", // Keep original requester name
-      items: values.items.map(item => ({...item})) // Ensure it's a new array
-    };
-    
     if (viewMode) {
       setIsFormOpen(false);
       return;
     }
   
-    const isEditing = requests.some(r => r.id === submittedRequest.id);
+    const isEditing = requests.some(r => r.id === selectedRequest?.id);
   
     if (isEditing) {
-      setRequests(requests.map((r) => (r.id === submittedRequest.id ? submittedRequest : r)));
+       const updatedRequest: MaterialRequest = {
+         ...selectedRequest!,
+         ...values,
+         requestDate: values.requestDate.toISOString(),
+       };
+      setRequests(requests.map((r) => (r.id === updatedRequest.id ? updatedRequest : r)));
     } else {
-      setRequests([submittedRequest, ...requests]);
+        const newRequest: MaterialRequest = {
+         ...selectedRequest!,
+         ...values,
+         requestDate: values.requestDate.toISOString(),
+         step: 2, // From creating to pending
+       };
+      setRequests([newRequest, ...requests]);
     }
     setIsFormOpen(false);
     toast({
@@ -201,6 +206,8 @@ export function MaterialRequestsClient({
         return "bg-green-100 text-green-800";
       case "Chờ duyệt":
         return "bg-yellow-100 text-yellow-800";
+       case "Hoàn thành":
+        return "bg-blue-100 text-blue-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
@@ -256,6 +263,7 @@ export function MaterialRequestsClient({
                 <SelectItem value="all">-- Tất cả trạng thái --</SelectItem>
                 <SelectItem value="Chờ duyệt">Chờ duyệt</SelectItem>
                 <SelectItem value="Đã duyệt">Đã duyệt</SelectItem>
+                <SelectItem value="Hoàn thành">Hoàn thành</SelectItem>
               </SelectContent>
             </Select>
             <Select value={priorityFilter} onValueChange={setPriorityFilter}>

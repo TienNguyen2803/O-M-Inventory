@@ -96,9 +96,10 @@ export interface MaterialRequest {
   requestDate: string; // Ngày yêu cầu (ISO 8601 string)
   workOrder?: string; // Mã WO/Công trình
   priority: "Khẩn cấp" | "Bình thường";
-  status: "Đã duyệt" | "Chờ duyệt";
+  status: "Đã duyệt" | "Chờ duyệt" | "Hoàn thành";
   approver?: string; // Người duyệt kỹ thuật
   items: MaterialRequestItem[];
+  step: number;
 }
 
 export interface PurchaseRequestItem {
