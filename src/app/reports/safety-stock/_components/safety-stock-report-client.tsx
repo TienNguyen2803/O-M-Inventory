@@ -43,7 +43,7 @@ const Breadcrumbs = () => (
 
 type ReportData = {
   material: Material;
-  status: 'Dưới mức an toàn' | 'Ổn định' | 'Vượt mức tối đa' | 'Dư hơn 20%';
+  status: 'Dưới mức an toàn' | 'Ổn định' | 'Dư hơn 20%' | 'Vượt mức tối đa';
   note: string;
 };
 
@@ -184,6 +184,7 @@ export function SafetyStockReportClient({
                 <TableHead>Mã VT</TableHead>
                 <TableHead className="w-2/5">Tên Vật tư</TableHead>
                 <TableHead className="text-right">Tồn kho</TableHead>
+                <TableHead>ĐVT</TableHead>
                 <TableHead className="text-right">Min (Hiện tại)</TableHead>
                 <TableHead className="text-right">Max (Hiện tại)</TableHead>
                 <TableHead>Trạng thái</TableHead>
@@ -199,6 +200,7 @@ export function SafetyStockReportClient({
                     </TableCell>
                     <TableCell className="font-semibold">{material.name}</TableCell>
                     <TableCell className="text-right font-bold">{material.stock.toLocaleString('vi-VN')}</TableCell>
+                    <TableCell>{material.unit}</TableCell>
                     <TableCell className="text-right">
                        {(material.minStock || 0).toLocaleString('vi-VN')}
                     </TableCell>
@@ -216,7 +218,7 @@ export function SafetyStockReportClient({
               ) : (
                 <TableRow>
                   <TableCell
-                    colSpan={7}
+                    colSpan={8}
                     className="h-24 text-center text-muted-foreground"
                   >
                     Không có dữ liệu phù hợp.
