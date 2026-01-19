@@ -1,9 +1,10 @@
 "use client";
 
+import * as React from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { Globe, Pencil, QrCode, Save } from "lucide-react";
+import { Globe, Pencil, QrCode, Save, Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -87,6 +88,7 @@ export function MaterialForm({
   onCancel,
   viewMode,
 }: MaterialFormProps) {
+  const [isGeneratingCode, setIsGeneratingCode] = React.useState(false);
   const form = useForm<MaterialFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: material
@@ -114,28 +116,32 @@ export function MaterialForm({
   });
 
   const handleGenerateEvnCode = () => {
-    const generateRandomString = (length: number, chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789') => {
-        let result = '';
-        const charactersLength = chars.length;
-        for (let i = 0; i < length; i++) {
-            result += chars.charAt(Math.floor(Math.random() * charactersLength));
-        }
-        return result;
-    }
+    setIsGeneratingCode(true);
 
-    const countryCodes = ['VIE', 'JPN', 'GER', 'USA', 'CHN', 'KOR', '000'];
-    const qualityCodes = ['000', 'AXX', 'BXX', 'CXX', 'DXX', 'GXX'];
+    setTimeout(() => {
+      const generateRandomString = (length: number, chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789') => {
+          let result = '';
+          const charactersLength = chars.length;
+          for (let i = 0; i < length; i++) {
+              result += chars.charAt(Math.floor(Math.random() * charactersLength));
+          }
+          return result;
+      }
 
-    const n1 = generateRandomString(1);
-    const n2 = generateRandomString(2);
-    const n3 = generateRandomString(2);
-    const n4 = generateRandomString(3);
-    const n5 = countryCodes[Math.floor(Math.random() * countryCodes.length)];
-    const n6 = generateRandomString(2);
-    const n7 = qualityCodes[Math.floor(Math.random() * qualityCodes.length)];
+      const countryCodes = ['VIE', 'JPN', 'GER', 'USA', 'CHN', 'KOR'];
 
-    const newCode = `${n1}.${n2}.${n3}.${n4}.${n5}.${n6}.${n7}`;
-    form.setValue('evnCode', newCode);
+      const n1 = generateRandomString(1);
+      const n2 = generateRandomString(2);
+      const n3 = generateRandomString(2);
+      const n4 = generateRandomString(3);
+      const n5 = countryCodes[Math.floor(Math.random() * countryCodes.length)];
+      const n6 = generateRandomString(2);
+      const n7 = '000'; // Default quality code for "Mới" (New)
+
+      const newCode = `${n1}.${n2}.${n3}.${n4}.${n5}.${n6}.${n7}`;
+      form.setValue('evnCode', newCode);
+      setIsGeneratingCode(false);
+    }, 2000);
   };
 
   return (
@@ -168,11 +174,20 @@ export function MaterialForm({
                   <FormLabel>Mã Vật tư (EVN eCat)</FormLabel>
                   <div className="flex gap-2">
                     <FormControl>
-                      <Input {...field} disabled={viewMode} />
+                      <Input {...field} disabled={viewMode || isGeneratingCode} />
                     </FormControl>
                     {!viewMode && (
-                      <Button type="button" onClick={handleGenerateEvnCode}>
-                        <Globe className="mr-2" /> Xin cấp mã
+                      <Button type="button" onClick={handleGenerateEvnCode} disabled={isGeneratingCode}>
+                        {isGeneratingCode ? (
+                            <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Đang tạo...
+                            </>
+                        ) : (
+                            <>
+                                <Globe className="mr-2" /> Xin cấp mã
+                            </>
+                        )}
                       </Button>
                     )}
                   </div>
