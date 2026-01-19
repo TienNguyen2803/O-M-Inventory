@@ -52,12 +52,12 @@ export function AppHeader() {
            <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
-                variant="ghost"
+                variant="secondary"
                 size="icon"
-                className="relative h-9 w-9"
+                className="relative h-9 w-9 rounded-full"
               >
                 <Bell className="h-5 w-5" />
-                <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-600 text-xs font-bold text-white">
+                <span className="absolute top-0 right-0 flex h-4 w-4 items-center justify-center rounded-full bg-red-600 text-xs font-bold text-white ring-2 ring-card">
                   5
                 </span>
                 <span className="sr-only">Toggle notifications</span>
