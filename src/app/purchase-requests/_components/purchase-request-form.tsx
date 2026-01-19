@@ -1,9 +1,10 @@
 "use client";
 
+import * as React from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useFieldArray } from "react-hook-form";
 import * as z from "zod";
-import { Plus, Save, Trash2 } from "lucide-react";
+import { Plus, Save, Trash2, Check } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -62,6 +63,56 @@ type PurchaseRequestFormProps = {
   viewMode: boolean;
 };
 
+const Stepper = ({ currentStep }: { currentStep: number }) => {
+  const steps = [
+    { id: 1, name: "Tạo yêu cầu" },
+    { id: 2, name: "Chờ duyệt" },
+    { id: 3, name: "Đã duyệt" },
+    { id: 4, name: "Hoàn thành" },
+  ];
+
+  return (
+    <div className="flex items-center mb-8">
+      {steps.map((step, index) => (
+        <React.Fragment key={step.id}>
+          <div className="flex flex-col items-center w-32 text-center">
+            <div
+              className={cn(
+                "w-8 h-8 rounded-full flex items-center justify-center font-bold text-lg",
+                step.id < currentStep
+                  ? "bg-green-500 text-white"
+                  : step.id === currentStep
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted text-muted-foreground"
+              )}
+            >
+              {step.id < currentStep ? <Check className="w-5 h-5" /> : step.id}
+            </div>
+            <p
+              className={cn(
+                "text-xs mt-2",
+                step.id <= currentStep
+                  ? "font-semibold"
+                  : "text-muted-foreground"
+              )}
+            >
+              {step.name}
+            </p>
+          </div>
+          {index < steps.length - 1 && (
+            <div
+              className={cn(
+                "flex-1 h-0.5 mb-6",
+                step.id < currentStep ? "bg-green-500" : "bg-border"
+              )}
+            />
+          )}
+        </React.Fragment>
+      ))}
+    </div>
+  );
+};
+
 const FormSectionHeader = ({ title }: { title: string }) => (
   <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider text-primary border-b pb-2 mb-2">
     {title}
@@ -101,6 +152,7 @@ export function PurchaseRequestForm({
         onSubmit={form.handleSubmit(onSubmit)}
         className="space-y-4 pt-2 max-h-[80vh] overflow-y-auto pr-4"
       >
+        {request?.step && <Stepper currentStep={request.step} />}
         <div className="grid grid-cols-3 gap-x-6 gap-y-4">
           <FormField
             control={form.control}

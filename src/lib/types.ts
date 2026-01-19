@@ -119,8 +119,9 @@ export interface PurchaseRequest {
   source: 'Trong nước' | 'Nhập khẩu'; // NGUỒN GỐC
   fundingSource: string; // Nguồn vốn
   totalAmount: number; // TỔNG TIỀN
-  status: 'Approved' | 'Pending' | 'Rejected'; // TRẠNG THÁI
+  status: 'Approved' | 'Pending' | 'Rejected' | 'Completed'; // TRẠNG THÁI
   items: PurchaseRequestItem[];
+  step?: number;
 }
 
 export interface BiddingItem {

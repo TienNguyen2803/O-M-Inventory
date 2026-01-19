@@ -125,6 +125,7 @@ export function PurchaseRequestsClient({
       status: "Pending",
       items: [],
       totalAmount: 0,
+      step: 1,
     };
     setSelectedRequest(newRequestTemplate);
     setViewMode(false);
@@ -155,22 +156,27 @@ export function PurchaseRequestsClient({
   const handleFormSubmit = (values: PurchaseRequestFormValues) => {
     const totalAmount = values.items.reduce((sum, item) => sum + item.quantity * item.estimatedPrice, 0);
 
-    const submittedRequest: PurchaseRequest = {
-      ...selectedRequest!,
-      ...values,
-      totalAmount: totalAmount,
-    };
-    
     if (viewMode) {
       setIsFormOpen(false);
       return;
     }
   
-    const isEditing = requests.some(r => r.id === submittedRequest.id);
+    const isEditing = requests.some(r => r.id === selectedRequest?.id);
   
     if (isEditing) {
+       const submittedRequest: PurchaseRequest = {
+        ...selectedRequest!,
+        ...values,
+        totalAmount: totalAmount,
+      };
       setRequests(requests.map((r) => (r.id === submittedRequest.id ? submittedRequest : r)));
     } else {
+       const submittedRequest: PurchaseRequest = {
+        ...selectedRequest!,
+        ...values,
+        totalAmount: totalAmount,
+        step: 2,
+      };
       setRequests([submittedRequest, ...requests]);
     }
     setIsFormOpen(false);
@@ -188,6 +194,8 @@ export function PurchaseRequestsClient({
         return "bg-yellow-100 text-yellow-800";
       case "Rejected":
         return "bg-red-100 text-red-800";
+      case "Completed":
+        return "bg-blue-100 text-blue-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
@@ -229,6 +237,7 @@ export function PurchaseRequestsClient({
                 <SelectItem value="Approved">Approved</SelectItem>
                 <SelectItem value="Pending">Pending</SelectItem>
                 <SelectItem value="Rejected">Rejected</SelectItem>
+                <SelectItem value="Completed">Completed</SelectItem>
               </SelectContent>
             </Select>
           </div>

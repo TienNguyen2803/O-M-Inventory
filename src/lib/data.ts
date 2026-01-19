@@ -13,7 +13,7 @@ export const materials: Material[] = [
     unit: "Cái",
     status: "Mới",
     description: "Card điều khiển chính cho hệ thống SPPA-T3000.",
-    stock: 1,
+    stock: 2,
     manufacturer: "Siemens",
     origin: "Germany",
     minStock: 4,
@@ -32,7 +32,7 @@ export const materials: Material[] = [
     unit: "Cái",
     status: "Mới",
     description: "Đo nhiệt độ khí thải sau tuabin, dải đo 0-1200°C.",
-    stock: 11,
+    stock: 12,
     manufacturer: "WIKA",
     origin: "Germany",
     minStock: 10,
@@ -946,6 +946,27 @@ export const purchaseRequests: PurchaseRequest[] = Array.from({ length: 25 }, (_
     ];
     const totalAmount = items.reduce((acc, item) => acc + (item.quantity * item.estimatedPrice), 0);
 
+    const statuses: PurchaseRequest['status'][] = ['Approved', 'Pending', 'Rejected', 'Completed'];
+    const status = statuses[i % statuses.length];
+
+    let step;
+    switch (status) {
+        case 'Pending':
+            step = 2;
+            break;
+        case 'Approved':
+            step = 3;
+            break;
+        case 'Completed':
+            step = 4;
+            break;
+        case 'Rejected':
+            step = 2; // Rejected at step 2
+            break;
+        default:
+            step = 1;
+    }
+
     return {
         id: `PR-2025-${String(id).padStart(3, '0')}`,
         requesterName: 'Kho Vật tư',
@@ -954,7 +975,8 @@ export const purchaseRequests: PurchaseRequest[] = Array.from({ length: 25 }, (_
         source: i % 2 !== 0 ? 'Trong nước' : 'Nhập khẩu',
         fundingSource: i % 3 === 0 ? 'ĐTXD' : 'SCL',
         totalAmount: totalAmount,
-        status: id % 3 === 0 ? 'Rejected' : (id % 2 !== 0 ? 'Approved' : 'Pending'),
+        status: status,
+        step: step,
         items: items,
     };
 });
