@@ -1,7 +1,6 @@
 import {
   ArrowUp,
   CircleDollarSign,
-  Download,
   FileText,
   FlaskConical,
   Package,
@@ -19,13 +18,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   Table,
   TableBody,
   TableCell,
@@ -34,10 +26,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Progress } from "@/components/ui/progress";
-import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/page-header";
 import { getMaterials } from "@/lib/data";
 import { DashboardCharts } from "./_components/dashboard-charts";
+import { DashboardHeaderActions } from "./_components/dashboard-header-actions";
 
 export default async function DashboardPage() {
   const materials = await getMaterials();
@@ -104,22 +96,7 @@ export default async function DashboardPage() {
         title="Dashboard Quản lý Kho"
         description="Tổng hợp tình hình hoạt động kho Phú Mỹ"
       >
-        <div className="flex items-center space-x-2">
-          <Select defaultValue="this-month">
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Chọn tháng" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="this-month">Tháng này</SelectItem>
-              <SelectItem value="last-month">Tháng trước</SelectItem>
-              <SelectItem value="last-3-months">3 tháng qua</SelectItem>
-            </SelectContent>
-          </Select>
-          <Button variant="outline">
-            <Download className="mr-2 h-4 w-4" />
-            Xuất báo cáo
-          </Button>
-        </div>
+        <DashboardHeaderActions />
       </PageHeader>
       <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-4">
         <Card>
