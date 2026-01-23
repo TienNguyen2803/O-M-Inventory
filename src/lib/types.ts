@@ -9,18 +9,47 @@ export interface Material {
   nameEn?: string; // Tên Vật tư (Tiếng Anh)
   code: string; // Mã nội bộ (PhuMyTPC)
   evnCode?: string; // Mã Vật tư (EVN eCat)
-  partNo: string; // Part Number
+  partNo: string; // Part Number / Mã hàng (PN)
+  serialNumber?: string; // Số serial (SN)
   managementType: "Batch" | "Serial"; // Quản lý theo Serial/IMEI (Checkbox)
   category: string;
   unit: string; // Đơn vị tính
   status: "Mới" | "Cũ nhưng dùng được" | "Hư hỏng" | "Hư hỏng không thể sửa chữa" | "Thanh lý";
   description?: string; // Ghi chú
   stock: number;
-  manufacturer?: string; // Nhà sản xuất
-  origin?: string; // Xuất xứ
+  manufacturer?: string; // Nhà sản xuất / Hãng
+  origin?: string; // Xuất xứ thực tế
   minStock?: number; // Tồn kho Tối thiểu
   maxStock?: number; // Tồn kho Tối đa
   technicalSpecs?: TechnicalSpec[];
+  
+  // for goods history & lifecycle
+  location?: string;
+  stockAge?: string; // Tuổi tồn
+  supplierWarranty?: string; // Bảo hành của NCC
+  serviceWarranty?: string; // Bảo hành dịch vụ của NCC
+  chassisPn?: string;
+  chassisSn?: string;
+  originAsPerCustomer?: string;
+  originOnDocs?: string;
+  warrantyCount?: number; // Số lần bảo hành/sửa chữa
+  lifespan?: string; // Tuổi thọ tài sản
+}
+
+export interface GoodsHistorySubEvent {
+  step: number;
+  title: string;
+  actor: string;
+  timestamp: string;
+  refId?: string;
+}
+
+export interface GoodsHistoryEvent {
+  id: string;
+  type: 'inbound-po' | 'outbound-customer' | 'inbound-rma' | 'outbound-rma' | 'outbound-warranty-return';
+  title: string;
+  timestamp: string;
+  subEvents: GoodsHistorySubEvent[];
 }
 
 export interface InventoryLog {

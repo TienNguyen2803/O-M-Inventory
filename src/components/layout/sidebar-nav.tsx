@@ -25,6 +25,7 @@ import {
   ScrollText,
   Hourglass,
   GaugeCircle,
+  ClipboardPaste,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -74,6 +75,7 @@ const navItems = [
       { href: "/outbound", label: "Xuất kho (Outbound)", icon: ArrowUpFromLine },
       { href: "/stock-take", label: "Kiểm kê (Stock Take)", icon: ClipboardList },
       { href: "/lifecycle", label: "Truy vết Vòng đời", icon: History },
+      { href: "/goods-history", label: "Lịch sử hàng hóa", icon: ClipboardPaste },
     ],
   },
   {
