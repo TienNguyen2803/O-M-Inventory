@@ -1264,7 +1264,7 @@ roles[0].permissions = Object.entries(allPermissions).reduce((acc, [group, perms
 export const activityLogs: ActivityLog[] = Array.from({ length: 50 }, (_, i) => {
     const id = i + 1;
     const users = [
-        { name: 'Nguyễn Văn A', avatarUrl: 'https://i.pravatar.cc/150?u=a042581f4e29026704d' },
+        { name: 'Nguyễn Văn A', avatarUrl: 'https://i.pravatar.cc/150?u=nguyen-van-a' },
         { name: 'Trần Thị B', avatarUrl: 'https://i.pravatar.cc/150?u=a042581f4e29026704e' },
         { name: 'Lê Văn Kỹ', avatarUrl: 'https://i.pravatar.cc/150?u=a042581f4e29026704f' },
         { name: 'Phạm Minh Khoa', avatarUrl: 'https://i.pravatar.cc/150?u=a042581f4e29026704g' }
