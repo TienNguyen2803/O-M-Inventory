@@ -324,6 +324,24 @@ async function main() {
 
   console.log('Seeding completed! 24 master data tables seeded.')
 
+  // === PHÒNG BAN ===
+
+  // 25. Department
+  console.log('  Seeding Department...')
+  await prisma.department.createMany({
+    data: [
+      { code: "PKT", name: "Phòng Kỹ thuật", sortOrder: 1 },
+      { code: "PXVH", name: "PX Vận hành", sortOrder: 2 },
+      { code: "PKH", name: "Phòng Kế hoạch", sortOrder: 3 },
+      { code: "BGD", name: "Ban Giám đốc", sortOrder: 4 },
+      { code: "PTC", name: "Phòng Tài chính", sortOrder: 5 },
+      { code: "PXSCC", name: "PX Sửa chữa Cơ", sortOrder: 6 },
+      { code: "PXSCD", name: "PX Sửa chữa Điện", sortOrder: 7 },
+      { code: "TDHDK", name: "PX TĐH-ĐK", sortOrder: 8 },
+    ],
+    skipDuplicates: true
+  })
+
   // === PERMISSION MANAGEMENT ===
 
   // 25. Actions

@@ -80,7 +80,7 @@ PowerTrack Logistics là hệ thống quản lý vật tư O&M (Operation & Main
 
 ### Database Layer
 
-- **24 Master Data Tables**: Các bảng lookup data riêng biệt, dễ mở rộng
+- **25 Master Data Tables**: Các bảng lookup data riêng biệt, dễ mở rộng
 - **Business Tables**: Materials, Suppliers, Warehouses, Requests, etc.
 - **Prisma 7 với PostgreSQL Adapter**: Sử dụng `@prisma/adapter-pg` cho connection pooling
 
@@ -129,6 +129,7 @@ Generic API cho quản lý 24 bảng master data:
 - Xuất kho: `outbound-purpose`, `outbound-status`
 - Kiểm kê: `stocktake-status`, `stocktake-area`
 - Người dùng & Nhật ký: `user-status`, `activity-action`
+- Tổ chức: `department`
 
 ---
 
@@ -141,6 +142,7 @@ Generic API cho quản lý 24 bảng master data:
 | `useUsers()` | CRUD operations cho User Management với pagination, search, filter |
 | `useRoles()` | Fetch roles cho dropdowns |
 | `useDepartments()` | Fetch departments cho dropdowns |
+| `useMaterialRequests()` | CRUD operations cho Material Request với pagination, search, filter |
 
 ---
 
@@ -240,5 +242,31 @@ Permissions được lưu dưới dạng JSON trong Role:
 | `useFeatures(grouped?)` | CRUD operations cho Features |
 | `useFeatureActions()` | Manage feature-action mappings |
 | `useRolesManagement()` | CRUD operations cho Roles với permissions |
+
+---
+
+## Material Request API
+
+API cho quản lý yêu cầu vật tư:
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/material-requests` | Danh sách yêu cầu (pagination, search, filter) |
+| POST | `/api/material-requests` | Tạo yêu cầu mới |
+| GET | `/api/material-requests/{id}` | Chi tiết 1 yêu cầu |
+| PUT | `/api/material-requests/{id}` | Cập nhật yêu cầu |
+| DELETE | `/api/material-requests/{id}` | Xóa yêu cầu (soft delete) |
+| POST | `/api/material-requests/{id}/approve` | Phê duyệt yêu cầu |
+
+### Query Parameters cho GET `/api/material-requests`
+
+| Param | Type | Description |
+|-------|------|-------------|
+| `page` | number | Số trang (mặc định: 1) |
+| `limit` | number | Số lượng mỗi trang (mặc định: 10) |
+| `search` | string | Tìm theo mã yêu cầu, tên người yêu cầu |
+| `department` | string | Filter theo phòng ban |
+| `status` | string | Filter theo trạng thái |
+| `priority` | string | Filter theo độ ưu tiên |
 
 

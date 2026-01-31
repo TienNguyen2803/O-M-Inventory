@@ -43,7 +43,7 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { UserForm, type UserFormValues } from "./user-form";
-import { useUsers, useRoles } from "@/hooks/use-users";
+import { useUsers, useRoles, useDepartments } from "@/hooks/use-users";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const Breadcrumbs = () => (
@@ -68,7 +68,11 @@ export function UsersClient() {
   } = useUsers(10);
   
   const { roles: rolesData } = useRoles();
-  const roles = rolesData.map(r => r.name);
+  const { departments } = useDepartments();
+  
+  // Helper functions to lookup names from IDs
+  const getDepartmentName = (id: string) => departments.find(d => d.id === id)?.name || id;
+  const getRoleName = (id: string) => rolesData.find(r => r.id === id)?.name || id;
   
   const { toast } = useToast();
   
@@ -266,8 +270,8 @@ export function UsersClient() {
                       {user.employeeCode}
                     </TableCell>
                     <TableCell>{user.name}</TableCell>
-                    <TableCell>{user.department}</TableCell>
-                    <TableCell>{user.role}</TableCell>
+                    <TableCell>{getDepartmentName(user.department)}</TableCell>
+                    <TableCell>{getRoleName(user.role)}</TableCell>
                     <TableCell>
                       <span className={cn("rounded-md px-2.5 py-1 text-xs font-semibold", getStatusBadgeClass(user.status))}>
                         {user.status === 'Active' ? 'Hoạt động' : 'Vô hiệu'}
@@ -387,7 +391,7 @@ export function UsersClient() {
           {isFormOpen && (
             <UserForm
               user={selectedUser}
-              roles={roles}
+              roles={rolesData}
               onSubmit={handleFormSubmit}
               onCancel={() => setIsFormOpen(false)}
               viewMode={viewMode}

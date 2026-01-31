@@ -41,7 +41,7 @@ export type UserFormValues = z.infer<typeof formSchema>;
 
 type UserFormProps = {
   user: User | null;
-  roles: string[];
+  roles: { id: string; name: string }[];
   onSubmit: (values: UserFormValues) => void;
   onCancel: () => void;
   viewMode: boolean;
@@ -145,7 +145,7 @@ export function UserForm({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {departments.map(dept => <SelectItem key={dept.id} value={dept.name}>{dept.name}</SelectItem>)}
+                      {departments.map(dept => <SelectItem key={dept.id} value={dept.id}>{dept.name}</SelectItem>)}
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -165,7 +165,7 @@ export function UserForm({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {roles.map(role => <SelectItem key={role} value={role}>{role}</SelectItem>)}
+                      {roles.map(role => <SelectItem key={role.id} value={role.id}>{role.name}</SelectItem>)}
                     </SelectContent>
                   </Select>
                   <FormMessage />

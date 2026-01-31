@@ -56,6 +56,9 @@ export const MASTER_DATA_TABLES: MasterDataTableConfig[] = [
   // === NGƯỜI DÙNG & NHẬT KÝ ===
   { id: 'user-status', name: 'Trạng thái người dùng', group: 'Người dùng', modelName: 'userStatus' },
   { id: 'activity-action', name: 'Loại hành động', group: 'Nhật ký', modelName: 'activityAction' },
+
+  // === TỔ CHỨC ===
+  { id: 'department', name: 'Phòng ban', group: 'Tổ chức', modelName: 'department' },
 ]
 
 // Helper: Get table config by ID

@@ -1,20 +1,20 @@
 import { NextResponse } from 'next/server'
+import prisma from '@/lib/db'
 
-// Static list of departments - can be moved to database later
-const departments = [
-  { id: 'dept-1', name: 'Phòng Kỹ thuật' },
-  { id: 'dept-2', name: 'PX Vận hành' },
-  { id: 'dept-3', name: 'Phòng Kế hoạch' },
-  { id: 'dept-4', name: 'Ban Giám đốc' },
-  { id: 'dept-5', name: 'Phòng Tài chính' },
-  { id: 'dept-6', name: 'PX Sửa chữa Cơ' },
-  { id: 'dept-7', name: 'PX Sửa chữa Điện' },
-  { id: 'dept-8', name: 'PX TĐH-ĐK' },
-]
-
-// GET /api/departments - Get all departments
+// GET /api/departments - Get all departments from database
 export async function GET() {
   try {
+    const departments = await prisma.department.findMany({
+      where: { isActive: true },
+      orderBy: { sortOrder: 'asc' },
+      select: {
+        id: true,
+        code: true,
+        name: true,
+        color: true,
+      }
+    })
+
     return NextResponse.json({
       data: departments,
     })

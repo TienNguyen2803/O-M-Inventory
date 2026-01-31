@@ -3,10 +3,10 @@
 ## Overview
 
 Hệ thống sử dụng PostgreSQL với Prisma 7 ORM. Schema được chia thành 2 nhóm chính:
-- **Master Data Tables (24 bảng)**: Dữ liệu tham chiếu, lookup values
+- **Master Data Tables (25 bảng)**: Dữ liệu tham chiếu, lookup values
 - **Business Data Tables**: Dữ liệu nghiệp vụ chính
 
-## Master Data Tables (24 bảng)
+## Master Data Tables (25 bảng)
 
 Mỗi bảng master data có cấu trúc chuẩn:
 
@@ -61,8 +61,10 @@ model [TableName] {
 | **NGƯỜI DÙNG & NHẬT KÝ** | | | |
 | | UserStatus | `user_statuses` | 2 |
 | | ActivityAction | `activity_actions` | 6 |
+| **TỔ CHỨC** | | | |
+| | Department | `departments` | 8 |
 
-**Tổng: 93 master data records**
+**Tổng: 101 master data records**
 
 ---
 
