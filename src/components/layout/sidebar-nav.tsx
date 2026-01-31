@@ -26,7 +26,9 @@ import {
   Hourglass,
   GaugeCircle,
   ClipboardPaste,
+  Settings,
 } from "lucide-react";
+
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -84,6 +86,7 @@ const navItems = [
       { href: "/users", label: "Quản lý Người dùng", icon: UserCog },
       { href: "/roles", label: "Phân quyền Vai trò", icon: KeyRound },
       { href: "/activity-log", label: "Nhật ký Hoạt động", icon: ScrollText },
+      { href: "/settings", label: "Cài đặt Master Data", icon: Settings },
     ],
   },
 ];

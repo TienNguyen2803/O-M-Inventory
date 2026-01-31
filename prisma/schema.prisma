@@ -1,0 +1,745 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ============================================
+// MASTER DATA TABLES (24 tables)
+// ============================================
+
+// === VẬT TƯ (4 bảng) ===
+
+model MaterialStatus {
+  id        String   @id @default(uuid())
+  code      String   @unique
+  name      String
+  color     String?
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("material_statuses")
+}
+
+model MaterialCategory {
+  id        String   @id @default(uuid())
+  code      String   @unique
+  name      String
+  color     String?
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("material_categories")
+}
+
+model MaterialUnit {
+  id        String   @id @default(uuid())
+  code      String   @unique
+  name      String
+  color     String?
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("material_units")
+}
+
+model ManagementType {
+  id        String   @id @default(uuid())
+  code      String   @unique
+  name      String
+  color     String?
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("management_types")
+}
+
+// === KHO (3 bảng) ===
+
+model WarehouseArea {
+  id        String   @id @default(uuid())
+  code      String   @unique
+  name      String
+  color     String?
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("warehouse_areas")
+}
+
+model WarehouseType {
+  id        String   @id @default(uuid())
+  code      String   @unique
+  name      String
+  color     String?
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("warehouse_types")
+}
+
+model WarehouseStatus {
+  id        String   @id @default(uuid())
+  code      String   @unique
+  name      String
+  color     String?
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("warehouse_statuses")
+}
+
+// === NHÀ CUNG CẤP (3 bảng) ===
+
+model SupplierType {
+  id        String   @id @default(uuid())
+  code      String   @unique
+  name      String
+  color     String?
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("supplier_types")
+}
+
+model PaymentTerm {
+  id        String   @id @default(uuid())
+  code      String   @unique
+  name      String
+  color     String?
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("payment_terms")
+}
+
+model Currency {
+  id        String   @id @default(uuid())
+  code      String   @unique
+  name      String
+  color     String?
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("currencies")
+}
+
+// === YÊU CẦU VẬT TƯ (2 bảng) ===
+
+model RequestPriority {
+  id        String   @id @default(uuid())
+  code      String   @unique
+  name      String
+  color     String?
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("request_priorities")
+}
+
+model RequestStatus {
+  id        String   @id @default(uuid())
+  code      String   @unique
+  name      String
+  color     String?
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("request_statuses")
+}
+
+// === MUA SẮM (2 bảng) ===
+
+model PurchaseSource {
+  id        String   @id @default(uuid())
+  code      String   @unique
+  name      String
+  color     String?
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("purchase_sources")
+}
+
+model PurchaseStatus {
+  id        String   @id @default(uuid())
+  code      String   @unique
+  name      String
+  color     String?
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("purchase_statuses")
+}
+
+// === ĐẤU THẦU (2 bảng) ===
+
+model BiddingMethod {
+  id        String   @id @default(uuid())
+  code      String   @unique
+  name      String
+  color     String?
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("bidding_methods")
+}
+
+model BiddingStatus {
+  id        String   @id @default(uuid())
+  code      String   @unique
+  name      String
+  color     String?
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("bidding_statuses")
+}
+
+// === NHẬP KHO (2 bảng) ===
+
+model InboundType {
+  id        String   @id @default(uuid())
+  code      String   @unique
+  name      String
+  color     String?
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("inbound_types")
+}
+
+model InboundStatus {
+  id        String   @id @default(uuid())
+  code      String   @unique
+  name      String
+  color     String?
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("inbound_statuses")
+}
+
+// === XUẤT KHO (2 bảng) ===
+
+model OutboundPurpose {
+  id        String   @id @default(uuid())
+  code      String   @unique
+  name      String
+  color     String?
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("outbound_purposes")
+}
+
+model OutboundStatus {
+  id        String   @id @default(uuid())
+  code      String   @unique
+  name      String
+  color     String?
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("outbound_statuses")
+}
+
+// === KIỂM KÊ (2 bảng) ===
+
+model StocktakeStatus {
+  id        String   @id @default(uuid())
+  code      String   @unique
+  name      String
+  color     String?
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("stocktake_statuses")
+}
+
+model StocktakeArea {
+  id        String   @id @default(uuid())
+  code      String   @unique
+  name      String
+  color     String?
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("stocktake_areas")
+}
+
+// === NGƯỜI DÙNG & NHẬT KÝ (2 bảng) ===
+
+model UserStatus {
+  id        String   @id @default(uuid())
+  code      String   @unique
+  name      String
+  color     String?
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("user_statuses")
+}
+
+model ActivityAction {
+  id        String   @id @default(uuid())
+  code      String   @unique
+  name      String
+  color     String?
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("activity_actions")
+}
+
+// ============================================
+// BUSINESS DATA TABLES
+// ============================================
+
+model Material {
+  id             String   @id @default(uuid())
+  name           String
+  nameEn         String?
+  code           String   @unique
+  evnCode        String?
+  partNo         String
+  serialNumber   String?
+  managementType String   // Batch | Serial
+  category       String
+  unit           String
+  status         String
+  description    String?
+  stock          Int      @default(0)
+  manufacturer   String?
+  origin         String?
+  minStock       Int?
+  maxStock       Int?
+  technicalSpecs Json?
+  location       String?
+  stockAge       String?
+  supplierWarranty String?
+  serviceWarranty  String?
+  chassisPn      String?
+  chassisSn      String?
+  originAsPerCustomer String?
+  originOnDocs   String?
+  warrantyCount  Int?
+  lifespan       String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@map("materials")
+}
+
+model Supplier {
+  id          String   @id @default(uuid())
+  code        String   @unique
+  taxCode     String
+  name        String
+  address     String
+  country     String
+  type        String
+  paymentTerm String
+  currency    String
+  status      String   @default("Active")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  contacts SupplierContact[]
+
+  @@map("suppliers")
+}
+
+model SupplierContact {
+  id         String   @id @default(uuid())
+  supplierId String
+  name       String
+  position   String
+  email      String
+  phone      String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  supplier Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+
+  @@map("supplier_contacts")
+}
+
+model WarehouseLocation {
+  id         String   @id @default(uuid())
+  code       String   @unique
+  name       String
+  area       String
+  type       String
+  status     String   @default("Active")
+  barcode    String?
+  maxWeight  Float?
+  dimensions String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  items WarehouseItem[]
+
+  @@map("warehouse_locations")
+}
+
+model WarehouseItem {
+  id           String   @id @default(uuid())
+  locationId   String
+  materialId   String
+  materialCode String
+  materialName String
+  quantity     Int
+  unit         String
+  batchSerial  String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  location WarehouseLocation @relation(fields: [locationId], references: [id], onDelete: Cascade)
+
+  @@map("warehouse_items")
+}
+
+model MaterialRequest {
+  id            String   @id @default(uuid())
+  requestCode   String   @unique
+  requesterName String
+  requesterDept String
+  reason        String
+  requestDate   DateTime
+  workOrder     String?
+  priority      String
+  status        String
+  approver      String?
+  step          Int      @default(1)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  items MaterialRequestItem[]
+
+  @@map("material_requests")
+}
+
+model MaterialRequestItem {
+  id                String   @id @default(uuid())
+  requestId         String
+  materialId        String
+  materialCode      String
+  materialName      String
+  partNumber        String
+  unit              String
+  requestedQuantity Int
+  stock             Int
+  notes             String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  request MaterialRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+  @@map("material_request_items")
+}
+
+model PurchaseRequest {
+  id            String   @id @default(uuid())
+  requestCode   String   @unique
+  requesterName String
+  requesterDept String
+  description   String
+  source        String
+  fundingSource String
+  totalAmount   Float
+  status        String
+  step          Int?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  items PurchaseRequestItem[]
+
+  @@map("purchase_requests")
+}
+
+model PurchaseRequestItem {
+  id                String   @id @default(uuid())
+  requestId         String
+  name              String
+  unit              String
+  quantity          Int
+  estimatedPrice    Float
+  suggestedSupplier String
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  request PurchaseRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+  @@map("purchase_request_items")
+}
+
+model BiddingPackage {
+  id                String   @id @default(uuid())
+  packageCode       String   @unique
+  name              String
+  purchaseRequestId String
+  estimatedPrice    Float
+  method            String
+  status            String
+  step              Int      @default(1)
+  openingDate       DateTime?
+  closingDate       DateTime?
+  winnerSupplier    String?
+  winningPrice      Float?
+  technicalScore    String?
+  negotiationStatus String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  items BiddingItem[]
+
+  @@map("bidding_packages")
+}
+
+model BiddingItem {
+  id        String   @id @default(uuid())
+  packageId String
+  name      String
+  unit      String
+  quantity  Int
+  amount    Float
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  package BiddingPackage @relation(fields: [packageId], references: [id], onDelete: Cascade)
+
+  @@map("bidding_items")
+}
+
+model InboundReceipt {
+  id          String   @id @default(uuid())
+  receiptCode String   @unique
+  inboundType String
+  reference   String
+  inboundDate DateTime
+  partner     String
+  status      String
+  step        Int      @default(1)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  items     InboundReceiptItem[]
+  documents InboundDocument[]
+
+  @@map("inbound_receipts")
+}
+
+model InboundReceiptItem {
+  id                String   @id @default(uuid())
+  receiptId         String
+  materialCode      String
+  materialName      String
+  orderedQuantity   Int
+  receivedQuantity  Int
+  receivingQuantity Int
+  serialBatch       String?
+  location          String?
+  kcs               Boolean  @default(false)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  receipt InboundReceipt @relation(fields: [receiptId], references: [id], onDelete: Cascade)
+
+  @@map("inbound_receipt_items")
+}
+
+model InboundDocument {
+  id        String   @id @default(uuid())
+  receiptId String
+  type      String
+  fileName  String
+  fileUrl   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  receipt InboundReceipt @relation(fields: [receiptId], references: [id], onDelete: Cascade)
+
+  @@map("inbound_documents")
+}
+
+model OutboundVoucher {
+  id                String   @id @default(uuid())
+  voucherCode       String   @unique
+  purpose           String
+  materialRequestId String
+  department        String
+  receiverName      String
+  reason            String
+  status            String
+  step              Int      @default(1)
+  issueDate         DateTime
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  items OutboundVoucherItem[]
+
+  @@map("outbound_vouchers")
+}
+
+model OutboundVoucherItem {
+  id                     String   @id @default(uuid())
+  voucherId              String
+  materialId             String
+  materialCode           String
+  materialName           String
+  unit                   String
+  requestedQuantity      Int
+  issuedQuantity         Int
+  pickLocationSuggestion String?
+  actualSerial           String?
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  voucher OutboundVoucher @relation(fields: [voucherId], references: [id], onDelete: Cascade)
+
+  @@map("outbound_voucher_items")
+}
+
+model StockTake {
+  id        String   @id @default(uuid())
+  takeCode  String   @unique
+  name      String
+  date      DateTime
+  status    String
+  area      String
+  leader    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  results StockTakeResult[]
+
+  @@map("stock_takes")
+}
+
+model StockTakeResult {
+  id             String   @id @default(uuid())
+  stockTakeId    String
+  materialId     String
+  materialCode   String
+  materialName   String
+  location       String
+  bookQuantity   Int
+  actualQuantity Int
+  notes          String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  stockTake StockTake @relation(fields: [stockTakeId], references: [id], onDelete: Cascade)
+
+  @@map("stock_take_results")
+}
+
+model User {
+  id           String   @id @default(uuid())
+  employeeCode String   @unique
+  name         String
+  email        String   @unique
+  phone        String?
+  department   String
+  role         String
+  status       String   @default("Active")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("users")
+}
+
+model Role {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+  userCount   Int      @default(0)
+  permissions Json
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("roles")
+}
+
+model ActivityLog {
+  id         String   @id @default(uuid())
+  timestamp  DateTime @default(now())
+  userName   String
+  userAvatar String?
+  action     String
+  targetType String
+  targetId   String
+  details    String
+  createdAt  DateTime @default(now())
+
+  @@index([timestamp])
+  @@map("activity_logs")
+}
+
+model InventoryLog {
+  id           String   @id @default(uuid())
+  materialId   String
+  materialName String
+  quantity     Int
+  type         String   // inbound | outbound
+  date         DateTime
+  actor        String
+  createdAt    DateTime @default(now())
+
+  @@index([date])
+  @@map("inventory_logs")
+}

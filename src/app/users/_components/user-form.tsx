@@ -4,7 +4,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { Save } from "lucide-react";
+import { Save, Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/select";
 import type { User } from "@/lib/types";
 import { DialogFooter } from "@/components/ui/dialog";
+import { useDepartments } from "@/hooks/use-users";
 
 const formSchema = z.object({
   employeeCode: z.string().min(1, "Mã nhân viên là bắt buộc."),
@@ -44,9 +45,8 @@ type UserFormProps = {
   onSubmit: (values: UserFormValues) => void;
   onCancel: () => void;
   viewMode: boolean;
+  isSubmitting?: boolean;
 };
-
-const departments = ['Phòng Kỹ thuật', 'PX Vận hành', 'Phòng Kế hoạch', 'Ban Giám đốc', 'Phòng Tài chính', 'PX Sửa chữa Cơ', 'PX Sửa chữa Điện', 'PX TĐH-ĐK'];
 
 
 export function UserForm({
@@ -55,7 +55,9 @@ export function UserForm({
   onSubmit,
   onCancel,
   viewMode,
+  isSubmitting = false,
 }: UserFormProps) {
+  const { departments } = useDepartments();
   const form = useForm<UserFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: user
@@ -143,7 +145,7 @@ export function UserForm({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {departments.map(dept => <SelectItem key={dept} value={dept}>{dept}</SelectItem>)}
+                      {departments.map(dept => <SelectItem key={dept.id} value={dept.name}>{dept.name}</SelectItem>)}
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -198,8 +200,13 @@ export function UserForm({
             Hủy
           </Button>
           {!viewMode && (
-            <Button type="submit">
-              <Save className="mr-2 h-4 w-4" /> Lưu
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Save className="mr-2 h-4 w-4" />
+              )}
+              {isSubmitting ? 'Đang lưu...' : 'Lưu'}
             </Button>
           )}
         </DialogFooter>
