@@ -424,6 +424,29 @@ async function main() {
   })
 
   console.log('Permission management seeded!')
+
+  // === USERS ===
+  console.log('  Seeding Users...')
+  
+  // Get departments for reference
+  const departments = await prisma.department.findMany()
+  const deptMap = Object.fromEntries(departments.map(d => [d.code, d.id]))
+  
+  await prisma.user.createMany({
+    data: [
+      { employeeCode: 'NV001', name: 'Nguyễn Văn Admin', email: 'admin@powertrack.vn', department: deptMap['BGD'] || 'BGD', role: 'Quản trị hệ thống', status: 'Active' },
+      { employeeCode: 'NV002', name: 'Trần Thị Kho', email: 'kho@powertrack.vn', department: deptMap['PKH'] || 'PKH', role: 'Quản lý kho', status: 'Active' },
+      { employeeCode: 'NV003', name: 'Lê Văn Nhập', email: 'nhap@powertrack.vn', department: deptMap['PKH'] || 'PKH', role: 'Nhân viên kho', status: 'Active' },
+      { employeeCode: 'NV004', name: 'Phạm Thị Xuất', email: 'xuat@powertrack.vn', department: deptMap['PKH'] || 'PKH', role: 'Nhân viên kho', status: 'Active' },
+      { employeeCode: 'NV005', name: 'Hoàng Văn Kế', email: 'ketoan@powertrack.vn', department: deptMap['PTC'] || 'PTC', role: 'Kế toán', status: 'Active' },
+      { employeeCode: 'NV006', name: 'Vũ Thị Xem', email: 'viewer@powertrack.vn', department: deptMap['PKT'] || 'PKT', role: 'Người xem', status: 'Active' },
+      { employeeCode: 'NV007', name: 'Đặng Văn Kỹ', email: 'kythuat@powertrack.vn', phone: '0901234567', department: deptMap['PKT'] || 'PKT', role: 'Nhân viên kho', status: 'Active' },
+      { employeeCode: 'NV008', name: 'Bùi Thị Vận', email: 'vanhanh@powertrack.vn', phone: '0907654321', department: deptMap['PXVH'] || 'PXVH', role: 'Nhân viên kho', status: 'Active' },
+    ],
+    skipDuplicates: true
+  })
+  
+  console.log('Users seeded!')
 }
 
 main()

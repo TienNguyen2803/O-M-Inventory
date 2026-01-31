@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { AppLayout } from "@/components/layout/app-layout";
 import { Toaster } from "@/components/ui/toaster";
+import { AuthProvider } from "@/contexts/auth-context";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
@@ -29,8 +30,10 @@ export default function RootLayout({
         />
       </head>
       <body className={cn("font-body antialiased")}>
-        <AppLayout>{children}</AppLayout>
-        <Toaster />
+        <AuthProvider>
+          <AppLayout>{children}</AppLayout>
+          <Toaster />
+        </AuthProvider>
       </body>
     </html>
   );

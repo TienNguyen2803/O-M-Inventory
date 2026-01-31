@@ -3,7 +3,7 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { Bell } from "lucide-react";
+import { Bell, LogOut, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -13,6 +13,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useAuth } from "@/contexts/auth-context";
+import { useRouter } from "next/navigation";
 
 const notifications = [
     { id: 1, title: "Yêu cầu vật tư #YCVT-2025-026", description: "Cần được bạn phê duyệt." },
@@ -25,6 +27,22 @@ const notifications = [
 
 export function AppHeader() {
   const userAvatar = PlaceHolderImages.find((p) => p.id === "user-avatar");
+  const { user, logout } = useAuth();
+  const router = useRouter();
+
+  const handleLogout = () => {
+    logout();
+    router.push("/login");
+  };
+
+  // Get initials from user name
+  const getInitials = (name: string) => {
+    const parts = name.split(" ");
+    if (parts.length >= 2) {
+      return parts[0][0] + parts[parts.length - 1][0];
+    }
+    return name.substring(0, 2).toUpperCase();
+  };
 
   return (
     <header className="flex h-16 shrink-0 items-center border-b bg-card sticky top-0 z-20">
@@ -75,20 +93,51 @@ export function AppHeader() {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <div className="hidden flex-col items-end sm:flex">
-            <span className="font-semibold text-sm">Nguyễn Văn A</span>
-            <span className="text-xs text-muted-foreground">
-              Trưởng bộ phận Kho
-            </span>
-          </div>
-          <Avatar className="h-9 w-9">
-            <AvatarImage
-              src={userAvatar?.imageUrl}
-              alt="User"
-              data-ai-hint={userAvatar?.imageHint}
-            />
-            <AvatarFallback>NV</AvatarFallback>
-          </Avatar>
+          {/* User Profile Dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="flex items-center gap-3 h-auto p-2 hover:bg-accent">
+                <div className="hidden flex-col items-end sm:flex">
+                  <span className="font-semibold text-sm">{user?.name || "User"}</span>
+                  <span className="text-xs text-muted-foreground">
+                    {user?.role || "Role"}
+                  </span>
+                </div>
+                <Avatar className="h-9 w-9">
+                  <AvatarImage
+                    src={userAvatar?.imageUrl}
+                    alt={user?.name || "User"}
+                    data-ai-hint={userAvatar?.imageHint}
+                  />
+                  <AvatarFallback>{user?.name ? getInitials(user.name) : "U"}</AvatarFallback>
+                </Avatar>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel className="font-normal">
+                <div className="flex flex-col space-y-1">
+                  <p className="text-sm font-medium leading-none">{user?.name}</p>
+                  <p className="text-xs leading-none text-muted-foreground">{user?.email}</p>
+                </div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem 
+                onClick={() => router.push("/profile")}
+                className="cursor-pointer"
+              >
+                <User className="mr-2 h-4 w-4" />
+                <span>Thông tin cá nhân</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem 
+                onClick={handleLogout}
+                className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50"
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                <span>Đăng xuất</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
     </header>

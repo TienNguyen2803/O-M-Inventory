@@ -233,6 +233,8 @@ model User {
   status       String   @default("Active")
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+
+  userRoles    UserRole[]
 }
 ```
 
@@ -247,6 +249,27 @@ model Role {
   permissions Json
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  userRoles   UserRole[]
+}
+```
+
+### UserRole (Gán User vào Role - Many-to-Many)
+
+```prisma
+model UserRole {
+  id        String   @id @default(uuid())
+  userId    String
+  roleId    String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, roleId])
+  @@index([userId])
+  @@index([roleId])
+  @@map("user_roles")
 }
 ```
 

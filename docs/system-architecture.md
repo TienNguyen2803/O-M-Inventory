@@ -143,6 +143,7 @@ Generic API cho quản lý 24 bảng master data:
 | `useRoles()` | Fetch roles cho dropdowns |
 | `useDepartments()` | Fetch departments cho dropdowns |
 | `useMaterialRequests()` | CRUD operations cho Material Request với pagination, search, filter |
+| `useRoleUsers(roleId)` | CRUD operations cho gán User vào Role |
 
 ---
 
@@ -216,6 +217,9 @@ Hệ thống quản lý phân quyền chi tiết với 3 thực thể chính: **
 | POST | `/api/roles` | Tạo vai trò mới |
 | PUT | `/api/roles/{id}` | Cập nhật vai trò (bao gồm permissions) |
 | DELETE | `/api/roles/{id}` | Xóa vai trò |
+| GET | `/api/roles/{id}/users` | Danh sách users của vai trò |
+| POST | `/api/roles/{id}/users` | Gán users vào vai trò (body: `{userIds: string[]}`) |
+| DELETE | `/api/roles/{id}/users/{userId}` | Gỡ user khỏi vai trò |
 
 **Roles mặc định**: Quản trị hệ thống, Quản lý kho, Nhân viên kho, Kế toán, Người xem
 
@@ -242,6 +246,7 @@ Permissions được lưu dưới dạng JSON trong Role:
 | `useFeatures(grouped?)` | CRUD operations cho Features |
 | `useFeatureActions()` | Manage feature-action mappings |
 | `useRolesManagement()` | CRUD operations cho Roles với permissions |
+| `useRoleUsers(roleId)` | Gán/gỡ users vào/khỏi Role |
 
 ---
 

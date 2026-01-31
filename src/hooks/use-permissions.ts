@@ -411,3 +411,90 @@ export function useRolesManagement() {
 
   return { roles, isLoading, error, fetchRoles, getRole, createRole, updateRole, updateRolePermissions, deleteRole }
 }
+
+// ==================== useRoleUsers ====================
+export interface RoleUser {
+  id: string
+  employeeCode: string
+  name: string
+  email: string
+  department: string
+  status: string
+}
+
+export function useRoleUsers(roleId: string | null) {
+  const [users, setUsers] = useState<RoleUser[]>([])
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const fetchUsers = useCallback(async () => {
+    if (!roleId) {
+      setUsers([])
+      return
+    }
+    setIsLoading(true)
+    setError(null)
+    try {
+      const response = await fetch(`/api/roles/${roleId}/users`)
+      const data = await response.json()
+      if (response.ok) {
+        setUsers(data.data || [])
+      } else {
+        setError(data.error || 'Failed to fetch role users')
+      }
+    } catch (err) {
+      setError('Failed to fetch role users')
+      console.error(err)
+    } finally {
+      setIsLoading(false)
+    }
+  }, [roleId])
+
+  const addUsers = useCallback(async (userIds: string[]) => {
+    if (!roleId) return null
+    try {
+      const response = await fetch(`/api/roles/${roleId}/users`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userIds }),
+      })
+      const data = await response.json()
+      if (response.ok) {
+        await fetchUsers()
+        return data
+      }
+      setError(data.error)
+      return null
+    } catch (err) {
+      setError('Failed to add users to role')
+      console.error(err)
+      return null
+    }
+  }, [roleId, fetchUsers])
+
+  const removeUser = useCallback(async (userId: string) => {
+    if (!roleId) return false
+    try {
+      const response = await fetch(`/api/roles/${roleId}/users/${userId}`, {
+        method: 'DELETE',
+      })
+      if (response.ok) {
+        await fetchUsers()
+        return true
+      }
+      const data = await response.json()
+      setError(data.error)
+      return false
+    } catch (err) {
+      setError('Failed to remove user from role')
+      console.error(err)
+      return false
+    }
+  }, [roleId, fetchUsers])
+
+  useEffect(() => {
+    fetchUsers()
+  }, [fetchUsers])
+
+  return { users, isLoading, error, fetchUsers, addUsers, removeUser }
+}

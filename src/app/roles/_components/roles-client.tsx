@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { useRolesManagement, useFeatures, useActions, type Role, type Feature, type Action } from "@/hooks/use-permissions";
+import { UserAssignmentDialog } from "./user-assignment-dialog";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -32,7 +33,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Plus, Users, Pencil, Save, Loader2, Trash2 } from "lucide-react";
+import { Plus, Users, Pencil, Save, Loader2, Trash2, UserPlus } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const Breadcrumbs = () => (
@@ -44,7 +45,7 @@ const Breadcrumbs = () => (
 );
 
 export function RolesClient() {
-  const { roles, isLoading: rolesLoading, createRole, updateRole, deleteRole } = useRolesManagement();
+  const { roles, isLoading: rolesLoading, createRole, updateRole, deleteRole, fetchRoles } = useRolesManagement();
   const { groupedFeatures, isLoading: featuresLoading } = useFeatures(true);
   const { actions, isLoading: actionsLoading } = useActions();
   
@@ -58,6 +59,10 @@ export function RolesClient() {
   const [editingRole, setEditingRole] = useState<Role | null>(null);
   const [formData, setFormData] = useState({ name: "", description: "" });
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // User assignment dialog state
+  const [isUserDialogOpen, setIsUserDialogOpen] = useState(false);
+  const [userDialogRole, setUserDialogRole] = useState<Role | null>(null);
 
   // Select first role when loaded
   useEffect(() => {
@@ -274,9 +279,24 @@ export function RolesClient() {
                     </div>
                   </div>
                   <p className="text-sm text-muted-foreground">{role.description}</p>
-                  <div className="flex items-center text-xs text-muted-foreground mt-2">
-                    <Users className="h-3 w-3 mr-1.5" />
-                    <span>{role.userCount} người dùng</span>
+                  <div className="flex items-center justify-between text-xs text-muted-foreground mt-2">
+                    <div className="flex items-center">
+                      <Users className="h-3 w-3 mr-1.5" />
+                      <span>{role.userCount} người dùng</span>
+                    </div>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="h-7 text-xs"
+                      onClick={(e) => { 
+                        e.stopPropagation(); 
+                        setUserDialogRole(role); 
+                        setIsUserDialogOpen(true); 
+                      }}
+                    >
+                      <UserPlus className="h-3 w-3 mr-1" />
+                      Quản lý
+                    </Button>
                   </div>
                 </div>
               ))}
@@ -352,6 +372,14 @@ export function RolesClient() {
           </Card>
         </div>
       </div>
+
+      {/* User Assignment Dialog */}
+      <UserAssignmentDialog
+        open={isUserDialogOpen}
+        onOpenChange={setIsUserDialogOpen}
+        role={userDialogRole}
+        onUserCountChange={fetchRoles}
+      />
     </div>
   );
 }
