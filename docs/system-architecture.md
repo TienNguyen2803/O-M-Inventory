@@ -169,3 +169,76 @@ API cho quản lý người dùng:
 | `role` | string | Filter theo vai trò |
 | `status` | string | Filter theo trạng thái |
 
+---
+
+## Permission Management API
+
+Hệ thống quản lý phân quyền chi tiết với 3 thực thể chính: **Actions**, **Features**, **Roles**.
+
+### Actions API
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/actions` | Danh sách actions |
+| POST | `/api/actions` | Tạo action mới |
+| PUT | `/api/actions/{id}` | Cập nhật action |
+| DELETE | `/api/actions/{id}` | Xóa action |
+
+**Actions mặc định**: Xem, Tạo, Sửa, Xóa, Duyệt
+
+### Features API
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/features` | Danh sách features |
+| GET | `/api/features?grouped=true` | Features theo nhóm |
+| POST | `/api/features` | Tạo feature mới |
+| PUT | `/api/features/{id}` | Cập nhật feature |
+| DELETE | `/api/features/{id}` | Xóa feature |
+
+**Feature Groups**: BÁO CÁO & PHÂN TÍCH, KẾ HOẠCH & MUA SẮM, NHẬP XUẤT KHO, DANH MỤC, HỆ THỐNG
+
+### Feature-Actions API
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/feature-actions` | Danh sách mappings |
+| POST | `/api/feature-actions` | Gán action cho feature |
+| DELETE | `/api/feature-actions?featureId=...&actionId=...` | Gỡ action khỏi feature |
+
+### Roles API
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/roles` | Danh sách vai trò |
+| POST | `/api/roles` | Tạo vai trò mới |
+| PUT | `/api/roles/{id}` | Cập nhật vai trò (bao gồm permissions) |
+| DELETE | `/api/roles/{id}` | Xóa vai trò |
+
+**Roles mặc định**: Quản trị hệ thống, Quản lý kho, Nhân viên kho, Kế toán, Người xem
+
+### Permission Structure
+
+Permissions được lưu dưới dạng JSON trong Role:
+
+```json
+{
+  "dashboard": ["view"],
+  "materials": ["view", "create", "edit", "delete"],
+  "users": ["view", "create", "edit", "delete", "approve"],
+  "settings": ["view", "edit"]
+}
+```
+
+---
+
+## Custom Hooks (Permission Management)
+
+| Hook | Usage |
+|------|-------|
+| `useActions()` | CRUD operations cho Actions |
+| `useFeatures(grouped?)` | CRUD operations cho Features |
+| `useFeatureActions()` | Manage feature-action mappings |
+| `useRolesManagement()` | CRUD operations cho Roles với permissions |
+
+

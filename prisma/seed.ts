@@ -323,6 +323,89 @@ async function main() {
   })
 
   console.log('Seeding completed! 24 master data tables seeded.')
+
+  // === PERMISSION MANAGEMENT ===
+
+  // 25. Actions
+  console.log('  Seeding Actions...')
+  await prisma.action.createMany({
+    data: [
+      { code: 'view', name: 'Xem', sortOrder: 1 },
+      { code: 'create', name: 'Tạo', sortOrder: 2 },
+      { code: 'edit', name: 'Sửa', sortOrder: 3 },
+      { code: 'delete', name: 'Xóa', sortOrder: 4 },
+      { code: 'approve', name: 'Duyệt', sortOrder: 5 },
+    ],
+    skipDuplicates: true
+  })
+
+  // 26. Features
+  console.log('  Seeding Features...')
+  await prisma.feature.createMany({
+    data: [
+      // BÁO CÁO & PHÂN TÍCH
+      { code: 'dashboard', name: 'Tổng quan', groupCode: 'BÁO CÁO & PHÂN TÍCH', sortOrder: 1 },
+      { code: 'reports', name: 'Báo cáo nhập/xuất/tồn', groupCode: 'BÁO CÁO & PHÂN TÍCH', sortOrder: 2 },
+      { code: 'slow-moving', name: 'Vật tư chậm luân chuyển', groupCode: 'BÁO CÁO & PHÂN TÍCH', sortOrder: 3 },
+      { code: 'stock-level', name: 'Định mức tồn kho an toàn', groupCode: 'BÁO CÁO & PHÂN TÍCH', sortOrder: 4 },
+      // KẾ HOẠCH & MUA SẮM
+      { code: 'material-request', name: 'Yêu cầu Vật tư', groupCode: 'KẾ HOẠCH & MUA SẮM', sortOrder: 5 },
+      { code: 'purchase-request', name: 'Yêu cầu Mua sắm', groupCode: 'KẾ HOẠCH & MUA SẮM', sortOrder: 6 },
+      { code: 'bidding', name: 'Quản lý Đấu thầu', groupCode: 'KẾ HOẠCH & MUA SẮM', sortOrder: 7 },
+      // NHẬP XUẤT KHO
+      { code: 'inbound', name: 'Nhập kho', groupCode: 'NHẬP XUẤT KHO', sortOrder: 8 },
+      { code: 'outbound', name: 'Xuất kho', groupCode: 'NHẬP XUẤT KHO', sortOrder: 9 },
+      { code: 'stock-take', name: 'Kiểm kê', groupCode: 'NHẬP XUẤT KHO', sortOrder: 10 },
+      // DANH MỤC
+      { code: 'materials', name: 'Danh mục vật tư', groupCode: 'DANH MỤC', sortOrder: 11 },
+      { code: 'suppliers', name: 'Nhà cung cấp', groupCode: 'DANH MỤC', sortOrder: 12 },
+      { code: 'warehouses', name: 'Vị trí kho', groupCode: 'DANH MỤC', sortOrder: 13 },
+      // HỆ THỐNG
+      { code: 'users', name: 'Người dùng', groupCode: 'HỆ THỐNG', sortOrder: 14 },
+      { code: 'roles', name: 'Vai trò', groupCode: 'HỆ THỐNG', sortOrder: 15 },
+      { code: 'settings', name: 'Cài đặt', groupCode: 'HỆ THỐNG', sortOrder: 16 },
+    ],
+    skipDuplicates: true
+  })
+
+  // 27. Feature-Action Mappings (all features get all 5 actions by default)
+  console.log('  Seeding FeatureActions...')
+  const allActions = await prisma.action.findMany()
+  const allFeatures = await prisma.feature.findMany()
+  
+  const featureActionData = allFeatures.flatMap(feature =>
+    allActions.map(action => ({
+      featureId: feature.id,
+      actionId: action.id
+    }))
+  )
+  
+  await prisma.featureAction.createMany({
+    data: featureActionData,
+    skipDuplicates: true
+  })
+
+  // 28. Roles
+  console.log('  Seeding Roles...')
+  
+  // Build permissions object from all feature-actions
+  const permissionsObj: Record<string, string[]> = {}
+  for (const feature of allFeatures) {
+    permissionsObj[feature.code] = allActions.map(action => action.code)
+  }
+  
+  await prisma.role.createMany({
+    data: [
+      { name: 'Quản trị hệ thống', description: 'Toàn quyền quản lý hệ thống', permissions: permissionsObj },
+      { name: 'Quản lý kho', description: 'Quản lý và phê duyệt các hoạt động kho', permissions: {} },
+      { name: 'Nhân viên kho', description: 'Thực hiện nhập/xuất kho', permissions: {} },
+      { name: 'Kế toán', description: 'Xem báo cáo và phê duyệt tài chính', permissions: {} },
+      { name: 'Người xem', description: 'Chỉ xem dữ liệu', permissions: {} },
+    ],
+    skipDuplicates: true
+  })
+
+  console.log('Permission management seeded!')
 }
 
 main()

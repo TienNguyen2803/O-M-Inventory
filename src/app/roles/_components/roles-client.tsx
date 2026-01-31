@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import type { Role, RolePermission } from "@/lib/types";
+import { useState, useEffect, useMemo } from "react";
+import { useRolesManagement, useFeatures, useActions, type Role, type Feature, type Action } from "@/hooks/use-permissions";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -19,8 +19,20 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, Users, Pencil, Save } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Plus, Users, Pencil, Save, Loader2, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const Breadcrumbs = () => (
@@ -31,55 +43,150 @@ const Breadcrumbs = () => (
   </div>
 );
 
-export function RolesClient({ initialRoles }: { initialRoles: Role[] }) {
-  const [roles, setRoles] = useState<Role[]>(initialRoles);
-  const [selectedRole, setSelectedRole] = useState<Role>(initialRoles[0]);
+export function RolesClient() {
+  const { roles, isLoading: rolesLoading, createRole, updateRole, deleteRole } = useRolesManagement();
+  const { groupedFeatures, isLoading: featuresLoading } = useFeatures(true);
+  const { actions, isLoading: actionsLoading } = useActions();
+  
+  const [selectedRole, setSelectedRole] = useState<Role | null>(null);
+  const [localPermissions, setLocalPermissions] = useState<Record<string, string[]>>({});
+  const [isSaving, setIsSaving] = useState(false);
+  const [hasChanges, setHasChanges] = useState(false);
+  
+  // Dialog state
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingRole, setEditingRole] = useState<Role | null>(null);
+  const [formData, setFormData] = useState({ name: "", description: "" });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handlePermissionChange = (
-    group: string,
-    featureName: string,
-    permission: keyof Omit<RolePermission, "feature">,
-    value: boolean
-  ) => {
+  // Select first role when loaded
+  useEffect(() => {
+    if (roles.length > 0 && !selectedRole) {
+      setSelectedRole(roles[0]);
+      setLocalPermissions(roles[0].permissions || {});
+    }
+  }, [roles, selectedRole]);
+
+  // Update local permissions when role changes
+  useEffect(() => {
+    if (selectedRole) {
+      setLocalPermissions(selectedRole.permissions || {});
+      setHasChanges(false);
+    }
+  }, [selectedRole]);
+
+  const handlePermissionChange = (featureCode: string, actionCode: string, checked: boolean) => {
+    setLocalPermissions(prev => {
+      const current = prev[featureCode] || [];
+      const updated = checked
+        ? [...current, actionCode]
+        : current.filter(a => a !== actionCode);
+      return { ...prev, [featureCode]: updated };
+    });
+    setHasChanges(true);
+  };
+
+  const handleSelectAll = (groupCode: string, actionCode: string, checked: boolean) => {
+    const featuresInGroup = groupedFeatures[groupCode] || [];
+    setLocalPermissions(prev => {
+      const newPerms = { ...prev };
+      featuresInGroup.forEach((feature: Feature) => {
+        const current = newPerms[feature.code] || [];
+        newPerms[feature.code] = checked
+          ? [...new Set([...current, actionCode])]
+          : current.filter(a => a !== actionCode);
+      });
+      return newPerms;
+    });
+    setHasChanges(true);
+  };
+
+  const isActionSelected = (featureCode: string, actionCode: string) => {
+    return (localPermissions[featureCode] || []).includes(actionCode);
+  };
+
+  const isAllSelected = (groupCode: string, actionCode: string) => {
+    const featuresInGroup = groupedFeatures[groupCode] || [];
+    if (featuresInGroup.length === 0) return false;
+    return featuresInGroup.every((feature: Feature) => 
+      (localPermissions[feature.code] || []).includes(actionCode)
+    );
+  };
+
+  const handleSavePermissions = async () => {
     if (!selectedRole) return;
+    setIsSaving(true);
+    await updateRole(selectedRole.id, { permissions: localPermissions });
+    setHasChanges(false);
+    setIsSaving(false);
+  };
 
-    const updatedPermissions = JSON.parse(JSON.stringify(selectedRole.permissions));
-    
-    const permissionGroup = updatedPermissions[group];
-    if (permissionGroup) {
-      const featurePermission = permissionGroup.find((p: RolePermission) => p.feature === featureName);
-      if (featurePermission) {
-        featurePermission[permission] = value;
+  const handleOpenDialog = (role?: Role) => {
+    if (role) {
+      setEditingRole(role);
+      setFormData({ name: role.name, description: role.description || "" });
+    } else {
+      setEditingRole(null);
+      setFormData({ name: "", description: "" });
+    }
+    setIsDialogOpen(true);
+  };
+
+  const handleSubmit = async () => {
+    setIsSubmitting(true);
+    if (editingRole) {
+      await updateRole(editingRole.id, { name: formData.name, description: formData.description });
+    } else {
+      await createRole({ name: formData.name, description: formData.description, permissions: {} });
+    }
+    setIsSubmitting(false);
+    setIsDialogOpen(false);
+  };
+
+  const handleDeleteRole = async (role: Role) => {
+    if (window.confirm(`Bạn có chắc chắn muốn xóa vai trò "${role.name}"?`)) {
+      await deleteRole(role.id);
+      if (selectedRole?.id === role.id) {
+        setSelectedRole(roles.find(r => r.id !== role.id) || null);
       }
     }
-
-    const updatedRole = { ...selectedRole, permissions: updatedPermissions };
-    setSelectedRole(updatedRole);
-    setRoles(roles.map(r => r.id === updatedRole.id ? updatedRole : r));
   };
-  
-  const handleSelectAll = (group: string, permission: keyof Omit<RolePermission, 'feature'>, value: boolean) => {
-    if (!selectedRole) return;
 
-    const updatedPermissions = JSON.parse(JSON.stringify(selectedRole.permissions));
-    const permissionGroup = updatedPermissions[group];
-    if (permissionGroup) {
-        permissionGroup.forEach((p: RolePermission) => {
-            p[permission] = value;
-        });
+  // Get actions that are available for a feature
+  const getFeatureActions = (feature: Feature): Action[] => {
+    if (!feature.actions || feature.actions.length === 0) {
+      return actions; // fallback to all actions
     }
+    return feature.actions;
+  };
 
-    const updatedRole = { ...selectedRole, permissions: updatedPermissions };
-    setSelectedRole(updatedRole);
-    setRoles(roles.map(r => r.id === updatedRole.id ? updatedRole : r));
-  }
-  
-  const isAllSelected = (group: string, permission: keyof Omit<RolePermission, 'feature'>) => {
-      const permissionGroup = selectedRole?.permissions[group];
-      if (!permissionGroup || permissionGroup.length === 0) return false;
-      return permissionGroup.every(p => p[permission]);
-  }
+  const isLoading = rolesLoading || featuresLoading || actionsLoading;
 
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        <PageHeader 
+          title="Phân quyền & Vai trò" 
+          breadcrumbs={<Breadcrumbs />} 
+          description="Quản lý quyền truy cập chi tiết cho từng vai trò người dùng trong hệ thống."
+        />
+        <div className="grid md:grid-cols-3 lg:grid-cols-4 gap-6 items-start">
+          <Card className="md:col-span-1">
+            <CardContent className="p-4 space-y-3">
+              <Skeleton className="h-20 w-full" />
+              <Skeleton className="h-20 w-full" />
+              <Skeleton className="h-20 w-full" />
+            </CardContent>
+          </Card>
+          <Card className="md:col-span-2 lg:col-span-3">
+            <CardContent className="p-4">
+              <Skeleton className="h-96 w-full" />
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -88,7 +195,45 @@ export function RolesClient({ initialRoles }: { initialRoles: Role[] }) {
         breadcrumbs={<Breadcrumbs />} 
         description="Quản lý quyền truy cập chi tiết cho từng vai trò người dùng trong hệ thống."
       >
-        <Button><Plus className="mr-2 h-4 w-4" /> Thêm vai trò mới</Button>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogTrigger asChild>
+            <Button onClick={() => handleOpenDialog()}>
+              <Plus className="mr-2 h-4 w-4" /> Thêm vai trò mới
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{editingRole ? "Sửa vai trò" : "Thêm vai trò mới"}</DialogTitle>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="name">Tên vai trò</Label>
+                <Input
+                  id="name"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  placeholder="Quản trị viên, Thủ kho..."
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="description">Mô tả</Label>
+                <Textarea
+                  id="description"
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  placeholder="Mô tả vai trò và quyền hạn..."
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Hủy</Button>
+              <Button onClick={handleSubmit} disabled={isSubmitting || !formData.name}>
+                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {editingRole ? "Cập nhật" : "Thêm mới"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </PageHeader>
 
       <div className="grid md:grid-cols-3 lg:grid-cols-4 gap-6 items-start">
@@ -119,7 +264,14 @@ export function RolesClient({ initialRoles }: { initialRoles: Role[] }) {
                 >
                   <div className="flex justify-between items-center">
                     <p className="font-semibold">{role.name}</p>
-                    <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground"><Pencil className="h-4 w-4" /></Button>
+                    <div className="flex gap-1">
+                      <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground" onClick={(e) => { e.stopPropagation(); handleOpenDialog(role); }}>
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={(e) => { e.stopPropagation(); handleDeleteRole(role); }}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                   <p className="text-sm text-muted-foreground">{role.description}</p>
                   <div className="flex items-center text-xs text-muted-foreground mt-2">
@@ -131,6 +283,7 @@ export function RolesClient({ initialRoles }: { initialRoles: Role[] }) {
             </CardContent>
           </Card>
         </div>
+        
         <div className="md:col-span-2 lg:col-span-3">
           <Card>
             <CardHeader className="flex flex-row justify-between items-center">
@@ -138,57 +291,63 @@ export function RolesClient({ initialRoles }: { initialRoles: Role[] }) {
                 <CardTitle>Chi tiết Quyền cho vai trò</CardTitle>
                 <CardDescription className="font-bold text-primary text-base">{selectedRole?.name}</CardDescription>
               </div>
-              <Button><Save className="mr-2 h-4 w-4" /> Lưu thay đổi</Button>
+              <Button onClick={handleSavePermissions} disabled={isSaving || !hasChanges}>
+                {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                Lưu thay đổi
+              </Button>
             </CardHeader>
             <CardContent>
-              <Accordion type="multiple" defaultValue={Object.keys(selectedRole?.permissions || {})} className="w-full">
-                {selectedRole && Object.entries(selectedRole.permissions).map(([group, permissions]) => (
-                  permissions.length > 0 && <AccordionItem value={group} key={group}>
-                    <AccordionTrigger className="text-base font-semibold">{group}</AccordionTrigger>
-                    <AccordionContent>
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead className="w-2/5">Tính năng</TableHead>
-                            <TableHead className="text-center">
-                                <Checkbox checked={isAllSelected(group, 'view')} onCheckedChange={(checked) => handleSelectAll(group, 'view', !!checked)} id={`view-all-${group}`} />
-                                <label htmlFor={`view-all-${group}`} className="ml-2">Xem</label>
-                            </TableHead>
-                            <TableHead className="text-center">
-                                <Checkbox checked={isAllSelected(group, 'create')} onCheckedChange={(checked) => handleSelectAll(group, 'create', !!checked)} id={`create-all-${group}`} />
-                                <label htmlFor={`create-all-${group}`} className="ml-2">Tạo</label>
-                            </TableHead>
-                            <TableHead className="text-center">
-                                <Checkbox checked={isAllSelected(group, 'edit')} onCheckedChange={(checked) => handleSelectAll(group, 'edit', !!checked)} id={`edit-all-${group}`} />
-                                <label htmlFor={`edit-all-${group}`} className="ml-2">Sửa</label>
-                            </TableHead>
-                            <TableHead className="text-center">
-                                <Checkbox checked={isAllSelected(group, 'delete')} onCheckedChange={(checked) => handleSelectAll(group, 'delete', !!checked)} id={`delete-all-${group}`} />
-                                <label htmlFor={`delete-all-${group}`} className="ml-2">Xóa</label>
-                            </TableHead>
-                            <TableHead className="text-center">
-                                <Checkbox checked={isAllSelected(group, 'approve')} onCheckedChange={(checked) => handleSelectAll(group, 'approve', !!checked)} id={`approve-all-${group}`} />
-                                <label htmlFor={`approve-all-${group}`} className="ml-2">Duyệt</label>
-                            </TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {permissions.map((permission) => (
-                            <TableRow key={permission.feature}>
-                              <TableCell className="font-medium">{permission.feature}</TableCell>
-                              <TableCell className="text-center"><Checkbox checked={permission.view} onCheckedChange={(checked) => handlePermissionChange(group, permission.feature, 'view', !!checked)} /></TableCell>
-                              <TableCell className="text-center"><Checkbox checked={permission.create} onCheckedChange={(checked) => handlePermissionChange(group, permission.feature, 'create', !!checked)} /></TableCell>
-                              <TableCell className="text-center"><Checkbox checked={permission.edit} onCheckedChange={(checked) => handlePermissionChange(group, permission.feature, 'edit', !!checked)} /></TableCell>
-                              <TableCell className="text-center"><Checkbox checked={permission.delete} onCheckedChange={(checked) => handlePermissionChange(group, permission.feature, 'delete', !!checked)} /></TableCell>
-                              <TableCell className="text-center"><Checkbox checked={permission.approve} onCheckedChange={(checked) => handlePermissionChange(group, permission.feature, 'approve', !!checked)} /></TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </AccordionContent>
-                  </AccordionItem>
-                ))}
-              </Accordion>
+              {selectedRole && (
+                <Accordion type="multiple" defaultValue={Object.keys(groupedFeatures)} className="w-full">
+                  {Object.entries(groupedFeatures).map(([groupCode, features]) => (
+                    (features as Feature[]).length > 0 && (
+                      <AccordionItem value={groupCode} key={groupCode}>
+                        <AccordionTrigger className="text-base font-semibold">{groupCode}</AccordionTrigger>
+                        <AccordionContent>
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead className="w-1/4">Tính năng</TableHead>
+                                <TableHead>Quyền được phép</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {(features as Feature[]).map((feature) => {
+                                const featureActions = getFeatureActions(feature);
+                                return (
+                                  <TableRow key={feature.id}>
+                                    <TableCell className="font-medium align-top py-3">{feature.name}</TableCell>
+                                    <TableCell className="py-3">
+                                      <div className="flex flex-wrap gap-3">
+                                        {featureActions.length > 0 ? (
+                                          featureActions.map((action) => (
+                                            <label 
+                                              key={action.id}
+                                              className="flex items-center gap-2 cursor-pointer hover:bg-muted/50 px-3 py-1.5 rounded border bg-background"
+                                            >
+                                              <Checkbox 
+                                                checked={isActionSelected(feature.code, action.code)}
+                                                onCheckedChange={(checked) => handlePermissionChange(feature.code, action.code, !!checked)}
+                                              />
+                                              <span className="text-sm">{action.name}</span>
+                                            </label>
+                                          ))
+                                        ) : (
+                                          <span className="text-muted-foreground text-sm italic">Chưa có action nào</span>
+                                        )}
+                                      </div>
+                                    </TableCell>
+                                  </TableRow>
+                                );
+                              })}
+                            </TableBody>
+                          </Table>
+                        </AccordionContent>
+                      </AccordionItem>
+                    )
+                  ))}
+                </Accordion>
+              )}
             </CardContent>
           </Card>
         </div>

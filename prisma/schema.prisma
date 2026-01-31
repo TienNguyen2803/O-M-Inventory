@@ -715,6 +715,47 @@ model Role {
   @@map("roles")
 }
 
+// ============== Permission Management ==============
+
+model Action {
+  id        String   @id @default(uuid())
+  code      String   @unique
+  name      String
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  featureActions FeatureAction[]
+  @@map("actions")
+}
+
+model Feature {
+  id        String   @id @default(uuid())
+  code      String   @unique
+  name      String
+  groupCode String
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  featureActions FeatureAction[]
+  @@map("features")
+}
+
+model FeatureAction {
+  id        String   @id @default(uuid())
+  featureId String
+  actionId  String
+  feature   Feature  @relation(fields: [featureId], references: [id], onDelete: Cascade)
+  action    Action   @relation(fields: [actionId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([featureId, actionId])
+  @@map("feature_actions")
+}
+
 model ActivityLog {
   id         String   @id @default(uuid())
   timestamp  DateTime @default(now())

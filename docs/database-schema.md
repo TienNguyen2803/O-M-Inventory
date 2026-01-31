@@ -248,6 +248,63 @@ model Role {
 }
 ```
 
+### Action (Hành động)
+
+```prisma
+model Action {
+  id        String   @id @default(uuid())
+  code      String   @unique
+  name      String
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  featureActions FeatureAction[]
+}
+```
+
+**Actions mặc định**: view (Xem), create (Tạo), edit (Sửa), delete (Xóa), approve (Duyệt)
+
+### Feature (Tính năng)
+
+```prisma
+model Feature {
+  id        String   @id @default(uuid())
+  code      String   @unique
+  name      String
+  groupCode String
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  featureActions FeatureAction[]
+}
+```
+
+**Feature Groups**:
+- BÁO CÁO & PHÂN TÍCH: dashboard, reports, slow-moving, stock-level
+- KẾ HOẠCH & MUA SẮM: material-request, purchase-request, bidding
+- NHẬP XUẤT KHO: inbound, outbound, stock-take
+- DANH MỤC: materials, suppliers, warehouses
+- HỆ THỐNG: users, roles, settings
+
+### FeatureAction (Mapping)
+
+```prisma
+model FeatureAction {
+  id        String   @id @default(uuid())
+  featureId String
+  actionId  String
+  feature   Feature  @relation(fields: [featureId], references: [id], onDelete: Cascade)
+  action    Action   @relation(fields: [actionId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([featureId, actionId])
+}
+```
+
 ---
 
 ## Database Commands
