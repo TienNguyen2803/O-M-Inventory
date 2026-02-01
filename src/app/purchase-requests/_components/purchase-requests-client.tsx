@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import type { PurchaseRequest } from "@/lib/types";
+import type { PurchaseRequest, MasterDataItem } from "@/lib/types";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,6 +11,7 @@ import {
   Eye,
   ChevronLeft,
   ChevronRight,
+  Loader2,
 } from "lucide-react";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import {
@@ -69,28 +70,58 @@ export function PurchaseRequestsClient({
   const { toast } = useToast();
 
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [selectedRequest, setSelectedRequest] =
-    useState<PurchaseRequest | null>(null);
+  const [selectedRequest, setSelectedRequest] = useState<PurchaseRequest | null>(null);
   const [viewMode, setViewMode] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [sourceFilter, setSourceFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
 
+  // Master data for filters
+  const [materialOrigins, setMaterialOrigins] = useState<MasterDataItem[]>([]);
+  const [requestStatuses, setRequestStatuses] = useState<MasterDataItem[]>([]);
+
+  // Fetch master data for filters
+  useEffect(() => {
+    const fetchFilterData = async () => {
+      try {
+        const [originRes, statusRes] = await Promise.all([
+          fetch('/api/master-data/material-origin'),
+          fetch('/api/master-data/request-status'),
+        ]);
+        if (originRes.ok) {
+          const data = await originRes.json();
+          setMaterialOrigins(data.items || []);
+        }
+        if (statusRes.ok) {
+          const data = await statusRes.json();
+          setRequestStatuses(data.items || []);
+        }
+      } catch (error) {
+        console.error('Failed to fetch filter data:', error);
+      }
+    };
+    fetchFilterData();
+  }, []);
+
   const filteredRequests = useMemo(() => {
     return requests.filter((request) => {
       const searchLower = searchQuery.toLowerCase();
+      const requesterName = request.requester?.name || request.requesterName || '';
       const matchesSearch =
         !searchQuery ||
         request.id.toLowerCase().includes(searchLower) ||
-        request.requesterName.toLowerCase().includes(searchLower) ||
+        requesterName.toLowerCase().includes(searchLower) ||
         request.description.toLowerCase().includes(searchLower);
 
+      // Filter by sourceId
       const matchesSource =
-        sourceFilter === "all" || request.source === sourceFilter;
+        sourceFilter === "all" || request.sourceId === sourceFilter;
 
+      // Filter by statusId
       const matchesStatus =
-        statusFilter === "all" || request.status === statusFilter;
+        statusFilter === "all" || request.statusId === statusFilter;
 
       return matchesSearch && matchesSource && matchesStatus;
     });
@@ -115,23 +146,11 @@ export function PurchaseRequestsClient({
   );
 
   const handleAdd = () => {
-    const newRequestTemplate: PurchaseRequest = {
-      id: `PR-${new Date().getFullYear()}-${String(requests.length + 1).padStart(3, "0")}`,
-      requesterName: "Kho Vật tư", // Placeholder
-      requesterDept: "P.Kế hoạch", // Placeholder
-      description: "",
-      fundingSource: "SCL",
-      source: "Trong nước",
-      status: "Pending",
-      items: [],
-      totalAmount: 0,
-      step: 1,
-    };
-    setSelectedRequest(newRequestTemplate);
+    setSelectedRequest(null); // null = create mode
     setViewMode(false);
     setIsFormOpen(true);
   };
-  
+
   const handleEdit = (request: PurchaseRequest) => {
     setSelectedRequest(request);
     setViewMode(false);
@@ -144,62 +163,136 @@ export function PurchaseRequestsClient({
     setIsFormOpen(true);
   };
 
-  const handleDelete = (id: string) => {
-    setRequests(requests.filter((r) => r.id !== id));
-    toast({
-      title: "Thành công",
-      description: `Đã xóa yêu cầu ${id}.`,
-      variant: "destructive",
-    });
+  const handleDelete = async (requestCode: string) => {
+    try {
+      const response = await fetch(`/api/purchase-requests/${requestCode}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete');
+      }
+
+      setRequests(requests.filter((r) => r.requestCode !== requestCode && r.id !== requestCode));
+      toast({
+        title: "Thành công",
+        description: `Đã xóa yêu cầu ${requestCode}.`,
+        variant: "destructive",
+      });
+    } catch {
+      toast({
+        title: "Lỗi",
+        description: "Không thể xóa yêu cầu. Vui lòng thử lại.",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleFormSubmit = (values: PurchaseRequestFormValues) => {
-    const totalAmount = values.items.reduce((sum, item) => sum + item.quantity * item.estimatedPrice, 0);
-
+  const handleFormSubmit = async (values: PurchaseRequestFormValues) => {
     if (viewMode) {
       setIsFormOpen(false);
       return;
     }
-  
-    const isEditing = requests.some(r => r.id === selectedRequest?.id);
-  
-    if (isEditing) {
-       const submittedRequest: PurchaseRequest = {
-        ...selectedRequest!,
-        ...values,
-        source: values.source as any,
-        totalAmount: totalAmount,
+
+    setIsSubmitting(true);
+    const isEditing = selectedRequest !== null;
+
+    try {
+      // Prepare request body
+      const body = {
+        sourceId: values.sourceId,
+        fundingSourceId: values.fundingSourceId,
+        description: values.description,
+        items: values.items.map(item => ({
+          name: item.name,
+          materialId: item.materialId || null,
+          unitId: item.unitId,
+          quantity: item.quantity,
+          estimatedPrice: item.estimatedPrice,
+          suggestedSupplierId: item.suggestedSupplierId || null,
+        })),
       };
-      setRequests(requests.map((r) => (r.id === submittedRequest.id ? submittedRequest : r)));
-    } else {
-       const submittedRequest: PurchaseRequest = {
-        ...selectedRequest!,
-        ...values,
-        source: values.source as any,
-        totalAmount: totalAmount,
-        step: 2,
-      };
-      setRequests([submittedRequest, ...requests]);
+
+      let response: Response;
+      if (isEditing) {
+        // Update existing
+        response = await fetch(`/api/purchase-requests/${selectedRequest.requestCode || selectedRequest.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+      } else {
+        // Create new - need requesterId and departmentId
+        // For now, use first available user/department (should come from auth context in real app)
+        const usersRes = await fetch('/api/users?limit=1');
+        const usersData = await usersRes.json();
+        const firstUser = usersData.data?.[0];
+
+        if (!firstUser) {
+          throw new Error('No user found');
+        }
+
+        response = await fetch('/api/purchase-requests', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ...body,
+            requesterId: firstUser.id,
+            departmentId: firstUser.departmentId,
+          }),
+        });
+      }
+
+      if (!response.ok) {
+        throw new Error('Failed to save');
+      }
+
+      const result = await response.json();
+      const savedRequest = result.data as PurchaseRequest;
+
+      if (isEditing) {
+        setRequests(requests.map((r) =>
+          (r.requestCode === savedRequest.requestCode || r.id === savedRequest.id)
+            ? savedRequest
+            : r
+        ));
+      } else {
+        setRequests([savedRequest, ...requests]);
+      }
+
+      setIsFormOpen(false);
+      toast({
+        title: "Thành công",
+        description: isEditing ? "Đã cập nhật yêu cầu." : "Đã tạo yêu cầu mới.",
+      });
+    } catch {
+      toast({
+        title: "Lỗi",
+        description: "Không thể lưu yêu cầu. Vui lòng thử lại.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
     }
-    setIsFormOpen(false);
-    toast({
-      title: "Thành công",
-      description: isEditing ? "Đã cập nhật yêu cầu." : "Đã tạo yêu cầu mới.",
-    });
   };
 
-  const getStatusBadgeClass = (status: PurchaseRequest["status"]) => {
-    switch (status) {
+  const getStatusBadgeClass = (status?: PurchaseRequest["status"]) => {
+    const statusCode = status?.code || status?.name;
+    switch (statusCode) {
+      case "APPR":
       case "Approved":
         return "bg-green-100 text-green-800";
+      case "PEND":
       case "Pending":
         return "bg-yellow-100 text-yellow-800";
+      case "REJ":
       case "Rejected":
         return "bg-red-100 text-red-800";
+      case "DONE":
       case "Completed":
         return "bg-blue-100 text-blue-800";
       default:
-        return "bg-gray-100 text-gray-800";
+        return status?.color || "bg-gray-100 text-gray-800";
     }
   };
 
@@ -226,8 +319,11 @@ export function PurchaseRequestsClient({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">-- Tất cả nguồn gốc --</SelectItem>
-                <SelectItem value="Trong nước">Trong nước</SelectItem>
-                <SelectItem value="Nhập khẩu">Nhập khẩu</SelectItem>
+                {materialOrigins.map((origin) => (
+                  <SelectItem key={origin.id} value={origin.id}>
+                    {origin.name}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -236,10 +332,11 @@ export function PurchaseRequestsClient({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">-- Tất cả trạng thái --</SelectItem>
-                <SelectItem value="Approved">Approved</SelectItem>
-                <SelectItem value="Pending">Pending</SelectItem>
-                <SelectItem value="Rejected">Rejected</SelectItem>
-                <SelectItem value="Completed">Completed</SelectItem>
+                {requestStatuses.map((status) => (
+                  <SelectItem key={status.id} value={status.id}>
+                    {status.name}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -268,18 +365,18 @@ export function PurchaseRequestsClient({
                       className="font-medium text-primary hover:underline cursor-pointer"
                       onClick={() => handleView(request)}
                     >
-                      {request.id}
+                      {request.requestCode || request.id}
                     </TableCell>
                     <TableCell>
-                      <div>{request.requesterName}</div>
+                      <div>{request.requester?.name || request.requesterName}</div>
                       <div className="text-xs text-muted-foreground">
-                        {request.requesterDept}
+                        {request.department?.name || request.requesterDept}
                       </div>
                     </TableCell>
                     <TableCell className="text-muted-foreground">
                       {request.description}
                     </TableCell>
-                    <TableCell>{request.source}</TableCell>
+                    <TableCell>{request.source?.name || ''}</TableCell>
                     <TableCell className="text-right font-medium">
                       {request.totalAmount.toLocaleString("vi-VN", { style: 'currency', currency: 'VND' })}
                     </TableCell>
@@ -290,7 +387,7 @@ export function PurchaseRequestsClient({
                           getStatusBadgeClass(request.status)
                         )}
                       >
-                        {request.status}
+                        {request.status?.name || ''}
                       </span>
                     </TableCell>
                     <TableCell>
@@ -327,14 +424,14 @@ export function PurchaseRequestsClient({
                                 Bạn có chắc chắn muốn xóa?
                               </AlertDialogTitle>
                               <AlertDialogDescription>
-                                Hành động này không thể được hoàn tác. Yêu cầu "
-                                {request.id}" sẽ bị xóa vĩnh viễn.
+                                Hành động này không thể được hoàn tác. Yêu cầu &quot;
+                                {request.requestCode || request.id}&quot; sẽ bị xóa vĩnh viễn.
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
                               <AlertDialogCancel>Hủy</AlertDialogCancel>
                               <AlertDialogAction
-                                onClick={() => handleDelete(request.id)}
+                                onClick={() => handleDelete(request.requestCode || request.id)}
                                 className="bg-destructive hover:bg-destructive/90"
                               >
                                 Xóa
@@ -405,18 +502,25 @@ export function PurchaseRequestsClient({
           <DialogHeader>
             <DialogTitle>
               {viewMode
-                ? `Chi tiết Phiếu mua: ${selectedRequest?.id}`
-                : requests.some((r) => r.id === selectedRequest?.id)
+                ? `Chi tiết Phiếu mua: ${selectedRequest?.requestCode || selectedRequest?.id}`
+                : selectedRequest
                 ? "Cập nhật Phiếu mua"
                 : "Tạo Phiếu mua mới"}
             </DialogTitle>
           </DialogHeader>
-          <PurchaseRequestForm
-            request={selectedRequest}
-            onSubmit={handleFormSubmit}
-            onCancel={() => setIsFormOpen(false)}
-            viewMode={viewMode}
-          />
+          {isSubmitting ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              <span className="ml-2 text-muted-foreground">Đang lưu...</span>
+            </div>
+          ) : (
+            <PurchaseRequestForm
+              request={selectedRequest}
+              onSubmit={handleFormSubmit}
+              onCancel={() => setIsFormOpen(false)}
+              viewMode={viewMode}
+            />
+          )}
         </DialogContent>
       </Dialog>
     </div>

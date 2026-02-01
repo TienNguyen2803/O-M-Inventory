@@ -40,9 +40,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { DialogFooter } from "@/components/ui/dialog";
-import { CalendarIcon, Plus, Save, Check, Trash2 } from "lucide-react";
+import { CalendarIcon, Plus, Save, Check, Trash2, Package } from "lucide-react";
 import type { Material, MaterialRequest, MasterDataItem } from "@/lib/types";
 import { MaterialPickerDialog } from "./material-picker-dialog";
+import { Card, CardContent } from "@/components/ui/card";
 
 const formSchema = z.object({
   id: z.string(),
@@ -510,32 +511,37 @@ export function RequestForm({
           />
         </div>
 
-        <div className="space-y-2 pt-2">
-          <FormSectionHeader title="Chi tiết vật tư đề nghị cấp" />
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[120px]">Mã VT</TableHead>
-                  <TableHead>Tên Vật Tư</TableHead>
-                  <TableHead className="w-[120px]">Part Number</TableHead>
-                  <TableHead className="w-[80px]">ĐVT</TableHead>
-                  <TableHead className="w-[100px] text-center">SL YC</TableHead>
-                  <TableHead className="w-[80px] text-right">Tồn Kho</TableHead>
-                  <TableHead className="w-[150px]">Ghi Chú</TableHead>
-                  {!viewMode && <TableHead className="w-[50px]"></TableHead>}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {watchedItems.length === 0 ? (
-                  <TableRow>
-                    <TableCell
-                      colSpan={viewMode ? 7 : 8}
-                      className="h-16 text-center text-muted-foreground"
-                    >
-                      Chưa có vật tư nào. Click &quot;+ Thêm dòng&quot; để thêm.
-                    </TableCell>
+        <Card className="mt-6">
+          <CardContent className="pt-4">
+            <FormSectionHeader title="Chi tiết vật tư đề nghị cấp" />
+            <div className="rounded-lg border border-border/60 overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/50 hover:bg-muted/50">
+                    <TableHead className="w-[120px] font-semibold">Mã VT</TableHead>
+                    <TableHead className="font-semibold">Tên Vật Tư</TableHead>
+                    <TableHead className="w-[120px] font-semibold">Part Number</TableHead>
+                    <TableHead className="w-[80px] font-semibold">ĐVT</TableHead>
+                    <TableHead className="w-[100px] text-center font-semibold">SL YC</TableHead>
+                    <TableHead className="w-[80px] text-right font-semibold">Tồn Kho</TableHead>
+                    <TableHead className="w-[150px] font-semibold">Ghi Chú</TableHead>
+                    {!viewMode && <TableHead className="w-[50px]"></TableHead>}
                   </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {watchedItems.length === 0 ? (
+                    <TableRow className="hover:bg-transparent">
+                      <TableCell
+                        colSpan={viewMode ? 7 : 8}
+                        className="h-24 text-center"
+                      >
+                        <div className="flex flex-col items-center justify-center text-muted-foreground">
+                          <Package className="h-8 w-8 mb-2 opacity-40" />
+                          <p>Chưa có vật tư nào</p>
+                          {!viewMode && <p className="text-xs mt-1">Click &quot;+ Thêm vật tư&quot; để bắt đầu</p>}
+                        </div>
+                      </TableCell>
+                    </TableRow>
                 ) : (
                   watchedItems.map((item, index) => (
                     <TableRow key={index}>
@@ -601,22 +607,23 @@ export function RequestForm({
                     </TableRow>
                   ))
                 )}
-              </TableBody>
-            </Table>
-          </div>
-          {!viewMode && (
-            <Button
-              type="button"
-              variant="link"
-              size="sm"
-              className="p-0 h-auto"
-              onClick={() => setIsPickerOpen(true)}
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              Thêm dòng
-            </Button>
-          )}
-        </div>
+                </TableBody>
+              </Table>
+            </div>
+            {!viewMode && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="mt-4 border-dashed border-primary/50 text-primary hover:bg-primary/5 hover:text-primary"
+                onClick={() => setIsPickerOpen(true)}
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Thêm vật tư
+              </Button>
+            )}
+          </CardContent>
+        </Card>
 
         <DialogFooter className="!justify-between items-center pt-4 sticky bottom-0 bg-background py-4 -mx-4 px-4 border-t">
           <div className="text-sm text-muted-foreground">

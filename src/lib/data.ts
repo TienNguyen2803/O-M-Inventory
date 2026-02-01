@@ -1212,8 +1212,21 @@ export const getMaterialRequests = async (): Promise<MaterialRequest[]> => {
 }
 
 export const getPurchaseRequests = async (): Promise<PurchaseRequest[]> => {
-    await new Promise(resolve => setTimeout(resolve, 100));
-    return purchaseRequests.sort((a, b) => a.id.localeCompare(b.id));
+    try {
+        const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+        const response = await fetch(`${baseUrl}/api/purchase-requests?limit=100`, {
+            cache: 'no-store'
+        });
+        if (!response.ok) {
+            console.error('Failed to fetch purchase requests from API');
+            return [];
+        }
+        const json = await response.json();
+        return json.data || [];
+    } catch (error) {
+        console.error('Error fetching purchase requests:', error);
+        return [];
+    }
 }
 
 export const getBiddingPackages = async (): Promise<BiddingPackage[]> => {

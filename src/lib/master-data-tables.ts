@@ -37,6 +37,8 @@ export const MASTER_DATA_TABLES: MasterDataTableConfig[] = [
   // === MUA SẮM ===
   { id: 'purchase-source', name: 'Nguồn gốc mua sắm', group: 'Mua sắm', modelName: 'purchaseSource' },
   { id: 'purchase-status', name: 'Trạng thái PR', group: 'Mua sắm', modelName: 'purchaseStatus' },
+  { id: 'material-origin', name: 'Nguồn gốc vật tư', group: 'Mua sắm', modelName: 'materialOrigin' },
+  { id: 'funding-source', name: 'Nguồn vốn', group: 'Mua sắm', modelName: 'fundingSource' },
 
   // === ĐẤU THẦU ===
   { id: 'bidding-method', name: 'Hình thức đấu thầu', group: 'Đấu thầu', modelName: 'biddingMethod' },

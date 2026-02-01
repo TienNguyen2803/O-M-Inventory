@@ -184,7 +184,8 @@ async function main() {
     data: [
       { code: "PEND", name: "Chờ duyệt", color: "bg-yellow-100 text-yellow-800", sortOrder: 1 },
       { code: "APPR", name: "Đã duyệt", color: "bg-green-100 text-green-800", sortOrder: 2 },
-      { code: "DONE", name: "Hoàn thành", color: "bg-sky-100 text-sky-800", sortOrder: 3 },
+      { code: "REJ", name: "Từ chối", color: "bg-red-100 text-red-800", sortOrder: 3 },
+      { code: "DONE", name: "Hoàn thành", color: "bg-sky-100 text-sky-800", sortOrder: 4 },
     ],
     skipDuplicates: true
   })
@@ -209,6 +210,27 @@ async function main() {
       { code: "APPR", name: "Approved", color: "bg-green-100 text-green-800", sortOrder: 2 },
       { code: "REJ", name: "Rejected", color: "bg-red-100 text-red-800", sortOrder: 3 },
       { code: "DONE", name: "Completed", color: "bg-sky-100 text-sky-800", sortOrder: 4 },
+    ],
+    skipDuplicates: true
+  })
+
+  // 14a. MaterialOrigin (Nguồn gốc vật tư)
+  console.log('  Seeding MaterialOrigin...')
+  await prisma.materialOrigin.createMany({
+    data: [
+      { code: "DOMESTIC", name: "Trong nước", sortOrder: 1 },
+      { code: "IMPORT", name: "Nhập khẩu", sortOrder: 2 },
+    ],
+    skipDuplicates: true
+  })
+
+  // 14b. FundingSource (Nguồn vốn)
+  console.log('  Seeding FundingSource...')
+  await prisma.fundingSource.createMany({
+    data: [
+      { code: "SCL", name: "Sửa chữa lớn", sortOrder: 1 },
+      { code: "DTXD", name: "Đầu tư xây dựng", sortOrder: 2 },
+      { code: "QDTX", name: "Quỹ đầu tư", sortOrder: 3 },
     ],
     skipDuplicates: true
   })
@@ -1015,6 +1037,348 @@ async function main() {
   }
 
   console.log('MaterialRequests seeded! 20 records added.')
+
+  // === PURCHASE REQUESTS (Yêu cầu Mua sắm) ===
+  console.log('\\n📦 Phase 3: Seeding Purchase Requests...')
+
+  // Get MaterialOrigin IDs
+  const materialOrigins = await prisma.materialOrigin.findMany()
+  const originMap = Object.fromEntries(materialOrigins.map(o => [o.code, o.id]))
+
+  // Get FundingSource IDs
+  const fundingSources = await prisma.fundingSource.findMany()
+  const fundingMap = Object.fromEntries(fundingSources.map(f => [f.code, f.id]))
+
+  // Get Supplier IDs for suggested supplier
+  const suppliers = await prisma.supplier.findMany()
+  const supplierMap = Object.fromEntries(suppliers.map(s => [s.code, s.id]))
+
+  // Helper function for PR code
+  const generatePRCode = (index: number) => `PR-2026-${String(index).padStart(3, '0')}`
+
+  const purchaseRequestsData = [
+    {
+      requestCode: generatePRCode(1),
+      requesterId: userMap['NV007'],
+      departmentId: deptMap['PKT'],
+      statusId: requestStatusMap['APPR'],
+      sourceId: originMap['DOMESTIC'],
+      fundingSourceId: fundingMap['SCL'],
+      description: 'Mua cảm biến áp suất thay thế cho tổ máy 1',
+      totalAmount: 75000000,
+      step: 2,
+      items: [
+        { name: 'Cảm biến áp suất P003', materialId: materialMap['PM-TDH-001'], unitId: unitMap['CAI'], quantity: 5, estimatedPrice: 15000000, suggestedSupplierId: supplierMap['NCC01'] },
+      ]
+    },
+    {
+      requestCode: generatePRCode(2),
+      requesterId: userMap['NV008'],
+      departmentId: deptMap['PXVH'],
+      statusId: requestStatusMap['PEND'],
+      sourceId: originMap['IMPORT'],
+      fundingSourceId: fundingMap['DTXD'],
+      description: 'Mua bơm ly tâm công suất lớn cho hệ thống làm mát',
+      totalAmount: 450000000,
+      step: 1,
+      items: [
+        { name: 'Bơm ly tâm 500HP', materialId: materialMap['PM-MECH-001'], unitId: unitMap['CAI'], quantity: 2, estimatedPrice: 225000000, suggestedSupplierId: supplierMap['NCC02'] },
+      ]
+    },
+    {
+      requestCode: generatePRCode(3),
+      requesterId: userMap['NV003'],
+      departmentId: deptMap['PXSCC'],
+      statusId: requestStatusMap['DONE'],
+      sourceId: originMap['DOMESTIC'],
+      fundingSourceId: fundingMap['SCL'],
+      description: 'Mua vòng bi cho động cơ quạt làm mát',
+      totalAmount: 35000000,
+      step: 4,
+      items: [
+        { name: 'Vòng bi SKF 6208', materialId: materialMap['PM-MECH-002'], unitId: unitMap['CAI'], quantity: 20, estimatedPrice: 1750000, suggestedSupplierId: supplierMap['NCC01'] },
+      ]
+    },
+    {
+      requestCode: generatePRCode(4),
+      requesterId: userMap['NV006'],
+      departmentId: deptMap['TDHDK'],
+      statusId: requestStatusMap['APPR'],
+      sourceId: originMap['IMPORT'],
+      fundingSourceId: fundingMap['DTXD'],
+      description: 'Mua hệ thống điều khiển DCS mới cho tổ máy 3',
+      totalAmount: 2500000000,
+      step: 2,
+      items: [
+        { name: 'Bộ điều khiển DCS ABB', materialId: materialMap['PM-TDH-001'], unitId: unitMap['BO'], quantity: 1, estimatedPrice: 2000000000, suggestedSupplierId: supplierMap['NCC03'] },
+        { name: 'Module I/O', materialId: materialMap['PM-TDH-002'], unitId: unitMap['CAI'], quantity: 50, estimatedPrice: 10000000, suggestedSupplierId: supplierMap['NCC03'] },
+      ]
+    },
+    {
+      requestCode: generatePRCode(5),
+      requesterId: userMap['NV004'],
+      departmentId: deptMap['PKH'],
+      statusId: requestStatusMap['PEND'],
+      sourceId: originMap['DOMESTIC'],
+      fundingSourceId: fundingMap['SCL'],
+      description: 'Mua hóa chất xử lý nước lò hơi',
+      totalAmount: 180000000,
+      step: 1,
+      items: [
+        { name: 'Hóa chất xử lý nước N2820', materialId: materialMap['PM-CHEM-001'], unitId: unitMap['LIT'], quantity: 2000, estimatedPrice: 90000, suggestedSupplierId: supplierMap['NCC04'] },
+      ]
+    },
+    {
+      requestCode: generatePRCode(6),
+      requesterId: userMap['NV007'],
+      departmentId: deptMap['PKT'],
+      statusId: requestStatusMap['DONE'],
+      sourceId: originMap['DOMESTIC'],
+      fundingSourceId: fundingMap['QDTX'],
+      description: 'Mua thiết bị an toàn và bảo hộ lao động',
+      totalAmount: 85000000,
+      step: 4,
+      items: [
+        { name: 'Giày bảo hộ chống tĩnh điện', materialId: materialMap['PM-PPE-001'], unitId: unitMap['DOI'], quantity: 100, estimatedPrice: 500000, suggestedSupplierId: supplierMap['NCC01'] },
+        { name: 'Mũ bảo hộ 3M', materialId: materialMap['PM-PPE-002'], unitId: unitMap['CAI'], quantity: 100, estimatedPrice: 350000, suggestedSupplierId: supplierMap['NCC01'] },
+      ]
+    },
+    {
+      requestCode: generatePRCode(7),
+      requesterId: userMap['NV008'],
+      departmentId: deptMap['PXVH'],
+      statusId: requestStatusMap['REJ'],
+      sourceId: originMap['IMPORT'],
+      fundingSourceId: fundingMap['DTXD'],
+      description: 'Mua máy biến áp dự phòng 110kV',
+      totalAmount: 15000000000,
+      step: 1,
+      items: [
+        { name: 'Máy biến áp 110kV/22kV 100MVA', materialId: materialMap['PM-MEAS-001'], unitId: unitMap['CAI'], quantity: 1, estimatedPrice: 15000000000, suggestedSupplierId: supplierMap['NCC03'] },
+      ]
+    },
+    {
+      requestCode: generatePRCode(8),
+      requesterId: userMap['NV003'],
+      departmentId: deptMap['PXSCC'],
+      statusId: requestStatusMap['APPR'],
+      sourceId: originMap['DOMESTIC'],
+      fundingSourceId: fundingMap['SCL'],
+      description: 'Mua van điều khiển cho hệ thống nhiên liệu',
+      totalAmount: 320000000,
+      step: 3,
+      items: [
+        { name: 'Van điều khiển DN100 PN40', materialId: materialMap['PM-VALVE-001'], unitId: unitMap['CAI'], quantity: 8, estimatedPrice: 40000000, suggestedSupplierId: supplierMap['NCC02'] },
+      ]
+    },
+    {
+      requestCode: generatePRCode(9),
+      requesterId: userMap['NV006'],
+      departmentId: deptMap['TDHDK'],
+      statusId: requestStatusMap['PEND'],
+      sourceId: originMap['DOMESTIC'],
+      fundingSourceId: fundingMap['QDTX'],
+      description: 'Mua cáp điều khiển cho dự án nâng cấp SCADA',
+      totalAmount: 125000000,
+      step: 1,
+      items: [
+        { name: 'Cáp điều khiển 12x1.5mm²', materialId: materialMap['PM-TDH-001'], unitId: unitMap['MET'], quantity: 5000, estimatedPrice: 25000, suggestedSupplierId: supplierMap['NCC01'] },
+      ]
+    },
+    {
+      requestCode: generatePRCode(10),
+      requesterId: userMap['NV004'],
+      departmentId: deptMap['PKH'],
+      statusId: requestStatusMap['DONE'],
+      sourceId: originMap['IMPORT'],
+      fundingSourceId: fundingMap['SCL'],
+      description: 'Mua thiết bị đo phân tích môi trường',
+      totalAmount: 280000000,
+      step: 4,
+      items: [
+        { name: 'Máy đo pH online', materialId: materialMap['PM-MEAS-002'], unitId: unitMap['CAI'], quantity: 2, estimatedPrice: 80000000, suggestedSupplierId: supplierMap['NCC03'] },
+        { name: 'Máy đo turbidity', materialId: materialMap['PM-MEAS-002'], unitId: unitMap['CAI'], quantity: 2, estimatedPrice: 60000000, suggestedSupplierId: supplierMap['NCC03'] },
+      ]
+    },
+    {
+      requestCode: generatePRCode(11),
+      requesterId: userMap['NV007'],
+      departmentId: deptMap['PKT'],
+      statusId: requestStatusMap['APPR'],
+      sourceId: originMap['DOMESTIC'],
+      fundingSourceId: fundingMap['DTXD'],
+      description: 'Mua cánh tuabin dự phòng',
+      totalAmount: 890000000,
+      step: 2,
+      items: [
+        { name: 'Cánh tuabin hạ áp', materialId: materialMap['PM-TURB-001'], unitId: unitMap['CAI'], quantity: 10, estimatedPrice: 89000000, suggestedSupplierId: supplierMap['NCC02'] },
+      ]
+    },
+    {
+      requestCode: generatePRCode(12),
+      requesterId: userMap['NV008'],
+      departmentId: deptMap['PXVH'],
+      statusId: requestStatusMap['PEND'],
+      sourceId: originMap['DOMESTIC'],
+      fundingSourceId: fundingMap['SCL'],
+      description: 'Mua vật tư tiêu hao bảo dưỡng quý 2/2026',
+      totalAmount: 65000000,
+      step: 1,
+      items: [
+        { name: 'Ốc vít các loại', materialId: materialMap['PM-CONS-001'], unitId: unitMap['CAI'], quantity: 1000, estimatedPrice: 25000, suggestedSupplierId: supplierMap['NCC01'] },
+        { name: 'Bulong M16', materialId: materialMap['PM-CONS-002'], unitId: unitMap['CAI'], quantity: 500, estimatedPrice: 40000, suggestedSupplierId: supplierMap['NCC01'] },
+        { name: 'Đệm phẳng các loại', materialId: materialMap['PM-CONS-003'], unitId: unitMap['CAI'], quantity: 2000, estimatedPrice: 10000, suggestedSupplierId: supplierMap['NCC01'] },
+      ]
+    },
+    {
+      requestCode: generatePRCode(13),
+      requesterId: userMap['NV003'],
+      departmentId: deptMap['PXSCC'],
+      statusId: requestStatusMap['DONE'],
+      sourceId: originMap['IMPORT'],
+      fundingSourceId: fundingMap['QDTX'],
+      description: 'Mua bộ phốt cho bơm thủy lực',
+      totalAmount: 45000000,
+      step: 4,
+      items: [
+        { name: 'Bộ phốt bơm thủy lực Rexroth', materialId: materialMap['PM-MECH-002'], unitId: unitMap['BO'], quantity: 5, estimatedPrice: 9000000, suggestedSupplierId: supplierMap['NCC02'] },
+      ]
+    },
+    {
+      requestCode: generatePRCode(14),
+      requesterId: userMap['NV006'],
+      departmentId: deptMap['TDHDK'],
+      statusId: requestStatusMap['APPR'],
+      sourceId: originMap['DOMESTIC'],
+      fundingSourceId: fundingMap['SCL'],
+      description: 'Mua rơ le bảo vệ cho trạm 110kV',
+      totalAmount: 520000000,
+      step: 2,
+      items: [
+        { name: 'Rơ le bảo vệ khoảng cách', materialId: materialMap['PM-TDH-002'], unitId: unitMap['CAI'], quantity: 4, estimatedPrice: 130000000, suggestedSupplierId: supplierMap['NCC03'] },
+      ]
+    },
+    {
+      requestCode: generatePRCode(15),
+      requesterId: userMap['NV004'],
+      departmentId: deptMap['PKH'],
+      statusId: requestStatusMap['PEND'],
+      sourceId: originMap['DOMESTIC'],
+      fundingSourceId: fundingMap['DTXD'],
+      description: 'Mua dầu bôi trơn tuabin',
+      totalAmount: 185000000,
+      step: 1,
+      items: [
+        { name: 'Dầu tuabin T46', materialId: materialMap['PM-CHEM-001'], unitId: unitMap['LIT'], quantity: 2000, estimatedPrice: 92500, suggestedSupplierId: supplierMap['NCC04'] },
+      ]
+    },
+    {
+      requestCode: generatePRCode(16),
+      requesterId: userMap['NV007'],
+      departmentId: deptMap['PKT'],
+      statusId: requestStatusMap['DONE'],
+      sourceId: originMap['IMPORT'],
+      fundingSourceId: fundingMap['QDTX'],
+      description: 'Mua cảm biến nhiệt độ cao cấp',
+      totalAmount: 156000000,
+      step: 4,
+      items: [
+        { name: 'Cảm biến nhiệt PT100', materialId: materialMap['PM-TDH-002'], unitId: unitMap['CAI'], quantity: 12, estimatedPrice: 13000000, suggestedSupplierId: supplierMap['NCC03'] },
+      ]
+    },
+    {
+      requestCode: generatePRCode(17),
+      requesterId: userMap['NV008'],
+      departmentId: deptMap['PXVH'],
+      statusId: requestStatusMap['APPR'],
+      sourceId: originMap['DOMESTIC'],
+      fundingSourceId: fundingMap['SCL'],
+      description: 'Mua khớp nối mềm cho đường ống',
+      totalAmount: 78000000,
+      step: 3,
+      items: [
+        { name: 'Khớp nối mềm DN200', materialId: materialMap['PM-VALVE-001'], unitId: unitMap['CAI'], quantity: 6, estimatedPrice: 13000000, suggestedSupplierId: supplierMap['NCC02'] },
+      ]
+    },
+    {
+      requestCode: generatePRCode(18),
+      requesterId: userMap['NV003'],
+      departmentId: deptMap['PXSCC'],
+      statusId: requestStatusMap['REJ'],
+      sourceId: originMap['IMPORT'],
+      fundingSourceId: fundingMap['DTXD'],
+      description: 'Mua rotor máy phát dự phòng (từ chối do ngân sách)',
+      totalAmount: 8500000000,
+      step: 1,
+      items: [
+        { name: 'Rotor máy phát 300MW', materialId: materialMap['PM-TURB-002'], unitId: unitMap['CAI'], quantity: 1, estimatedPrice: 8500000000, suggestedSupplierId: supplierMap['NCC02'] },
+      ]
+    },
+    {
+      requestCode: generatePRCode(19),
+      requesterId: userMap['NV006'],
+      departmentId: deptMap['TDHDK'],
+      statusId: requestStatusMap['APPR'],
+      sourceId: originMap['DOMESTIC'],
+      fundingSourceId: fundingMap['QDTX'],
+      description: 'Mua thiết bị UPS cho phòng điều khiển',
+      totalAmount: 245000000,
+      step: 2,
+      items: [
+        { name: 'UPS 10kVA online', materialId: materialMap['PM-TDH-001'], unitId: unitMap['CAI'], quantity: 5, estimatedPrice: 49000000, suggestedSupplierId: supplierMap['NCC01'] },
+      ]
+    },
+    {
+      requestCode: generatePRCode(20),
+      requesterId: userMap['NV004'],
+      departmentId: deptMap['PKH'],
+      statusId: requestStatusMap['PEND'],
+      sourceId: originMap['IMPORT'],
+      fundingSourceId: fundingMap['SCL'],
+      description: 'Mua thiết bị lấy mẫu và phân tích khí thải',
+      totalAmount: 680000000,
+      step: 1,
+      items: [
+        { name: 'Hệ thống CEMS', materialId: materialMap['PM-MEAS-001'], unitId: unitMap['BO'], quantity: 2, estimatedPrice: 340000000, suggestedSupplierId: supplierMap['NCC03'] },
+      ]
+    },
+  ]
+
+  for (const prData of purchaseRequestsData) {
+    const { items, ...requestFields } = prData
+    
+    // Create PurchaseRequest first
+    const createdPR = await prisma.purchaseRequest.create({
+      data: {
+        requestCode: requestFields.requestCode,
+        requesterId: requestFields.requesterId,
+        departmentId: requestFields.departmentId,
+        statusId: requestFields.statusId,
+        sourceId: requestFields.sourceId,
+        fundingSourceId: requestFields.fundingSourceId,
+        description: requestFields.description,
+        totalAmount: requestFields.totalAmount,
+        step: requestFields.step,
+      }
+    })
+    
+    // Then create items
+    for (const item of items) {
+      await prisma.purchaseRequestItem.create({
+        data: {
+          requestId: createdPR.id,
+          name: item.name,
+          materialId: item.materialId || null,
+          unitId: item.unitId,
+          quantity: item.quantity,
+          estimatedPrice: item.estimatedPrice,
+          suggestedSupplierId: item.suggestedSupplierId || null,
+        }
+      })
+    }
+  }
+
+  console.log('PurchaseRequests seeded! 20 records added.')
 }
 
 main()
@@ -1026,3 +1390,4 @@ main()
     await prisma.$disconnect()
     await pool.end()
   })
+

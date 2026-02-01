@@ -197,24 +197,48 @@ export interface MaterialRequest {
 
 export interface PurchaseRequestItem {
   id: string;
+  requestId?: string;
+  materialId?: string;
   name: string;
-  unit: string;
+  unitId: string;
   quantity: number;
   estimatedPrice: number;
-  suggestedSupplier: string;
+  suggestedSupplierId?: string;
+  // Nested relations (populated from API)
+  material?: { id: string; code: string; name: string };
+  unit?: MasterDataItem;
+  suggestedSupplier?: { id: string; name: string };
+  // Legacy field for backward compatibility
+  suggestedSupplierName?: string;
 }
 
 export interface PurchaseRequest {
-  id: string; // MÃ PR
-  requesterName: string; 
-  requesterDept: string; 
+  id: string; // MÃ PR (requestCode)
+  requestCode?: string;
+
+  // FK IDs
+  requesterId?: string;
+  departmentId?: string;
+  statusId?: string;
+  sourceId?: string;
+  fundingSourceId?: string;
+
+  // Nested relations (populated from API)
+  requester?: { id: string; name: string; employeeCode?: string };
+  department?: MasterDataItem;
+  status?: MasterDataItem & { code?: string };
+  source?: MasterDataItem;
+  fundingSource?: MasterDataItem;
+
+  // Legacy fields for backward compatibility
+  requesterName?: string;
+  requesterDept?: string;
   description: string; // NỘI DUNG / Diễn giải mua sắm
-  source: 'Trong nước' | 'Nhập khẩu'; // NGUỒN GỐC
-  fundingSource: string; // Nguồn vốn
   totalAmount: number; // TỔNG TIỀN
-  status: 'Approved' | 'Pending' | 'Rejected' | 'Completed'; // TRẠNG THÁI
   items: PurchaseRequestItem[];
   step?: number;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface BiddingItem {
