@@ -1,7 +1,7 @@
 ---
 title: "Implement Inbound Logistics (Goods Receipt) Backend & Integration"
 description: "Implement real backend API for Inbound Receipts with stock update logic and integrate with frontend."
-status: pending
+status: completed
 priority: P1
 effort: 3d
 branch: main
