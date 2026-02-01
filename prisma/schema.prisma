@@ -503,20 +503,20 @@ model Material {
   evnCode        String?
   partNo         String
   serialNumber   String?
-  
+
   // FK Relations to Master Data
   managementTypeId String
   categoryId       String
   unitId           String
   statusId         String
   countryId        String?
-  
+
   managementType   ManagementType   @relation(fields: [managementTypeId], references: [id])
   materialCategory MaterialCategory @relation(fields: [categoryId], references: [id])
   materialUnit     MaterialUnit     @relation(fields: [unitId], references: [id])
   materialStatus   MaterialStatus   @relation(fields: [statusId], references: [id])
   country          Country?         @relation(fields: [countryId], references: [id])
-  
+
   description    String?
   stock          Int      @default(0)
   manufacturer   String?
@@ -543,6 +543,11 @@ model Material {
   outboundItems        OutboundReceiptItem[] @relation("OutboundItemMaterial")
   stocktakeResults     StocktakeResult[]     @relation("StocktakeMaterial")
 
+  // Lifecycle tracking relations
+  lifecycleEvents MaterialEvent[]
+  installations   Installation[]
+
+  @@index([serialNumber])
   @@map("materials")
 }
 
@@ -903,9 +908,16 @@ model InboundReceiptItem {
   serialBatch       String?
   kcs               Boolean   @default(false)
 
+  // KCS inspection fields
+  kcsDate        DateTime?
+  kcsInspectorId String?
+  kcsResult      String?
+  kcsInspector   User? @relation("KCSInspector", fields: [kcsInspectorId], references: [id])
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@index([kcsInspectorId])
   @@map("inbound_receipt_items")
 }
 
@@ -1101,6 +1113,11 @@ model User {
   stocktakeAssignments  StocktakeAssignment[] @relation("StocktakeAssignee")
   stocktakeResults      StocktakeResult[]     @relation("StocktakeCounter")
 
+  // Lifecycle tracking relations
+  performedInstallations Installation[]       @relation("InstallationPerformer")
+  kcsInspections         InboundReceiptItem[] @relation("KCSInspector")
+  materialEvents         MaterialEvent[]      @relation("EventActor")
+
   @@map("users")
 }
 
@@ -1218,4 +1235,70 @@ model InventoryLog {
 
   @@index([date])
   @@map("inventory_logs")
+}
+
+// ============================================
+// LIFECYCLE TRACKING
+// ============================================
+
+enum MaterialEventType {
+  REQUEST
+  APPROVED
+  PO_ISSUED   // Future phase
+  INBOUND
+  QC
+  OUTBOUND
+  INSTALLED
+}
+
+// MaterialEvent - Logs lifecycle events for materials
+model MaterialEvent {
+  id          String   @id @default(uuid())
+
+  materialId  String
+  eventType   MaterialEventType
+  eventDate   DateTime
+
+  // Actor with FK relation
+  actorId     String
+  actorName   String   // Denormalized for display
+  actor       User     @relation("EventActor", fields: [actorId], references: [id])
+
+  referenceType  String   // e.g., "MaterialRequest", "InboundReceipt", "OutboundReceipt"
+  referenceId    String   // ID of the referenced document
+  referenceCode  String   // Code of the referenced document for display
+
+  description String
+  metadata    Json?
+
+  createdAt   DateTime @default(now())
+
+  material    Material @relation(fields: [materialId], references: [id])
+
+  @@index([materialId, eventDate])
+  @@index([referenceType, referenceId])
+  @@map("material_events")
+}
+
+// Installation - Tracks where materials are installed
+model Installation {
+  id              String   @id @default(uuid())
+
+  materialId      String
+  installedById   String
+
+  material        Material @relation(fields: [materialId], references: [id])
+  installedBy     User     @relation("InstallationPerformer", fields: [installedById], references: [id])
+
+  locationName    String
+  slotInfo        String?
+  installedAt     DateTime
+  notes           String?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([materialId])
+  @@index([installedById])
+  @@map("installations")
 }

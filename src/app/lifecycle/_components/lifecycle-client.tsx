@@ -1,81 +1,18 @@
 "use client";
 
-import { useState } from "react";
-import {
-  Package,
-  Wrench,
-  ShoppingCart,
-  Truck,
-  ClipboardCheck,
-  ThumbsUp,
-  MapPin,
-  Cpu,
-  Search,
-  CheckCircle,
-  FileText,
-  Warehouse,
-  PackageCheck,
-  Factory,
-} from "lucide-react";
+import { useState, useCallback } from "react";
+import { Search, ArrowLeft } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
-
-const timelineData = [
-    {
-    icon: CheckCircle,
-    iconColor: "bg-green-100 text-green-600",
-    title: "Lắp đặt & Đưa vào Vận hành",
-    description: "Lắp đặt thay thế card lỗi tại tủ L3. Chạy thử đạt yêu cầu. Người thực hiện: Nguyễn Văn A (PX Tự động)",
-    timestamp: "21/08/2025 09:30",
-    highlight: true,
-  },
-  {
-    icon: Truck,
-    iconColor: "bg-blue-100 text-blue-600",
-    title: "Xuất kho Vật tư",
-    description: "Xuất kho theo phiếu PXK-2025-088. Lý do: Thay thế định kỳ. Thủ kho: Trần Văn Kho",
-    timestamp: "20/08/2025 14:15",
-  },
-  {
-    icon: ClipboardCheck,
-    iconColor: "bg-purple-100 text-purple-600",
-    title: "Kiểm tra Chất lượng (KCS)",
-    description: "Đánh giá chất lượng: ĐẠT. Hồ sơ CO/CQ đầy đủ. Người kiểm: Ban nghiệm thu",
-    timestamp: "15/08/2025 10:00",
-  },
-  {
-    icon: Warehouse,
-    iconColor: "bg-sky-100 text-sky-600",
-    title: "Nhập kho (GRN)",
-    description: "Nhập kho theo phiếu PNK-2025-001 (PO-2025-112). Vị trí lưu: A1-02-05.",
-    timestamp: "15/08/2025 08:30",
-  },
-  {
-    icon: PackageCheck,
-    iconColor: "bg-gray-100 text-gray-600",
-    title: "Đặt hàng (PO Issued)",
-    description: "Phát hành đơn hàng PO-2025-112 cho nhà thầu Siemens Energy Global.",
-    timestamp: "01/07/2025",
-  },
-    {
-    icon: ThumbsUp,
-    iconColor: "bg-gray-100 text-gray-600",
-    title: "Phê duyệt Yêu cầu",
-    description: "Đã được phê duyệt bởi Trưởng phòng Kỹ thuật.",
-    timestamp: "20/06/2025",
-  },
-  {
-    icon: FileText,
-    iconColor: "bg-gray-100 text-gray-600",
-    title: "Nhu cầu Vật tư (Request)",
-    description: "Tạo phiếu yêu cầu PR-2025-002. Người đề nghị: Nguyễn Văn A (PX Vận hành 1).",
-    timestamp: "15/06/2025",
-  },
-];
+import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  MaterialInfoCard,
+  LifecycleTimeline,
+  LifecycleFilterBar,
+} from "@/components/lifecycle";
+import type { MaterialLifecycleResponse } from "@/lib/types/lifecycle";
 
 const Breadcrumbs = () => (
   <div className="text-sm text-muted-foreground mb-1">
@@ -86,13 +23,105 @@ const Breadcrumbs = () => (
 );
 
 export function LifecycleClient() {
-  const [searchQuery, setSearchQuery] = useState("SIEMENS-2025-999");
-  const [showResults, setShowResults] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [materialId, setMaterialId] = useState<string | null>(null);
+  const [lifecycleData, setLifecycleData] = useState<MaterialLifecycleResponse | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [filters, setFilters] = useState<{ fromDate?: string; toDate?: string }>({});
+  const [offset, setOffset] = useState(0);
 
-  const handleSearch = () => {
-    if (searchQuery.trim() !== "") {
-      setShowResults(true);
+  // Search for material by code or serial number
+  const handleSearch = async () => {
+    if (!searchQuery.trim()) return;
+
+    setIsLoading(true);
+    setError(null);
+    setLifecycleData(null);
+    setMaterialId(null);
+
+    try {
+      // First, find the material by code or serial number
+      const materialRes = await fetch(
+        `/api/materials?search=${encodeURIComponent(searchQuery.trim())}&limit=1`
+      );
+      const materialData = await materialRes.json();
+
+      if (!materialData.data || materialData.data.length === 0) {
+        setError("Không tìm thấy vật tư với mã hoặc serial đã nhập");
+        setIsLoading(false);
+        return;
+      }
+
+      const foundMaterial = materialData.data[0];
+      setMaterialId(foundMaterial.id);
+
+      // Fetch lifecycle data
+      await fetchLifecycle(foundMaterial.id, 0, filters);
+    } catch (err) {
+      console.error("Search error:", err);
+      setError("Có lỗi xảy ra khi tìm kiếm");
+    } finally {
+      setIsLoading(false);
     }
+  };
+
+  // Fetch lifecycle data for a material
+  const fetchLifecycle = useCallback(
+    async (
+      matId: string,
+      newOffset: number,
+      filterParams: { fromDate?: string; toDate?: string }
+    ) => {
+      setIsLoading(true);
+      try {
+        const params = new URLSearchParams({
+          limit: "20",
+          offset: String(newOffset),
+        });
+        if (filterParams.fromDate) params.set("fromDate", filterParams.fromDate);
+        if (filterParams.toDate) params.set("toDate", filterParams.toDate);
+
+        const res = await fetch(`/api/materials/${matId}/lifecycle?${params}`);
+        if (!res.ok) {
+          throw new Error("Failed to fetch lifecycle");
+        }
+        const data: MaterialLifecycleResponse = await res.json();
+        setLifecycleData(data);
+        setOffset(newOffset);
+      } catch (err) {
+        console.error("Lifecycle fetch error:", err);
+        setError("Có lỗi xảy ra khi tải lịch sử vòng đời");
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    []
+  );
+
+  // Handle filter changes
+  const handleFilter = (newFilters: { fromDate?: string; toDate?: string }) => {
+    setFilters(newFilters);
+    if (materialId) {
+      fetchLifecycle(materialId, 0, newFilters);
+    }
+  };
+
+  // Handle pagination
+  const handlePageChange = (newOffset: number) => {
+    if (materialId) {
+      fetchLifecycle(materialId, newOffset, filters);
+    }
+  };
+
+  // Reset search
+  const handleReset = () => {
+    setMaterialId(null);
+    setLifecycleData(null);
+    setError(null);
+    setSearchQuery("");
+    setFilters({});
+    setOffset(0);
   };
 
   return (
@@ -103,120 +132,92 @@ export function LifecycleClient() {
         breadcrumbs={<Breadcrumbs />}
       />
 
+      {/* Search bar */}
       <Card>
         <CardContent className="pt-6">
-          <div className="flex w-full max-w-md items-center space-x-2">
+          <div className="flex w-full max-w-lg items-center space-x-2">
+            {lifecycleData && (
+              <Button variant="ghost" size="icon" onClick={handleReset}>
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+            )}
             <Input
               type="text"
               placeholder="Nhập Serial / Batch / Mã Vật tư..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+              onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+              disabled={isLoading}
             />
-            <Button onClick={handleSearch}>
+            <Button onClick={handleSearch} disabled={isLoading || !searchQuery.trim()}>
               <Search className="mr-2 h-4 w-4" />
               Tra cứu
             </Button>
           </div>
         </CardContent>
       </Card>
-      
-      {showResults && (
+
+      {/* Error state */}
+      {error && (
+        <Card className="border-destructive">
+          <CardContent className="pt-6">
+            <p className="text-destructive">{error}</p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Loading state */}
+      {isLoading && !lifecycleData && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div className="space-y-4">
+            <Card>
+              <CardContent className="pt-6 space-y-4">
+                <Skeleton className="h-6 w-32" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-3/4" />
+              </CardContent>
+            </Card>
+          </div>
+          <div className="lg:col-span-2">
+            <Card>
+              <CardContent className="pt-6 space-y-4">
+                <Skeleton className="h-6 w-48" />
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="flex gap-4">
+                    <Skeleton className="h-10 w-10 rounded-full" />
+                    <div className="flex-1 space-y-2">
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-3 w-48" />
+                    </div>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      )}
+
+      {/* Results */}
+      {lifecycleData && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
-            {/* Left Column */}
-            <div className="lg:col-span-1 space-y-4">
-                <Card>
-                    <CardHeader className="flex flex-row items-center gap-4 space-y-0 pb-2">
-                         <div className="p-3 rounded-lg bg-primary/10">
-                             <Cpu className="h-8 w-8 text-primary" />
-                         </div>
-                         <div>
-                            <CardTitle className="text-lg">Card Điều Khiển PLC</CardTitle>
-                            <p className="text-sm text-muted-foreground">SN: SIEMENS-2025-999</p>
-                         </div>
-                    </CardHeader>
-                    <CardContent>
-                        <Badge variant="outline" className="text-green-600 border-green-600/50 bg-green-50">ĐANG VẬN HÀNH</Badge>
-                        <div className="mt-4 space-y-2 text-sm">
-                           <div className="flex justify-between">
-                                <span className="text-muted-foreground">Mã Vật tư (EVN)</span>
-                                <span className="font-medium">5.12.99.102</span>
-                           </div>
-                           <div className="flex justify-between">
-                                <span className="text-muted-foreground">Nhà sản xuất</span>
-                                <span className="font-medium">Siemens Energy</span>
-                           </div>
-                            <div className="flex justify-between">
-                                <span className="text-muted-foreground">Xuất xứ</span>
-                                <span className="font-medium">Germany</span>
-                           </div>
-                           <div className="flex justify-between">
-                                <span className="text-muted-foreground">Ngày nhập kho</span>
-                                <span className="font-medium">15/08/2025</span>
-                           </div>
-                           <div className="flex justify-between">
-                                <span className="text-muted-foreground">Hạn bảo hành</span>
-                                <span className="font-medium text-red-600">15/08/2027</span>
-                           </div>
-                        </div>
-                    </CardContent>
-                </Card>
+          {/* Left Column - Material info and filters */}
+          <div className="space-y-4">
+            <MaterialInfoCard
+              material={lifecycleData.material}
+              currentLocation={lifecycleData.currentLocation}
+            />
+            <LifecycleFilterBar onFilter={handleFilter} isLoading={isLoading} />
+          </div>
 
-                 <Card>
-                    <CardHeader>
-                        <CardTitle className="text-base flex items-center gap-2">
-                           <MapPin className="h-5 w-5 text-muted-foreground" />
-                           Vị trí Lắp đặt Hiện tại
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="font-bold text-primary">Tổ máy GT11 - Nhà máy Phú Mỹ 1</div>
-                        <p className="text-muted-foreground">Tủ điều khiển Local L3 (Rack 2, Slot 5)</p>
-                        <p className="text-xs text-muted-foreground/80 mt-2">Cập nhật lần cuối: 21/08/2025 bởi Kỹ sư Tự động hóa</p>
-                    </CardContent>
-                </Card>
-            </div>
-
-            {/* Right Column (Timeline) */}
-            <div className="lg:col-span-2">
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Lịch sử Vòng đời (Lifecycle Timeline)</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                         <div className="relative pl-6">
-                            {/* Vertical Line */}
-                             <div className="absolute left-6 top-0 h-full w-0.5 bg-border -translate-x-1/2"></div>
-                            
-                             <div className="space-y-6">
-                                {timelineData.map((item, index) => {
-                                const Icon = item.icon;
-                                return (
-                                    <div key={index} className="relative flex items-start gap-4">
-                                        {/* Icon */}
-                                        <div className="absolute left-0 top-0 -translate-x-1/2 flex items-center justify-center">
-                                            <span className="absolute h-8 w-8 rounded-full bg-border"></span>
-                                            <span className={cn("relative z-10 flex h-6 w-6 items-center justify-center rounded-full", item.iconColor)}>
-                                                <Icon className="h-4 w-4" />
-                                            </span>
-                                        </div>
-                                        
-                                        {/* Content */}
-                                        <div className={cn("flex-1 rounded-md border p-3 ml-10", item.highlight ? "bg-green-50/50 border-green-200/80" : "bg-card")}>
-                                            <div className="flex items-center justify-between">
-                                                <p className="font-semibold">{item.title}</p>
-                                                <p className="text-xs text-muted-foreground">{item.timestamp}</p>
-                                            </div>
-                                            <p className="text-sm text-muted-foreground mt-1">{item.description}</p>
-                                        </div>
-                                    </div>
-                                );
-                                })}
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-            </div>
+          {/* Right Column - Timeline */}
+          <div className="lg:col-span-2">
+            <LifecycleTimeline
+              events={lifecycleData.timeline}
+              pagination={lifecycleData.pagination}
+              isLoading={isLoading}
+              onPageChange={handlePageChange}
+            />
+          </div>
         </div>
       )}
     </div>

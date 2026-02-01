@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/db'
+import {
+  createMaterialEventsBatch,
+  buildEventDescription,
+} from '@/lib/services/material-event-logging-service'
+import { MaterialEventType } from '@prisma/client'
 
 // Helper function to generate request code
 async function generateRequestCode(): Promise<string> {
@@ -264,6 +269,28 @@ export async function POST(request: NextRequest) {
         stock: item.stock,
         notes: item.notes,
       }))
+    }
+
+    // Log REQUEST events for each material item
+    try {
+      const eventInputs = materialRequest.items.map((item) => ({
+        materialId: item.materialId,
+        eventType: 'REQUEST' as MaterialEventType,
+        eventDate: materialRequest.requestDate,
+        actorId: materialRequest.requesterId,
+        actorName: materialRequest.requester.name,
+        referenceType: 'MaterialRequest',
+        referenceId: materialRequest.id,
+        referenceCode: materialRequest.requestCode,
+        description: buildEventDescription('REQUEST', {
+          referenceCode: materialRequest.requestCode,
+        }),
+        metadata: { quantity: item.requestedQuantity },
+      }))
+      await createMaterialEventsBatch(eventInputs)
+    } catch (eventError) {
+      console.error('Failed to log REQUEST events:', eventError)
+      // Don't fail the main request if event logging fails
     }
 
     return NextResponse.json({ data }, { status: 201 })

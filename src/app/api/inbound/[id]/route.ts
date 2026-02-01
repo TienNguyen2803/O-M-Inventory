@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+import prisma from "@/lib/db";
 import { inboundSchema } from "@/lib/validations/inbound";
+import {
+  createMaterialEventsBatch,
+  buildEventDescription,
+} from "@/lib/services/material-event-logging-service";
+import { MaterialEventType } from "@prisma/client";
 
 // Include relations for nested data
 const includeRelations = {
@@ -233,6 +238,37 @@ export async function PUT(
 
         return updatedReceipt;
       });
+
+      // Log INBOUND events for completed items
+      try {
+        const actorId = existingReceipt.createdById;
+        const createdBy = await prisma.user.findUnique({
+          where: { id: actorId },
+          select: { name: true },
+        });
+        const eventInputs = itemsToCreate
+          .filter((item) => item.receivingQuantity && item.receivingQuantity > 0)
+          .map((item) => ({
+            materialId: item.materialId,
+            eventType: "INBOUND" as MaterialEventType,
+            eventDate: new Date(receiptData.inboundDate),
+            actorId: actorId,
+            actorName: createdBy?.name ?? "Unknown",
+            referenceType: "InboundReceipt",
+            referenceId: id,
+            referenceCode: existingReceipt.receiptCode,
+            description: buildEventDescription("INBOUND", {
+              referenceCode: existingReceipt.receiptCode,
+              quantity: item.receivingQuantity,
+            }),
+            metadata: { quantity: item.receivingQuantity },
+          }));
+        if (eventInputs.length > 0) {
+          await createMaterialEventsBatch(eventInputs);
+        }
+      } catch (eventError) {
+        console.error("Failed to log INBOUND events:", eventError);
+      }
 
       return NextResponse.json(result);
     } else {

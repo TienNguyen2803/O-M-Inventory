@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ItemDetails } from "./item-details";
 import { HistoryTimeline } from "./history-timeline";
-import { getGoodsHistory } from "@/lib/data";
+import { getGoodsHistoryAction } from "../_actions/get-goods-history";
 import type { Material, GoodsHistoryEvent } from "@/lib/types";
 
 const Breadcrumbs = () => (
@@ -28,7 +28,7 @@ export function GoodsHistoryClient() {
     if (searchQuery.trim() === "") return;
     setIsLoading(true);
     setResult(null);
-    const data = await getGoodsHistory(searchQuery.trim());
+    const data = await getGoodsHistoryAction(searchQuery.trim());
     setResult(data);
     setIsLoading(false);
   };

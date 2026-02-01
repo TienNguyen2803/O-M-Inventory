@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/db'
+import {
+  createMaterialEventsBatch,
+  buildEventDescription,
+} from '@/lib/services/material-event-logging-service'
+import { MaterialEventType } from '@prisma/client'
 
 type RouteParams = {
   params: Promise<{ id: string }>
@@ -106,6 +111,30 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         stock: item.material?.stock || 0,
         notes: item.notes,
       }))
+    }
+
+    // Log APPROVED events for each material item
+    try {
+      const approver = await prisma.user.findUnique({
+        where: { id: approverId },
+        select: { name: true },
+      })
+      const eventInputs = updatedRequest.items.map((item) => ({
+        materialId: item.materialId,
+        eventType: 'APPROVED' as MaterialEventType,
+        eventDate: new Date(),
+        actorId: approverId,
+        actorName: approver?.name ?? 'Unknown',
+        referenceType: 'MaterialRequest',
+        referenceId: updatedRequest.id,
+        referenceCode: updatedRequest.requestCode,
+        description: buildEventDescription('APPROVED', {
+          referenceCode: updatedRequest.requestCode,
+        }),
+      }))
+      await createMaterialEventsBatch(eventInputs)
+    } catch (eventError) {
+      console.error('Failed to log APPROVED events:', eventError)
     }
 
     return NextResponse.json({ data })

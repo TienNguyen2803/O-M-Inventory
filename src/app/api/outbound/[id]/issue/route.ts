@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+import prisma from "@/lib/db";
+import {
+  createMaterialEventsBatch,
+  buildEventDescription,
+} from "@/lib/services/material-event-logging-service";
+import { MaterialEventType } from "@prisma/client";
 
 export async function POST(
   req: NextRequest,
@@ -144,6 +149,9 @@ export async function POST(
         approver: {
           select: { id: true, name: true, employeeCode: true },
         },
+        createdBy: {
+          select: { id: true, name: true },
+        },
         items: {
           include: {
             material: true,
@@ -153,6 +161,32 @@ export async function POST(
         },
       },
     });
+
+    // Log OUTBOUND events for issued items
+    try {
+      const eventInputs = receipt.items
+        .filter((item) => item.issuedQuantity > 0)
+        .map((item) => ({
+          materialId: item.materialId,
+          eventType: "OUTBOUND" as MaterialEventType,
+          eventDate: new Date(),
+          actorId: receipt.createdById,
+          actorName: fullReceipt?.createdBy?.name ?? "Unknown",
+          referenceType: "OutboundReceipt",
+          referenceId: receipt.id,
+          referenceCode: receipt.receiptCode,
+          description: buildEventDescription("OUTBOUND", {
+            referenceCode: receipt.receiptCode,
+            quantity: item.issuedQuantity,
+          }),
+          metadata: { quantity: item.issuedQuantity },
+        }));
+      if (eventInputs.length > 0) {
+        await createMaterialEventsBatch(eventInputs);
+      }
+    } catch (eventError) {
+      console.error("Failed to log OUTBOUND events:", eventError);
+    }
 
     return NextResponse.json(fullReceipt);
   } catch (error) {

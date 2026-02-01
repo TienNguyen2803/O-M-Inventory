@@ -1,31 +1,32 @@
 # PowerTrack Logistics - O&M Inventory Management System
 
-> **Status:** Active Development (Hybrid State)
-> **Version:** 1.2.0
+> **Status:** Active Development
+> **Version:** 1.4.0
 
-A comprehensive inventory management system for Power Plant Operation & Maintenance (O&M), built with the modern Next.js 14 stack.
+A comprehensive inventory management system for Power Plant Operation & Maintenance (O&M), built with modern Next.js stack.
 
-## 🚀 Tech Stack
+## Tech Stack
 
 - **Frontend**: Next.js 15.5 (App Router), React 19, TypeScript, Tailwind CSS
-- **UI Library**: Shadcn/ui (Radix Primitives)
+- **UI Library**: shadcn/ui (Radix Primitives), recharts, lucide-react
 - **Backend**: Next.js API Routes (Serverless)
 - **Database**: PostgreSQL (via Docker)
-- **ORM**: Prisma 7
+- **ORM**: Prisma 7 with PrismaPg adapter
 - **Validation**: Zod + React Hook Form
+- **AI**: Firebase Genkit with Gemini 2.5 Flash
 
-## 📚 Documentation
+## Documentation
 
 We maintain detailed documentation in the `docs/` directory:
 
-- **[Project Overview & PDR](./docs/project-overview-pdr.md)**: Vision, core modules, and requirements.
-- **[Codebase Summary](./docs/codebase-summary.md)**: Detailed breakdown of the project structure and current "Hybrid" state (Real vs Mock).
-- **[System Architecture](./docs/system-architecture.md)**: Technical design, data flow, and API endpoints.
-- **[Code Standards](./docs/code-standards.md)**: Development guidelines and patterns.
-- **[Roadmap](./docs/project-roadmap.md)**: Development phases and feature status.
-- **[Database Schema](./docs/database-schema.md)**: Entity-Relationship details (Master Data + Business Tables).
+- **[Project Overview & PDR](./docs/project-overview-pdr.md)**: Vision, core modules, requirements
+- **[Codebase Summary](./docs/codebase-summary.md)**: Project structure and module status
+- **[System Architecture](./docs/system-architecture.md)**: Technical design, data flow, API endpoints
+- **[Code Standards](./docs/code-standards.md)**: Development guidelines and patterns
+- **[Roadmap](./docs/project-roadmap.md)**: Development phases and feature status
+- **[Database Schema](./docs/database-schema.md)**: Entity-Relationship details
 
-## 🛠️ Quick Start
+## Quick Start
 
 ### Prerequisites
 - Node.js 18+
@@ -52,44 +53,57 @@ npm run dev
 
 App runs at: [http://localhost:9002](http://localhost:9002)
 
-## 🧩 Module Status
-
-The application is currently in a **Hybrid State**:
+## Module Status
 
 | Module | Status | Description |
 |--------|--------|-------------|
-| **Materials** | ✅ Live | Connected to DB. Full CRUD. |
-| **Requests** | ✅ Live | Connected to DB. Approval workflow. |
-| **Users/Roles**| ✅ Live | RBAC System fully functional. |
-| **Warehouse Locations** | ✅ Live | Full CRUD with FK relations. |
-| **Suppliers** | ✅ Live | Full CRUD with contacts management. FK relations. |
-| **Inbound** | 🚧 Prototype | UI + partial API. Mock data. |
-| **Outbound** | 🚧 Prototype | UI only. Mock data. |
-| **Reports** | ⚠️ Hybrid | UI exists, calculations are client-side. |
+| **Materials** | Live | Full CRUD, search, filtering, master data integration |
+| **Material Requests** | Live | Request creation, approval workflow, status tracking |
+| **Purchase Requests** | Live | Procurement workflow with items and approvals |
+| **Bidding Management** | Live | Full bidding workflow: invite, receive, evaluate, select winner |
+| **Users/Roles** | Live | RBAC system with feature-action permissions |
+| **Warehouse Locations** | Live | Full CRUD with FK relations to master data |
+| **Suppliers** | Live | Full CRUD with contacts management |
+| **Inbound** | Live | Goods receipt with FK relations |
+| **Outbound** | Live | Goods issue with approve/issue workflow, stock decrement |
+| **Stocktake** | Live | Physical inventory counting with assignments and reconciliation |
+| **Reports** | Hybrid | UI exists, calculations are client-side |
+| **Dashboard** | Hybrid | Charts with partial live data |
 
-## 📂 Project Structure
+## Project Structure
 
 ```
 src/
 ├── app/                    # Next.js App Router
-│   ├── api/                # Backend API Routes (Real)
-│   ├── materials/          # Materials Module (Real)
-│   ├── material-requests/  # Request Module (Real)
-│   ├── warehouses/         # Warehouse Locations (Real)
-│   ├── suppliers/          # Suppliers Module (Real)
-│   ├── inbound/            # Inbound Module (Prototype)
+│   ├── api/                # Backend API Routes (19 endpoint groups, 44+ routes)
+│   ├── materials/          # Materials Module
+│   ├── material-requests/  # Material Request Module
+│   ├── purchase-requests/  # Purchase Request Module
+│   ├── biddings/           # Bidding Management Module
+│   ├── inbound/            # Inbound Logistics Module
+│   ├── outbound/           # Outbound Logistics Module
+│   ├── stock-take/         # Stocktake Module
+│   ├── warehouses/         # Warehouse Locations Module
+│   ├── suppliers/          # Suppliers Module
+│   ├── users/              # User Management
+│   ├── roles/              # Role Management
 │   └── ...
-├── components/             # Shadcn UI & Shared Components
+├── components/
+│   ├── ui/                 # 35+ shadcn/ui components
+│   ├── layout/             # AppLayout, AppHeader, SidebarNav
+│   └── shared/             # Shared components
 ├── lib/
-│   ├── prisma.ts           # DB Client
+│   ├── db.ts               # Prisma client singleton
+│   ├── types.ts            # TypeScript interfaces
 │   ├── validations/        # Zod validation schemas
-│   └── data.ts             # ⚠️ Legacy/Mock Data (to be deprecated)
-└── ...
+│   └── master-data-tables.ts # 24 master data table mappings
+├── hooks/                  # Custom React hooks
+└── contexts/               # Auth context
 ```
 
-## 🤝 Contributing
+## Contributing
 
 Please read [Code Standards](./docs/code-standards.md) before contributing.
-- Use **kebab-case** for filenames.
-- Prefer **Server Components** where possible.
-- Update documentation when modifying features.
+- Use **kebab-case** for filenames
+- Prefer **Server Components** where possible
+- Update documentation when modifying features
