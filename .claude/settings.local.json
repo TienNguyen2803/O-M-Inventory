@@ -30,7 +30,18 @@
       "Bash(timeout:*)",
       "Bash(curl:*)",
       "Bash(powershell:*)",
-      "Bash(npx eslint:*)"
+      "Bash(npx eslint:*)",
+      "Bash(git -C \"C:\\\\Users\\\\tiennm\\\\dyad-apps\\\\O-M-Inventory\" status --porcelain src/app/)",
+      "Bash(find:*)",
+      "Bash(PGPASSWORD=postgres psql:*)",
+      "Bash(npx next lint:*)",
+      "Bash(npx ts-node:*)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)",
+      "Bash(taskkill:*)",
+      "Bash(npx cross-env NODE_ENV=production next build:*)",
+      "Bash(cmd /c:*)",
+      "Bash(psql:*)"
     ]
   }
 }
