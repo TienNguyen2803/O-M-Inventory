@@ -1843,6 +1843,400 @@ async function main() {
   }
 
   console.log('BiddingPackages seeded! 20 records added.')
+
+  // === INBOUND RECEIPTS (Phiếu nhập kho) ===
+  console.log('\n📦 Phase 5: Seeding InboundReceipts...')
+
+  // Get InboundType IDs
+  const inboundTypes = await prisma.inboundType.findMany()
+  const inboundTypeMap = Object.fromEntries(inboundTypes.map(t => [t.code, t.id]))
+
+  // Get InboundStatus IDs
+  const inboundStatuses = await prisma.inboundStatus.findMany()
+  const inboundStatusMap = Object.fromEntries(inboundStatuses.map(s => [s.code, s.id]))
+
+  // Get WarehouseLocation IDs
+  const locations = await prisma.warehouseLocation.findMany()
+  const locationMap = Object.fromEntries(locations.map(l => [l.code, l.id]))
+
+  // Get PurchaseRequest IDs for linking
+  const purchaseRequests = await prisma.purchaseRequest.findMany()
+  const prMap = Object.fromEntries(purchaseRequests.map(pr => [pr.requestCode, pr.id]))
+
+  // Helper function to generate receipt code
+  const generateReceiptCode = (index: number) => `PNK-2026-${String(index).padStart(3, '0')}`
+
+  // Type for inbound receipt items
+  interface InboundItemData {
+    materialCode: string
+    unitCode: string
+    locationCode?: string
+    orderedQuantity: number
+    receivedQuantity: number
+    receivingQuantity: number
+    serialBatch?: string
+    kcs?: boolean
+  }
+
+  const inboundReceiptsData: Array<{
+    receiptCode: string
+    typeId: string
+    statusId: string
+    supplierId: string
+    purchaseRequestId?: string
+    createdById: string
+    referenceCode: string | null
+    inboundDate: Date
+    notes: string
+    step: number
+    items: InboundItemData[]
+  }> = [
+    {
+      receiptCode: generateReceiptCode(1),
+      typeId: inboundTypeMap['PO'],
+      statusId: inboundStatusMap['COMPLETED'],
+      supplierId: supplierIdMap['NCC-001'],
+      purchaseRequestId: prMap['PR-2026-001'],
+      createdById: userMap['NV003'],
+      referenceCode: 'PO-2026-001',
+      inboundDate: new Date('2026-01-10'),
+      notes: 'Nhập cảm biến áp suất theo PO đã duyệt',
+      step: 4,
+      items: [
+        { materialCode: 'PM-TDH-001', unitCode: 'CAI', locationCode: 'A1-01-01', orderedQuantity: 5, receivedQuantity: 5, receivingQuantity: 0, serialBatch: 'BATCH-2026-001', kcs: true },
+        { materialCode: 'PM-TDH-002', unitCode: 'CAI', locationCode: 'A1-01-02', orderedQuantity: 10, receivedQuantity: 10, receivingQuantity: 0, serialBatch: 'BATCH-2026-002', kcs: true },
+      ]
+    },
+    {
+      receiptCode: generateReceiptCode(2),
+      typeId: inboundTypeMap['PO'],
+      statusId: inboundStatusMap['RECEIVING'],
+      supplierId: supplierIdMap['NCC-002'],
+      purchaseRequestId: prMap['PR-2026-004'],
+      createdById: userMap['NV003'],
+      referenceCode: 'PO-2026-002',
+      inboundDate: new Date('2026-01-15'),
+      notes: 'Đang nhập hệ thống DCS mới',
+      step: 3,
+      items: [
+        { materialCode: 'PM-TDH-003', unitCode: 'CAI', orderedQuantity: 3, receivedQuantity: 1, receivingQuantity: 2, serialBatch: 'SN-PLC-001', kcs: true },
+      ]
+    },
+    {
+      receiptCode: generateReceiptCode(3),
+      typeId: inboundTypeMap['REPAIR'],
+      statusId: inboundStatusMap['COMPLETED'],
+      supplierId: supplierIdMap['NCC-003'],
+      createdById: userMap['NV004'],
+      referenceCode: 'SC-2026-001',
+      inboundDate: new Date('2026-01-08'),
+      notes: 'Nhập lại bơm sau sửa chữa',
+      step: 4,
+      items: [
+        { materialCode: 'PM-MECH-001', unitCode: 'CAI', locationCode: 'C1-FLOOR-01', orderedQuantity: 1, receivedQuantity: 1, receivingQuantity: 0, serialBatch: 'SN-PUMP-R01', kcs: true },
+      ]
+    },
+    {
+      receiptCode: generateReceiptCode(4),
+      typeId: inboundTypeMap['PO'],
+      statusId: inboundStatusMap['KCS'],
+      supplierId: supplierIdMap['NCC-004'],
+      purchaseRequestId: prMap['PR-2026-005'],
+      createdById: userMap['NV003'],
+      referenceCode: 'PO-2026-003',
+      inboundDate: new Date('2026-01-18'),
+      notes: 'Đang KCS hóa chất xử lý nước',
+      step: 2,
+      items: [
+        { materialCode: 'PM-CHEM-002', unitCode: 'KG', orderedQuantity: 500, receivedQuantity: 0, receivingQuantity: 500, kcs: false },
+      ]
+    },
+    {
+      receiptCode: generateReceiptCode(5),
+      typeId: inboundTypeMap['LOAN'],
+      statusId: inboundStatusMap['COMPLETED'],
+      supplierId: supplierIdMap['NCC-001'],
+      createdById: userMap['NV004'],
+      referenceCode: 'LOAN-2026-001',
+      inboundDate: new Date('2026-01-05'),
+      notes: 'Nhập hàng mượn để thử nghiệm',
+      step: 4,
+      items: [
+        { materialCode: 'PM-MEAS-001', unitCode: 'CAI', locationCode: 'B1-01-01', orderedQuantity: 2, receivedQuantity: 2, receivingQuantity: 0, serialBatch: 'LOAN-FM-001', kcs: true },
+      ]
+    },
+    {
+      receiptCode: generateReceiptCode(6),
+      typeId: inboundTypeMap['PO'],
+      statusId: inboundStatusMap['COMPLETED'],
+      supplierId: supplierIdMap['NCC-005'],
+      purchaseRequestId: prMap['PR-2026-003'],
+      createdById: userMap['NV003'],
+      referenceCode: 'PO-2026-004',
+      inboundDate: new Date('2026-01-12'),
+      notes: 'Nhập vòng bi cho động cơ quạt',
+      step: 4,
+      items: [
+        { materialCode: 'PM-TURB-002', unitCode: 'BO', locationCode: 'A1-02-02', orderedQuantity: 20, receivedQuantity: 20, receivingQuantity: 0, serialBatch: 'BATCH-BRG-001', kcs: true },
+      ]
+    },
+    {
+      receiptCode: generateReceiptCode(7),
+      typeId: inboundTypeMap['PO'],
+      statusId: inboundStatusMap['REQUESTED'],
+      supplierId: supplierIdMap['NCC-002'],
+      purchaseRequestId: prMap['PR-2026-008'],
+      createdById: userMap['NV003'],
+      referenceCode: 'PO-2026-005',
+      inboundDate: new Date('2026-01-25'),
+      notes: 'Chờ nhập van điều khiển',
+      step: 1,
+      items: [
+        { materialCode: 'PM-VALVE-001', unitCode: 'CAI', orderedQuantity: 8, receivedQuantity: 0, receivingQuantity: 0 },
+        { materialCode: 'PM-VALVE-002', unitCode: 'CAI', orderedQuantity: 4, receivedQuantity: 0, receivingQuantity: 0 },
+      ]
+    },
+    {
+      receiptCode: generateReceiptCode(8),
+      typeId: inboundTypeMap['RETURN'],
+      statusId: inboundStatusMap['COMPLETED'],
+      supplierId: supplierIdMap['NCC-003'],
+      createdById: userMap['NV004'],
+      referenceCode: 'RET-2026-001',
+      inboundDate: new Date('2026-01-20'),
+      notes: 'Hoàn trả thiết bị từ công trường',
+      step: 4,
+      items: [
+        { materialCode: 'PM-PPE-001', unitCode: 'DOI', locationCode: 'B1-02-01', orderedQuantity: 15, receivedQuantity: 15, receivingQuantity: 0, kcs: true },
+        { materialCode: 'PM-PPE-002', unitCode: 'CAI', locationCode: 'B1-02-01', orderedQuantity: 20, receivedQuantity: 20, receivingQuantity: 0, kcs: true },
+      ]
+    },
+    {
+      receiptCode: generateReceiptCode(9),
+      typeId: inboundTypeMap['PO'],
+      statusId: inboundStatusMap['COMPLETED'],
+      supplierId: supplierIdMap['NCC-004'],
+      purchaseRequestId: prMap['PR-2026-006'],
+      createdById: userMap['NV003'],
+      referenceCode: 'PO-2026-006',
+      inboundDate: new Date('2026-01-14'),
+      notes: 'Nhập thiết bị bảo hộ lao động',
+      step: 4,
+      items: [
+        { materialCode: 'PM-PPE-001', unitCode: 'DOI', locationCode: 'B1-01-02', orderedQuantity: 100, receivedQuantity: 100, receivingQuantity: 0, serialBatch: 'BATCH-PPE-001', kcs: true },
+        { materialCode: 'PM-PPE-002', unitCode: 'CAI', locationCode: 'B1-01-02', orderedQuantity: 100, receivedQuantity: 100, receivingQuantity: 0, serialBatch: 'BATCH-PPE-002', kcs: true },
+      ]
+    },
+    {
+      receiptCode: generateReceiptCode(10),
+      typeId: inboundTypeMap['PO'],
+      statusId: inboundStatusMap['RECEIVING'],
+      supplierId: supplierIdMap['NCC-001'],
+      purchaseRequestId: prMap['PR-2026-011'],
+      createdById: userMap['NV003'],
+      referenceCode: 'PO-2026-007',
+      inboundDate: new Date('2026-01-22'),
+      notes: 'Đang nhập cánh tuabin dự phòng',
+      step: 3,
+      items: [
+        { materialCode: 'PM-TURB-001', unitCode: 'CAI', orderedQuantity: 10, receivedQuantity: 6, receivingQuantity: 4, serialBatch: 'SN-BLADE-001', kcs: true },
+      ]
+    },
+    {
+      receiptCode: generateReceiptCode(11),
+      typeId: inboundTypeMap['PO'],
+      statusId: inboundStatusMap['COMPLETED'],
+      supplierId: supplierIdMap['NCC-003'],
+      purchaseRequestId: prMap['PR-2026-010'],
+      createdById: userMap['NV004'],
+      referenceCode: 'PO-2026-008',
+      inboundDate: new Date('2026-01-16'),
+      notes: 'Nhập thiết bị đo phân tích môi trường',
+      step: 4,
+      items: [
+        { materialCode: 'PM-MEAS-002', unitCode: 'CAI', locationCode: 'CHEM-01-01', orderedQuantity: 4, receivedQuantity: 4, receivingQuantity: 0, serialBatch: 'SN-PH-001', kcs: true },
+      ]
+    },
+    {
+      receiptCode: generateReceiptCode(12),
+      typeId: inboundTypeMap['PO'],
+      statusId: inboundStatusMap['KCS'],
+      supplierId: supplierIdMap['NCC-002'],
+      createdById: userMap['NV003'],
+      referenceCode: 'PO-2026-009',
+      inboundDate: new Date('2026-01-28'),
+      notes: 'Đang KCS cảm biến nhiệt độ cao cấp',
+      step: 2,
+      items: [
+        { materialCode: 'PM-TDH-002', unitCode: 'CAI', orderedQuantity: 12, receivedQuantity: 0, receivingQuantity: 12, kcs: false },
+      ]
+    },
+    {
+      receiptCode: generateReceiptCode(13),
+      typeId: inboundTypeMap['PO'],
+      statusId: inboundStatusMap['COMPLETED'],
+      supplierId: supplierIdMap['NCC-005'],
+      purchaseRequestId: prMap['PR-2026-012'],
+      createdById: userMap['NV003'],
+      referenceCode: 'PO-2026-010',
+      inboundDate: new Date('2026-01-19'),
+      notes: 'Nhập vật tư tiêu hao quý 2',
+      step: 4,
+      items: [
+        { materialCode: 'PM-CONS-001', unitCode: 'CAI', locationCode: 'A1-01-03', orderedQuantity: 1000, receivedQuantity: 1000, receivingQuantity: 0, serialBatch: 'BATCH-CONS-001', kcs: true },
+        { materialCode: 'PM-CONS-002', unitCode: 'CAI', locationCode: 'A1-01-03', orderedQuantity: 500, receivedQuantity: 500, receivingQuantity: 0, serialBatch: 'BATCH-CONS-002', kcs: true },
+        { materialCode: 'PM-CONS-003', unitCode: 'CAI', locationCode: 'A1-01-03', orderedQuantity: 2000, receivedQuantity: 2000, receivingQuantity: 0, serialBatch: 'BATCH-CONS-003', kcs: true },
+      ]
+    },
+    {
+      receiptCode: generateReceiptCode(14),
+      typeId: inboundTypeMap['REPAIR'],
+      statusId: inboundStatusMap['RECEIVING'],
+      supplierId: supplierIdMap['NCC-003'],
+      createdById: userMap['NV004'],
+      referenceCode: 'SC-2026-002',
+      inboundDate: new Date('2026-01-26'),
+      notes: 'Đang nhập lại valve sau hiệu chuẩn',
+      step: 3,
+      items: [
+        { materialCode: 'PM-VALVE-001', unitCode: 'CAI', orderedQuantity: 3, receivedQuantity: 2, receivingQuantity: 1, serialBatch: 'SN-VALVE-R01', kcs: true },
+      ]
+    },
+    {
+      receiptCode: generateReceiptCode(15),
+      typeId: inboundTypeMap['PO'],
+      statusId: inboundStatusMap['COMPLETED'],
+      supplierId: supplierIdMap['NCC-004'],
+      purchaseRequestId: prMap['PR-2026-015'],
+      createdById: userMap['NV003'],
+      referenceCode: 'PO-2026-011',
+      inboundDate: new Date('2026-01-21'),
+      notes: 'Nhập dầu bôi trơn tuabin',
+      step: 4,
+      items: [
+        { materialCode: 'PM-CHEM-001', unitCode: 'LIT', locationCode: 'CHEM-01-01', orderedQuantity: 2000, receivedQuantity: 2000, receivingQuantity: 0, serialBatch: 'BATCH-OIL-001', kcs: true },
+      ]
+    },
+    {
+      receiptCode: generateReceiptCode(16),
+      typeId: inboundTypeMap['LOAN'],
+      statusId: inboundStatusMap['REQUESTED'],
+      supplierId: supplierIdMap['NCC-001'],
+      createdById: userMap['NV004'],
+      referenceCode: 'LOAN-2026-002',
+      inboundDate: new Date('2026-01-30'),
+      notes: 'Chờ nhập thiết bị đo mượn để thử nghiệm',
+      step: 1,
+      items: [
+        { materialCode: 'PM-MEAS-001', unitCode: 'CAI', orderedQuantity: 1, receivedQuantity: 0, receivingQuantity: 0 },
+      ]
+    },
+    {
+      receiptCode: generateReceiptCode(17),
+      typeId: inboundTypeMap['PO'],
+      statusId: inboundStatusMap['COMPLETED'],
+      supplierId: supplierIdMap['NCC-001'],
+      createdById: userMap['NV003'],
+      referenceCode: 'PO-2026-012',
+      inboundDate: new Date('2026-01-17'),
+      notes: 'Nhập RAM và SSD cho máy chủ SCADA',
+      step: 4,
+      items: [
+        { materialCode: 'PM-SERVER-001', unitCode: 'CAI', locationCode: 'A1-01-01', orderedQuantity: 20, receivedQuantity: 20, receivingQuantity: 0, serialBatch: 'SN-RAM-001', kcs: true },
+        { materialCode: 'PM-SERVER-002', unitCode: 'CAI', locationCode: 'A1-01-01', orderedQuantity: 10, receivedQuantity: 10, receivingQuantity: 0, serialBatch: 'SN-SSD-001', kcs: true },
+      ]
+    },
+    {
+      receiptCode: generateReceiptCode(18),
+      typeId: inboundTypeMap['RETURN'],
+      statusId: inboundStatusMap['KCS'],
+      supplierId: supplierIdMap['NCC-002'],
+      createdById: userMap['NV004'],
+      referenceCode: 'RET-2026-002',
+      inboundDate: new Date('2026-01-29'),
+      notes: 'Đang KCS khớp nối trả về từ công trường',
+      step: 2,
+      items: [
+        { materialCode: 'PM-MECH-002', unitCode: 'CAI', orderedQuantity: 8, receivedQuantity: 0, receivingQuantity: 8, kcs: false },
+      ]
+    },
+    {
+      receiptCode: generateReceiptCode(19),
+      typeId: inboundTypeMap['PO'],
+      statusId: inboundStatusMap['RECEIVING'],
+      supplierId: supplierIdMap['NCC-003'],
+      purchaseRequestId: prMap['PR-2026-014'],
+      createdById: userMap['NV003'],
+      referenceCode: 'PO-2026-013',
+      inboundDate: new Date('2026-01-27'),
+      notes: 'Đang nhập rơ le bảo vệ',
+      step: 3,
+      items: [
+        { materialCode: 'PM-TDH-002', unitCode: 'CAI', orderedQuantity: 4, receivedQuantity: 2, receivingQuantity: 2, serialBatch: 'SN-RELAY-001', kcs: true },
+      ]
+    },
+    {
+      receiptCode: generateReceiptCode(20),
+      typeId: inboundTypeMap['PO'],
+      statusId: inboundStatusMap['DRAFT'],
+      supplierId: supplierIdMap['NCC-004'],
+      createdById: userMap['NV003'],
+      referenceCode: null,
+      inboundDate: new Date('2026-02-01'),
+      notes: 'Phiếu nháp - chờ xác nhận thông tin',
+      step: 1,
+      items: [
+        { materialCode: 'PM-CHEM-001', unitCode: 'LIT', orderedQuantity: 1000, receivedQuantity: 0, receivingQuantity: 0 },
+        { materialCode: 'PM-CHEM-002', unitCode: 'KG', orderedQuantity: 200, receivedQuantity: 0, receivingQuantity: 0 },
+      ]
+    },
+  ]
+
+  for (const receiptData of inboundReceiptsData) {
+    const { items, ...receiptFields } = receiptData
+
+    // Check if receipt already exists
+    const existingReceipt = await prisma.inboundReceipt.findUnique({ where: { receiptCode: receiptFields.receiptCode } })
+    if (existingReceipt) {
+      console.log(`  Receipt ${receiptFields.receiptCode} already exists, skipping...`)
+      continue
+    }
+
+    // Create InboundReceipt
+    const createdReceipt = await prisma.inboundReceipt.create({
+      data: {
+        receiptCode: receiptFields.receiptCode,
+        typeId: receiptFields.typeId,
+        statusId: receiptFields.statusId,
+        supplierId: receiptFields.supplierId,
+        purchaseRequestId: receiptFields.purchaseRequestId || null,
+        createdById: receiptFields.createdById,
+        referenceCode: receiptFields.referenceCode || null,
+        inboundDate: receiptFields.inboundDate,
+        notes: receiptFields.notes,
+        step: receiptFields.step,
+      }
+    })
+
+    // Create items
+    for (const item of items) {
+      await prisma.inboundReceiptItem.create({
+        data: {
+          receiptId: createdReceipt.id,
+          materialId: materialMap[item.materialCode],
+          unitId: unitMap[item.unitCode],
+          locationId: item.locationCode ? locationMap[item.locationCode] : null,
+          orderedQuantity: item.orderedQuantity,
+          receivedQuantity: item.receivedQuantity,
+          receivingQuantity: item.receivingQuantity,
+          serialBatch: item.serialBatch || null,
+          kcs: item.kcs || false,
+        }
+      })
+    }
+  }
+
+  console.log('InboundReceipts seeded! 20 records added.')
 }
 
 main()
