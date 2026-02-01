@@ -477,6 +477,70 @@ export interface InboundReceipt {
 }
 
 
+// New Stocktake types with FK relations
+export interface StocktakeAssignment {
+  id: string;
+  stocktakeId?: string;
+  locationId: string;
+  assigneeId: string;
+  statusId: string;
+  // Nested relations
+  location?: { id: string; code: string; name: string };
+  assignee?: { id: string; name: string; employeeCode?: string };
+  status?: MasterDataItem;
+  completedAt?: string | null;
+}
+
+export interface StocktakeResult {
+  id: string;
+  stocktakeId?: string;
+  materialId: string;
+  locationId: string;
+  unitId: string;
+  countedById: string;
+  // Nested relations
+  material?: { id: string; code: string; name: string };
+  location?: { id: string; code: string; name: string };
+  unit?: MasterDataItem;
+  countedBy?: { id: string; name: string };
+  // Quantities
+  bookQuantity: number;
+  actualQuantity: number;
+  variance: number;
+  serialBatch?: string | null;
+  notes?: string | null;
+  updatedAt?: string;
+}
+
+export interface Stocktake {
+  id: string;
+  takeCode: string;
+  name: string;
+  // FK IDs
+  statusId: string;
+  areaId: string;
+  createdById: string;
+  // Nested relations
+  status?: MasterDataItem & { sortOrder?: number };
+  area?: MasterDataItem;
+  createdBy?: { id: string; name: string; employeeCode?: string };
+  // Other fields
+  takeDate: string;
+  notes?: string | null;
+  completedAt?: string | null;
+  // Computed fields
+  currentStep?: number;
+  totalLocations?: number;
+  completedLocations?: number;
+  totalVariance?: number;
+  // Relations
+  assignments?: StocktakeAssignment[];
+  results?: StocktakeResult[];
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+// Legacy StockTake types (keeping for backward compatibility)
 export interface StockTakeResult {
     id: string;
     materialId: string;
