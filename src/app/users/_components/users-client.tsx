@@ -70,9 +70,31 @@ export function UsersClient() {
   const { roles: rolesData } = useRoles();
   const { departments } = useDepartments();
   
-  // Helper functions to lookup names from IDs
-  const getDepartmentName = (id: string) => departments.find(d => d.id === id)?.name || id;
-  const getRoleName = (id: string) => rolesData.find(r => r.id === id)?.name || id;
+  // Helper functions to get display names from nested objects
+  const getDepartmentName = (user: User) => {
+    if (typeof user.department === 'string') return user.department;
+    return user.department?.name || '-';
+  };
+
+  const getRoleName = (user: User) => {
+    if (typeof user.role === 'string' && user.role) return user.role;
+    if (user.userRoles && user.userRoles.length > 0) {
+      return user.userRoles.map(ur => ur.role.name).join(', ');
+    }
+    return '-';
+  };
+
+  const getStatusName = (user: User) => {
+    if (typeof user.status === 'string' && user.status) return user.status;
+    if (typeof user.userStatus === 'string') return user.userStatus;
+    return user.userStatus?.name || 'Active';
+  };
+
+  const getStatusClass = (user: User) => {
+    const statusName = getStatusName(user);
+    if (statusName === 'Active' || statusName === 'Hoạt động') return 'bg-green-100 text-green-800';
+    return 'bg-red-100 text-red-800';
+  }
   
   const { toast } = useToast();
   
@@ -96,9 +118,8 @@ export function UsersClient() {
       employeeCode: "",
       name: "",
       email: "",
-      department: "",
-      role: "",
-      status: "Active",
+      departmentId: "",
+      statusId: "",
     });
     setViewMode(false);
     setIsFormOpen(true);
@@ -176,17 +197,6 @@ export function UsersClient() {
       }
     } finally {
       setIsSubmitting(false);
-    }
-  };
-
-  const getStatusBadgeClass = (status: User["status"]) => {
-    switch (status) {
-      case "Active":
-        return "bg-green-100 text-green-800";
-      case "Inactive":
-        return "bg-red-100 text-red-800";
-      default:
-        return "bg-gray-100 text-gray-800";
     }
   };
 
@@ -270,11 +280,13 @@ export function UsersClient() {
                       {user.employeeCode}
                     </TableCell>
                     <TableCell>{user.name}</TableCell>
-                    <TableCell>{getDepartmentName(user.department)}</TableCell>
-                    <TableCell>{getRoleName(user.role)}</TableCell>
+                    <TableCell>{getDepartmentName(user)}</TableCell>
+                    <TableCell>{getRoleName(user)}</TableCell>
                     <TableCell>
-                      <span className={cn("rounded-md px-2.5 py-1 text-xs font-semibold", getStatusBadgeClass(user.status))}>
-                        {user.status === 'Active' ? 'Hoạt động' : 'Vô hiệu'}
+                      <span className={cn("rounded-md px-2.5 py-1 text-xs font-semibold",
+                        getStatusClass(user)
+                      )}>
+                        {getStatusName(user)}
                       </span>
                     </TableCell>
                     <TableCell>

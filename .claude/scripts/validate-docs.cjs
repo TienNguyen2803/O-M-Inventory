@@ -42,7 +42,11 @@ const IGNORE_CODE_REFS = new Set([
 const IGNORE_ENV_PREFIXES = ['NODE_', 'PATH', 'HOME', 'USER', 'SHELL', 'TERM', 'PWD', 'CI'];
 
 // Markdown template variables (not actual env vars)
-const IGNORE_ENV_VARS = new Set(['ARGUMENTS']);
+const IGNORE_ENV_VARS = new Set([
+  'ARGUMENTS',
+  'RSC', 'SWR', 'SSR', 'ISR', 'SSG',
+  'GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS'
+]);
 
 /**
  * Find all markdown files in directory.
@@ -135,7 +139,8 @@ function checkCodeRefExists(ref, srcDirs) {
     `class ${name}`,
     `def ${name}`,
     `export.*${name}`,
-    `${name}:`  // object methods
+    `${name}:`,  // object methods
+    `model ${name}` // Prisma models
   ];
 
   for (const srcDir of srcDirs) {

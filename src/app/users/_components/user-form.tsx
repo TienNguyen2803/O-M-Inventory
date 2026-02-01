@@ -26,15 +26,15 @@ import {
 import type { User } from "@/lib/types";
 import { DialogFooter } from "@/components/ui/dialog";
 import { useDepartments } from "@/hooks/use-users";
+import { useMasterDataItems } from "@/hooks/use-master-data";
 
 const formSchema = z.object({
   employeeCode: z.string().min(1, "Mã nhân viên là bắt buộc."),
   name: z.string().min(1, "Họ tên là bắt buộc."),
   email: z.string().email("Email không hợp lệ."),
   phone: z.string().optional(),
-  department: z.string().min(1, "Phòng ban là bắt buộc."),
-  role: z.string().min(1, "Vai trò là bắt buộc."),
-  status: z.enum(["Active", "Inactive"]),
+  departmentId: z.string().min(1, "Phòng ban là bắt buộc."),
+  statusId: z.string().min(1, "Trạng thái là bắt buộc."),
 });
 
 export type UserFormValues = z.infer<typeof formSchema>;
@@ -58,18 +58,26 @@ export function UserForm({
   isSubmitting = false,
 }: UserFormProps) {
   const { departments } = useDepartments();
+  const { items: userStatuses } = useMasterDataItems('user-status');
+  
   const form = useForm<UserFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: user
-      ? { ...user }
+      ? { 
+          employeeCode: user.employeeCode || "",
+          name: user.name || "",
+          email: user.email || "",
+          phone: user.phone || "",
+          departmentId: user.departmentId || "",
+          statusId: user.statusId || "",
+        }
       : {
           employeeCode: "",
           name: "",
           email: "",
           phone: "",
-          department: "",
-          role: "",
-          status: "Active",
+          departmentId: "",
+          statusId: "",
         },
   });
 
@@ -134,7 +142,7 @@ export function UserForm({
             />
             <FormField
               control={form.control}
-              name="department"
+              name="departmentId"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Phòng ban</FormLabel>
@@ -154,39 +162,18 @@ export function UserForm({
             />
             <FormField
               control={form.control}
-              name="role"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Vai trò</FormLabel>
-                   <Select onValueChange={field.onChange} defaultValue={field.value} disabled={viewMode}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Chọn vai trò" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {roles.map(role => <SelectItem key={role.id} value={role.id}>{role.name}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="status"
+              name="statusId"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Trạng thái</FormLabel>
                    <Select onValueChange={field.onChange} defaultValue={field.value} disabled={viewMode}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue />
+                        <SelectValue placeholder="Chọn trạng thái" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="Active">Hoạt động</SelectItem>
-                      <SelectItem value="Inactive">Vô hiệu</SelectItem>
+                      {userStatuses.map(status => <SelectItem key={status.id} value={status.id}>{status.name}</SelectItem>)}
                     </SelectContent>
                   </Select>
                   <FormMessage />

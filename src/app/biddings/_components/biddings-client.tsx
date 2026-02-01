@@ -123,8 +123,8 @@ export function BiddingsClient({
       name: "",
       purchaseRequestId: "",
       estimatedPrice: 0,
-      method: 'Đấu thầu rộng rãi',
-      status: 'Đang mời thầu',
+      method: 'Đấu thầu rộng rãi' as any,
+      status: 'Đang mời thầu' as any,
       step: 1,
       items: [],
     };

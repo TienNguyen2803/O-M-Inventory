@@ -118,7 +118,8 @@ export function InboundClient({ initialReceipts }: InboundClientProps) {
   // Handlers
   const handleAdd = () => {
     const newReceiptTemplate: InboundReceipt = {
-      id: `PNK-2025-${String(receipts.length + 1).padStart(3, "0")}`,
+      id: "", // Will be generated
+      receiptCode: "", // Will be generated
       inboundType: "Theo PO",
       reference: "",
       inboundDate: new Date().toISOString(),
@@ -160,6 +161,15 @@ export function InboundClient({ initialReceipts }: InboundClientProps) {
       ...selectedReceipt!,
       ...values,
       inboundDate: values.inboundDate.toISOString(),
+      inboundType: values.inboundType as any,
+      status: values.status as any,
+      // Ensure items have required properties
+      items: values.items?.map(item => ({
+        ...item,
+        id: item.id || crypto.randomUUID(), // Temp ID if missing
+        serialBatch: item.serialBatch || "",
+        location: item.location || "",
+      }))
     };
 
     if (viewMode) {

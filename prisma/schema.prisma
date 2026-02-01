@@ -25,6 +25,8 @@ model MaterialStatus {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  materials Material[]
+
   @@map("material_statuses")
 }
 
@@ -37,6 +39,8 @@ model MaterialCategory {
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  materials Material[]
 
   @@map("material_categories")
 }
@@ -51,6 +55,8 @@ model MaterialUnit {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  materials Material[]
+
   @@map("material_units")
 }
 
@@ -63,6 +69,8 @@ model ManagementType {
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  materials Material[]
 
   @@map("management_types")
 }
@@ -147,6 +155,23 @@ model Currency {
   updatedAt DateTime @updatedAt
 
   @@map("currencies")
+}
+
+// === XUẤT XỨ (1 bảng) ===
+
+model Country {
+  id        String   @id @default(uuid())
+  code      String   @unique
+  name      String
+  color     String?
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  materials Material[]
+
+  @@map("countries")
 }
 
 // === YÊU CẦU VẬT TƯ (2 bảng) ===
@@ -329,6 +354,8 @@ model UserStatus {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  users     User[]
+
   @@map("user_statuses")
 }
 
@@ -357,6 +384,8 @@ model Department {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  users     User[]
+
   @@map("departments")
 }
 
@@ -372,14 +401,23 @@ model Material {
   evnCode        String?
   partNo         String
   serialNumber   String?
-  managementType String   // Batch | Serial
-  category       String
-  unit           String
-  status         String
+  
+  // FK Relations to Master Data
+  managementTypeId String
+  categoryId       String
+  unitId           String
+  statusId         String
+  countryId        String?
+  
+  managementType   ManagementType   @relation(fields: [managementTypeId], references: [id])
+  materialCategory MaterialCategory @relation(fields: [categoryId], references: [id])
+  materialUnit     MaterialUnit     @relation(fields: [unitId], references: [id])
+  materialStatus   MaterialStatus   @relation(fields: [statusId], references: [id])
+  country          Country?         @relation(fields: [countryId], references: [id])
+  
   description    String?
   stock          Int      @default(0)
   manufacturer   String?
-  origin         String?
   minStock       Int?
   maxStock       Int?
   technicalSpecs Json?
@@ -709,12 +747,13 @@ model User {
   name         String
   email        String   @unique
   phone        String?
-  department   String
-  role         String
-  status       String   @default("Active")
+  departmentId String
+  statusId     String
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
+  department   Department @relation(fields: [departmentId], references: [id])
+  userStatus   UserStatus @relation(fields: [statusId], references: [id])
   userRoles    UserRole[]
 
   @@map("users")
@@ -725,11 +764,11 @@ model Role {
   name        String   @unique
   description String?
   userCount   Int      @default(0)
-  permissions Json
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  userRoles   UserRole[]
+  userRoles          UserRole[]
+  roleFeatureActions RoleFeatureAction[]
 
   @@map("roles")
 }
@@ -786,8 +825,25 @@ model FeatureAction {
   action    Action   @relation(fields: [actionId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
 
+  roleFeatureActions RoleFeatureAction[]
+
   @@unique([featureId, actionId])
   @@map("feature_actions")
+}
+
+model RoleFeatureAction {
+  id              String        @id @default(uuid())
+  roleId          String
+  featureActionId String
+  createdAt       DateTime      @default(now())
+
+  role          Role          @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  featureAction FeatureAction @relation(fields: [featureActionId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, featureActionId])
+  @@index([roleId])
+  @@index([featureActionId])
+  @@map("role_feature_actions")
 }
 
 model ActivityLog {

@@ -35,7 +35,12 @@ interface AvailableUser {
   employeeCode: string;
   name: string;
   email: string;
-  department: string;
+  departmentId: string;
+  department?: {
+    id: string;
+    code: string;
+    name: string;
+  };
 }
 
 export function UserAssignmentDialog({
@@ -205,7 +210,7 @@ export function UserAssignmentDialog({
                           </p>
                         </div>
                         <Badge variant="outline" className="text-xs flex-shrink-0">
-                          {user.department}
+                          {user.department?.name || '-'}
                         </Badge>
                         {isSelected && (
                           <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0" />
@@ -278,7 +283,7 @@ export function UserAssignmentDialog({
                       </div>
                       <div className="flex items-center gap-2 flex-shrink-0">
                         <Badge variant="secondary" className="text-xs">
-                          {user.department}
+                          {user.department?.name || '-'}
                         </Badge>
                         <Button
                           variant="ghost"

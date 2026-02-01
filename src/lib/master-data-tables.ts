@@ -18,6 +18,7 @@ export const MASTER_DATA_TABLES: MasterDataTableConfig[] = [
   { id: 'material-category', name: 'Danh mục Vật tư', group: 'Vật tư', modelName: 'materialCategory' },
   { id: 'material-unit', name: 'Đơn vị tính', group: 'Vật tư', modelName: 'materialUnit' },
   { id: 'management-type', name: 'Loại quản lý', group: 'Vật tư', modelName: 'managementType' },
+  { id: 'country', name: 'Xuất xứ', group: 'Vật tư', modelName: 'country' },
 
   // === KHO ===
   { id: 'warehouse-area', name: 'Khu vực kho', group: 'Kho', modelName: 'warehouseArea' },

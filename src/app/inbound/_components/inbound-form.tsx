@@ -44,11 +44,13 @@ import { cn } from "@/lib/utils";
 import type { InboundReceipt } from "@/lib/types";
 
 const formSchema = z.object({
-  id: z.string(),
+  id: z.string().optional(),
+  receiptCode: z.string().optional(),
   inboundType: z.string({ required_error: "Vui lòng chọn loại nhập." }),
   reference: z.string().optional(),
   inboundDate: z.date({ required_error: "Vui lòng chọn ngày nhập." }),
   partner: z.string().min(1, "Đối tác là bắt buộc."),
+  status: z.string(),
   items: z.array(
     z.object({
       id: z.string(),
@@ -138,11 +140,22 @@ export function InboundForm({
       ? {
           ...receipt,
           inboundDate: new Date(receipt.inboundDate),
-          items: receipt.items || [],
+          items: receipt.items?.map(item => ({
+            id: item.id,
+            materialCode: item.materialCode,
+            materialName: item.materialName,
+            orderedQuantity: item.orderedQuantity,
+            receivedQuantity: item.receivedQuantity,
+            receivingQuantity: item.receivingQuantity,
+            serialBatch: item.serialBatch,
+            location: item.location,
+            kcs: item.kcs
+          })) || [],
           documents: receipt.documents || [],
         }
       : {
           id: "",
+          receiptCode: "",
           inboundType: "Theo PO",
           reference: "",
           inboundDate: new Date(),

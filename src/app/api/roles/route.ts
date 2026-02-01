@@ -1,11 +1,23 @@
 import { NextResponse } from 'next/server'
 import prisma from '@/lib/db'
 
-// GET /api/roles - Get all roles
+// GET /api/roles - Get all roles with their permissions (via roleFeatureActions)
 export async function GET() {
   try {
     const roles = await prisma.role.findMany({
       orderBy: { name: 'asc' },
+      include: {
+        roleFeatureActions: {
+          include: {
+            featureAction: {
+              include: {
+                feature: true,
+                action: true,
+              }
+            }
+          }
+        }
+      }
     })
 
     return NextResponse.json({
@@ -24,7 +36,7 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { name, description, permissions } = body
+    const { name, description, featureActionIds } = body
 
     // Validate required fields
     if (!name) {
@@ -34,14 +46,32 @@ export async function POST(request: Request) {
       )
     }
 
-    // Create role
+    // Create role with optional RoleFeatureAction records
     const role = await prisma.role.create({
       data: {
         name,
         description: description || null,
-        permissions: permissions || {},
         userCount: 0,
+        ...(featureActionIds && featureActionIds.length > 0 && {
+          roleFeatureActions: {
+            create: featureActionIds.map((faId: string) => ({
+              featureActionId: faId
+            }))
+          }
+        })
       },
+      include: {
+        roleFeatureActions: {
+          include: {
+            featureAction: {
+              include: {
+                feature: true,
+                action: true,
+              }
+            }
+          }
+        }
+      }
     })
 
     return NextResponse.json(role, { status: 201 })

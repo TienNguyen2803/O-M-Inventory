@@ -3,6 +3,13 @@ export interface TechnicalSpec {
   value: string;
 }
 
+export interface MasterDataItem {
+  id: string;
+  code: string;
+  name: string;
+  color?: string | null;
+}
+
 export interface Material {
   id: string;
   name: string; // Tên Vật tư (Tiếng Việt)
@@ -11,16 +18,32 @@ export interface Material {
   evnCode?: string; // Mã Vật tư (EVN eCat)
   partNo: string; // Part Number / Mã hàng (PN)
   serialNumber?: string; // Số serial (SN)
-  managementType: "Batch" | "Serial"; // Quản lý theo Serial/IMEI (Checkbox)
-  category: string;
-  unit: string; // Đơn vị tính
-  status: "Mới" | "Cũ nhưng dùng được" | "Hư hỏng" | "Hư hỏng không thể sửa chữa" | "Thanh lý";
+  
+  // FK IDs to Master Data
+  managementTypeId?: string;
+  categoryId?: string;
+  unitId?: string;
+  statusId?: string;
+  countryId?: string;
+  
+  // Nested relations (populated from API)
+  managementType?: MasterDataItem | string;
+  materialCategory?: MasterDataItem | string;
+  materialUnit?: MasterDataItem | string;
+  materialStatus?: MasterDataItem | string;
+  country?: MasterDataItem | string;
+
   description?: string; // Ghi chú
   stock: number;
   manufacturer?: string; // Nhà sản xuất / Hãng
-  origin?: string; // Xuất xứ thực tế
+  origin?: string; // Xuất xứ (Legacy field)
   minStock?: number; // Tồn kho Tối thiểu
   maxStock?: number; // Tồn kho Tối đa
+
+  // Legacy/Mock fields compatibility
+  category?: string;
+  unit?: string;
+  status?: string;
   technicalSpecs?: TechnicalSpec[];
   
   // for goods history & lifecycle
@@ -34,6 +57,8 @@ export interface Material {
   originOnDocs?: string;
   warrantyCount?: number; // Số lần bảo hành/sửa chữa
   lifespan?: string; // Tuổi thọ tài sản
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface GoodsHistorySubEvent {
@@ -227,7 +252,8 @@ export interface InboundReceiptDocument {
 }
 
 export interface InboundReceipt {
-  id: string; // SỐ PHIẾU
+  id: string; // UUID
+  receiptCode: string; // SỐ PHIẾU (Display ID)
   inboundType: 'Theo PO' | 'Sau Sửa chữa' | 'Hàng Mượn' | 'Hoàn trả'; // LOẠI NHẬP
   reference: string; // THAM CHIẾU
   inboundDate: string; // NGÀY NHẬP
@@ -266,9 +292,33 @@ export interface User {
   name: string; // HỌ TÊN
   email: string;
   phone?: string;
-  department: string; // PHÒNG BAN
-  role: string; // VAI TRÒ
-  status: 'Active' | 'Inactive'; // TRẠNG THÁI
+  departmentId?: string;
+  statusId?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  // Nested relations (populated from API)
+  department?: {
+    id: string;
+    code: string;
+    name: string;
+    color?: string;
+  } | string;
+  userStatus?: {
+    id: string;
+    code: string;
+    name: string;
+    color?: string;
+  } | string;
+  userRoles?: Array<{
+    id: string;
+    role: {
+      id: string;
+      name: string;
+    };
+  }>;
+  // Legacy
+  role?: string;
+  status?: string;
 }
 
 export interface RolePermission {

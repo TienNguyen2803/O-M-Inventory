@@ -92,6 +92,27 @@ User Action → React Component → API Route → Prisma Client → PostgreSQL
                     └──────── Response ←───────────┘
 ```
 
+## Architectural Patterns
+
+### Hybrid Implementation Strategy
+The system is currently transitioning from a prototype to a fully connected application.
+
+1.  **Fully Connected Modules** (Materials, Requests, Auth):
+    - Follow standard **Next.js App Router** patterns.
+    - **Server Components** for initial data fetch (where possible) or Skeleton loaders.
+    - **Client Components** for interactivity (Forms, Tables) fetching data via `fetch` or `SWR` from `/api/*` endpoints.
+    - **API Routes** handle business logic and DB interaction via Prisma.
+
+2.  **Prototype Modules** (Inbound, Outbound, Dashboard):
+    - UI Components are built but feed on **Mock Data** (`src/lib/data.ts`).
+    - No backend integration yet.
+    - *Architecture Goal*: Migrate these to the Connected pattern in Phase 2.
+
+### State Management
+- **Server State**: Managed via `React Query` / `SWR` (recommended) or simple `useEffect` fetchers in Client Components.
+- **Form State**: `react-hook-form` + `zod` validation.
+- **Global State**: Minimal. URL Search Params are used for sharing state (filters, pagination).
+
 ## Configuration Files
 
 | File | Purpose |
@@ -147,6 +168,56 @@ Generic API cho quản lý 24 bảng master data:
 
 ---
 
+## Materials Management API
+
+API cho quản lý vật tư với FK relations đến master data:
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/materials` | Danh sách vật tư (pagination, search, filter) |
+| POST | `/api/materials` | Tạo vật tư mới |
+| GET | `/api/materials/{id}` | Chi tiết 1 vật tư |
+| PUT | `/api/materials/{id}` | Cập nhật vật tư |
+| DELETE | `/api/materials/{id}` | Xóa vật tư |
+
+### Query Parameters cho GET `/api/materials`
+
+| Param | Type | Description |
+|-------|------|-------------|
+| `page` | number | Số trang (mặc định: 1) |
+| `limit` | number | Số lượng mỗi trang (mặc định: 10) |
+| `search` | string | Tìm theo mã, tên, part number |
+| `categoryId` | string | Filter theo ID danh mục (FK) |
+| `statusId` | string | Filter theo ID trạng thái (FK) |
+| `managementTypeId` | string | Filter theo ID loại quản lý (FK) |
+
+### Response Format (GET list)
+
+```json
+{
+  "data": [{
+    "id": "uuid",
+    "code": "PM-TDH-001",
+    "name": "Cảm biến áp suất",
+    "categoryId": "cat-uuid",
+    "statusId": "status-uuid",
+    "unitId": "unit-uuid",
+    "managementTypeId": "mgmt-uuid",
+    "countryId": "country-uuid",
+    "materialCategory": { "id": "...", "name": "Phụ tùng TĐH" },
+    "materialStatus": { "id": "...", "name": "Mới" },
+    "materialUnit": { "id": "...", "name": "Cái" },
+    "managementType": { "id": "...", "name": "Serial" },
+    "country": { "id": "...", "name": "Nhật Bản" }
+  }],
+  "pagination": { "page": 1, "limit": 10, "total": 20, "totalPages": 2 }
+}
+```
+
+> **Note**: Materials API sử dụng FK relations thay vì string values. Client gửi IDs, API trả về nested objects.
+
+---
+
 ## User Management API
 
 API cho quản lý người dùng:
@@ -168,11 +239,10 @@ API cho quản lý người dùng:
 | `page` | number | Số trang (mặc định: 1) |
 | `limit` | number | Số lượng mỗi trang (mặc định: 10) |
 | `search` | string | Tìm theo mã NV, tên, email |
-| `department` | string | Filter theo phòng ban |
-| `role` | string | Filter theo vai trò |
-| `status` | string | Filter theo trạng thái |
+| `departmentId` | string | Filter theo ID phòng ban (FK) |
+| `statusId` | string | Filter theo ID trạng thái (FK) |
 
----
+> **Note**: API đã được refactor để sử dụng FK IDs thay vì string values.
 
 ## Permission Management API
 
@@ -223,18 +293,34 @@ Hệ thống quản lý phân quyền chi tiết với 3 thực thể chính: **
 
 **Roles mặc định**: Quản trị hệ thống, Quản lý kho, Nhân viên kho, Kế toán, Người xem
 
-### Permission Structure
+### Permission Structure (Normalized)
 
-Permissions được lưu dưới dạng JSON trong Role:
+Permissions được lưu trong bảng `RoleFeatureAction` (many-to-many relationship):
+
+```
+Role ↔ RoleFeatureAction ↔ FeatureAction ↔ Feature + Action
+```
+
+**API Response format** (khi GET Role):
 
 ```json
 {
-  "dashboard": ["view"],
-  "materials": ["view", "create", "edit", "delete"],
-  "users": ["view", "create", "edit", "delete", "approve"],
-  "settings": ["view", "edit"]
+  "id": "role-uuid",
+  "name": "Kế toán",
+  "roleFeatureActions": [
+    {
+      "id": "rfa-uuid",
+      "featureAction": {
+        "id": "fa-uuid",
+        "feature": { "code": "dashboard", "name": "Dashboard" },
+        "action": { "code": "view", "name": "Xem" }
+      }
+    }
+  ]
 }
 ```
+
+> **Note**: Hệ thống đã được refactor từ JSON `permissions` field sang normalized `RoleFeatureAction` table.
 
 ---
 

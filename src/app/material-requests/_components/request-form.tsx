@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { useForm, useFieldArray } from "react-hook-form";
 import * as z from "zod";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
@@ -159,7 +159,10 @@ export function RequestForm({
         },
   });
 
-  const { fields, append, remove } = form.control;
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "items",
+  });
 
   return (
     <Form {...form}>

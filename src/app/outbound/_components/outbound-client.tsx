@@ -118,12 +118,12 @@ export function OutboundClient({ initialVouchers }: OutboundClientProps) {
   const handleAdd = () => {
     const newVoucherTemplate: OutboundVoucher = {
       id: `PXK-2025-${String(vouchers.length + 1).padStart(3, "0")}`,
-      purpose: "Cấp O&M",
+      purpose: "Cấp O&M" as any,
       materialRequestId: `YCVT-2025-${String(vouchers.length + 1).padStart(3, "0")}`,
       department: "PX Vận hành 1",
       receiverName: "Nguyễn Văn B",
       reason: "Bảo dưỡng định kỳ",
-      status: "Đang soạn hàng",
+      status: "Đang soạn hàng" as any,
       step: 1,
       issueDate: new Date().toISOString(),
       items: [],
@@ -159,7 +159,10 @@ export function OutboundClient({ initialVouchers }: OutboundClientProps) {
       ...selectedVoucher!,
       purpose: values.purpose,
       issueDate: values.issueDate.toISOString(),
-      items: values.items || [],
+      items: values.items?.map(item => ({
+        ...item,
+        materialId: item.materialId || "unknown", // Fallback for mock/new items
+      })) || [],
     };
 
     if (viewMode) {

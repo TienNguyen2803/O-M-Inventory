@@ -12,6 +12,15 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     const user = await prisma.user.findUnique({
       where: { id },
+      include: {
+        department: true,
+        userStatus: true,
+        userRoles: {
+          include: {
+            role: true
+          }
+        }
+      }
     })
 
     if (!user) {
@@ -36,7 +45,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
   try {
     const { id } = await params
     const body = await request.json()
-    const { employeeCode, name, email, phone, department, role, status } = body
+    const { employeeCode, name, email, phone, departmentId, statusId } = body
 
     // Check if user exists
     const existingUser = await prisma.user.findUnique({
@@ -58,10 +67,13 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
         ...(name !== undefined && { name }),
         ...(email !== undefined && { email }),
         ...(phone !== undefined && { phone }),
-        ...(department !== undefined && { department }),
-        ...(role !== undefined && { role }),
-        ...(status !== undefined && { status }),
+        ...(departmentId !== undefined && { departmentId }),
+        ...(statusId !== undefined && { statusId }),
       },
+      include: {
+        department: true,
+        userStatus: true,
+      }
     })
 
     return NextResponse.json(user)

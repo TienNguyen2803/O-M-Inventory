@@ -81,14 +81,23 @@ model Material {
   evnCode        String?
   partNo         String
   serialNumber   String?
-  managementType String   // Batch | Serial
-  category       String
-  unit           String
-  status         String
+  
+  // FK Relations to Master Data
+  managementTypeId String
+  categoryId       String
+  unitId           String
+  statusId         String
+  countryId        String?
+  
+  managementType   ManagementType   @relation(fields: [managementTypeId], references: [id])
+  materialCategory MaterialCategory @relation(fields: [categoryId], references: [id])
+  materialUnit     MaterialUnit     @relation(fields: [unitId], references: [id])
+  materialStatus   MaterialStatus   @relation(fields: [statusId], references: [id])
+  country          Country?         @relation(fields: [countryId], references: [id])
+  
   description    String?
   stock          Int      @default(0)
   manufacturer   String?
-  origin         String?
   minStock       Int?
   maxStock       Int?
   technicalSpecs Json?
@@ -96,6 +105,14 @@ model Material {
   // ... additional fields
 }
 ```
+
+> **Note**: Material model đã được refactor để sử dụng FK relations thay vì string columns:
+> - `managementTypeId` → FK to `ManagementType`
+> - `categoryId` → FK to `MaterialCategory`  
+> - `unitId` → FK to `MaterialUnit`
+> - `statusId` → FK to `MaterialStatus`
+> - `countryId` → FK to `Country` (xuất xứ)
+> - Removed: `managementType`, `category`, `unit`, `status`, `origin` string columns
 
 ### Supplier (Nhà cung cấp)
 
@@ -228,15 +245,23 @@ model User {
   name         String
   email        String   @unique
   phone        String?
-  department   String
-  role         String
-  status       String   @default("Active")
+  departmentId String
+  statusId     String
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
+  department   Department @relation(fields: [departmentId], references: [id])
+  userStatus   UserStatus @relation(fields: [statusId], references: [id])
   userRoles    UserRole[]
+
+  @@map("users")
 }
 ```
+
+> **Note**: User model đã được refactor để sử dụng FK relations thay vì string columns:
+> - `departmentId` → FK to `Department`
+> - `statusId` → FK to `UserStatus`
+> - Removed: `department`, `role`, `status` string columns
 
 ### Role (Vai trò)
 
@@ -246,11 +271,11 @@ model Role {
   name        String   @unique
   description String?
   userCount   Int      @default(0)
-  permissions Json
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  userRoles   UserRole[]
+  userRoles          UserRole[]
+  roleFeatureActions RoleFeatureAction[]
 }
 ```
 
@@ -326,9 +351,33 @@ model FeatureAction {
   action    Action   @relation(fields: [actionId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
 
+  roleFeatureActions RoleFeatureAction[]
+
   @@unique([featureId, actionId])
 }
 ```
+
+### RoleFeatureAction (Gán quyền cho Role - Normalized)
+
+```prisma
+model RoleFeatureAction {
+  id              String        @id @default(uuid())
+  roleId          String
+  featureActionId String
+  createdAt       DateTime      @default(now())
+
+  role          Role          @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  featureAction FeatureAction @relation(fields: [featureActionId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, featureActionId])
+  @@index([roleId])
+  @@index([featureActionId])
+  @@map("role_feature_actions")
+}
+```
+
+> **Note**: RoleFeatureAction thay thế JSON `permissions` field trong Role model.
+> Cho phép normalized many-to-many relationship giữa Role và FeatureAction.
 
 ---
 

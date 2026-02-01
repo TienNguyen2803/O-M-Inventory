@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { useRolesManagement, useFeatures, useActions, type Role, type Feature, type Action } from "@/hooks/use-permissions";
+import { useRolesManagement, useFeatures, useActions, useFeatureActions, getPermissionsMap, type Role, type Feature, type Action } from "@/hooks/use-permissions";
 import { UserAssignmentDialog } from "./user-assignment-dialog";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
@@ -48,6 +48,7 @@ export function RolesClient() {
   const { roles, isLoading: rolesLoading, createRole, updateRole, deleteRole, fetchRoles } = useRolesManagement();
   const { groupedFeatures, isLoading: featuresLoading } = useFeatures(true);
   const { actions, isLoading: actionsLoading } = useActions();
+  const { featureActions } = useFeatureActions();
   
   const [selectedRole, setSelectedRole] = useState<Role | null>(null);
   const [localPermissions, setLocalPermissions] = useState<Record<string, string[]>>({});
@@ -68,14 +69,24 @@ export function RolesClient() {
   useEffect(() => {
     if (roles.length > 0 && !selectedRole) {
       setSelectedRole(roles[0]);
-      setLocalPermissions(roles[0].permissions || {});
     }
   }, [roles, selectedRole]);
 
-  // Update local permissions when role changes
+  // Keep selectedRole in sync with roles array (after fetch)
+  useEffect(() => {
+    if (selectedRole && roles.length > 0) {
+      const updatedRole = roles.find(r => r.id === selectedRole.id);
+      if (updatedRole && updatedRole !== selectedRole) {
+        setSelectedRole(updatedRole);
+      }
+    }
+  }, [roles, selectedRole]);
+
+  // Update local permissions when selectedRole changes
   useEffect(() => {
     if (selectedRole) {
-      setLocalPermissions(selectedRole.permissions || {});
+      const permissions = getPermissionsMap(selectedRole);
+      setLocalPermissions(permissions);
       setHasChanges(false);
     }
   }, [selectedRole]);
@@ -121,7 +132,21 @@ export function RolesClient() {
   const handleSavePermissions = async () => {
     if (!selectedRole) return;
     setIsSaving(true);
-    await updateRole(selectedRole.id, { permissions: localPermissions });
+    
+    // Convert localPermissions (featureCode -> actionCodes[]) to featureActionIds
+    const featureActionIds: string[] = [];
+    for (const [featureCode, actionCodes] of Object.entries(localPermissions)) {
+      for (const actionCode of actionCodes) {
+        const fa = featureActions.find(
+          f => f.feature?.code === featureCode && f.action?.code === actionCode
+        );
+        if (fa) {
+          featureActionIds.push(fa.id);
+        }
+      }
+    }
+    
+    await updateRole(selectedRole.id, { featureActionIds });
     setHasChanges(false);
     setIsSaving(false);
   };
@@ -142,7 +167,7 @@ export function RolesClient() {
     if (editingRole) {
       await updateRole(editingRole.id, { name: formData.name, description: formData.description });
     } else {
-      await createRole({ name: formData.name, description: formData.description, permissions: {} });
+      await createRole({ name: formData.name, description: formData.description });
     }
     setIsSubmitting(false);
     setIsDialogOpen(false);

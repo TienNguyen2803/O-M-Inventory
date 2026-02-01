@@ -35,20 +35,24 @@ import { Textarea } from "@/components/ui/textarea";
 import type { Material } from "@/lib/types";
 import { DialogFooter } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useMasterDataItems } from "@/hooks/use-master-data";
 
+// Form schema with ID fields for master data
 const formSchema = z.object({
   evnCode: z.string().optional(),
   code: z.string().min(1, "Mã nội bộ là bắt buộc."),
   name: z.string().min(2, "Tên vật tư (Tiếng Việt) phải có ít nhất 2 ký tự."),
   nameEn: z.string().optional(),
   partNo: z.string().min(1, "Part Number không được để trống."),
-  unit: z.string({ required_error: "Vui lòng chọn đơn vị tính." }),
-  status: z.enum(["Mới", "Cũ nhưng dùng được", "Hư hỏng", "Hư hỏng không thể sửa chữa", "Thanh lý"], { required_error: "Vui lòng chọn trạng thái vật tư." }),
+  // ID fields for master data - must have min(1) to catch empty strings
+  unitId: z.string().min(1, "Vui lòng chọn đơn vị tính."),
+  statusId: z.string().min(1, "Vui lòng chọn trạng thái vật tư."),
+  categoryId: z.string().min(1, "Vui lòng chọn danh mục."),
+  managementTypeId: z.string().min(1, "Vui lòng chọn loại quản lý."),
+  countryId: z.string().optional(),
   manufacturer: z.string().optional(),
-  origin: z.string().optional(),
   minStock: z.coerce.number().optional(),
   maxStock: z.coerce.number().optional(),
-  isSerial: z.boolean().default(false),
   description: z.string().optional(),
   technicalSpecs: z
     .array(
@@ -89,29 +93,49 @@ export function MaterialForm({
   viewMode,
 }: MaterialFormProps) {
   const [isGeneratingCode, setIsGeneratingCode] = React.useState(false);
+  
+  // Fetch master data for dropdowns
+  const { items: unitItems, isLoading: unitsLoading } = useMasterDataItems('material-unit');
+  const { items: statusItems, isLoading: statusLoading } = useMasterDataItems('material-status');
+  const { items: countryItems, isLoading: countriesLoading } = useMasterDataItems('country');
+  const { items: categoryItems, isLoading: categoriesLoading } = useMasterDataItems('material-category');
+  const { items: managementTypeItems, isLoading: managementTypesLoading } = useMasterDataItems('management-type');
+  
   const form = useForm<MaterialFormValues>({
     resolver: zodResolver(formSchema),
+    mode: "onTouched", // Show validation errors when field is touched/blurred
     defaultValues: material
       ? {
-          ...material,
-          isSerial: material.managementType === "Serial",
+          evnCode: material.evnCode || "",
+          code: material.code,
+          name: material.name,
+          nameEn: material.nameEn || "",
+          partNo: material.partNo,
+          unitId: material.unitId,
+          statusId: material.statusId,
+          categoryId: material.categoryId,
+          managementTypeId: material.managementTypeId,
+          countryId: material.countryId || "",
+          manufacturer: material.manufacturer || "",
           minStock: material.minStock ?? undefined,
           maxStock: material.maxStock ?? undefined,
-          description: material.description ?? "",
+          description: material.description || "",
+          technicalSpecs: material.technicalSpecs || [],
         }
       : {
           evnCode: "Chưa cấp",
-          isSerial: false,
-          technicalSpecs: [],
-          description: "",
+          code: "",
           name: "",
           nameEn: "",
-          code: "",
           partNo: "",
-          unit: "",
-          status: "Mới",
+          unitId: "",
+          statusId: "",
+          categoryId: "",
+          managementTypeId: "",
+          countryId: "",
           manufacturer: "",
-          origin: "",
+          description: "",
+          technicalSpecs: [],
         },
   });
 
@@ -127,66 +151,51 @@ export function MaterialForm({
           }
           return result;
       }
-
-      const countryCodes = ['VIE', 'JPN', 'GER', 'USA', 'CHN', 'KOR'];
-
-      const n1 = generateRandomString(1);
-      const n2 = generateRandomString(2);
-      const n3 = generateRandomString(2);
-      const n4 = generateRandomString(3);
-      const n5 = countryCodes[Math.floor(Math.random() * countryCodes.length)];
-      const n6 = generateRandomString(2);
-      const n7 = '000'; // Default quality code for "Mới" (New)
-
-      const newCode = `${n1}.${n2}.${n3}.${n4}.${n5}.${n6}.${n7}`;
-      form.setValue('evnCode', newCode);
+      const newCode = `EVN-${generateRandomString(3)}-${generateRandomString(4)}`;
+      form.setValue("evnCode", newCode);
       setIsGeneratingCode(false);
-    }, 2000);
+    }, 1000);
   };
+
+  const technicalSpecs = material?.technicalSpecs || [];
 
   return (
     <Form {...form}>
-      <form
-        onSubmit={form.handleSubmit(onSubmit)}
-        className="space-y-6 pt-4 max-h-[70vh] overflow-y-auto pr-4"
-      >
-        {/* THÔNG TIN ĐỊNH DANH */}
-        <div className="space-y-4">
-          <FormSectionHeader title="THÔNG TIN ĐỊNH DANH">
-            {viewMode && (
-              <Button
-                type="button"
-                variant="link"
-                size="sm"
-                className="text-sm p-0 h-auto"
-              >
-                Soạn thảo
-              </Button>
-            )}
-          </FormSectionHeader>
-
-          <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
+        {/* MÃ - ID Section */}
+        <div className="border rounded-md">
+          <FormSectionHeader title="MÃ - ID" />
+          <div className="p-4 grid grid-cols-1 md:grid-cols-3 gap-4">
             <FormField
               control={form.control}
               name="evnCode"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Mã Vật tư (EVN eCat)</FormLabel>
-                  <div className="flex gap-2">
+                  <div className="flex items-center gap-2">
                     <FormControl>
-                      <Input {...field} disabled={viewMode || isGeneratingCode} />
+                      <Input
+                        placeholder="Chưa cấp"
+                        {...field}
+                        disabled
+                        className="flex-1"
+                      />
                     </FormControl>
                     {!viewMode && (
-                      <Button type="button" onClick={handleGenerateEvnCode} disabled={isGeneratingCode}>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={handleGenerateEvnCode}
+                        disabled={isGeneratingCode}
+                      >
                         {isGeneratingCode ? (
-                            <>
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                Đang tạo...
-                            </>
+                          <Loader2 className="h-4 w-4 animate-spin" />
                         ) : (
-                            <>
-                                <Globe className="mr-2" /> Xin cấp mã
-                            </>
+                          <>
+                            <QrCode className="mr-1.5 h-4 w-4" />
+                            Xin cấp mã
+                          </>
                         )}
                       </Button>
                     )}
@@ -200,73 +209,10 @@ export function MaterialForm({
               name="code"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Mã nội bộ (PhuMyTPC)</FormLabel>
-                  <div className="relative">
-                    <FormControl>
-                      <Input {...field} disabled={viewMode} />
-                    </FormControl>
-                    {viewMode && (
-                      <Pencil className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    )}
-                  </div>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <div className="col-span-2">
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Tên Vật tư (Tiếng Việt)</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="Vd: Mỡ hàn Amtech 100g"
-                        {...field}
-                        disabled={viewMode}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            <div className="col-span-2">
-              <FormField
-                control={form.control}
-                name="nameEn"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Tên Vật tư (Tiếng Anh)</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="Vd: Amtech Solder Paste 100g"
-                        {...field}
-                        disabled={viewMode}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* THÔNG SỐ & QUẢN LÝ */}
-        <div className="space-y-4">
-          <FormSectionHeader title="THÔNG SỐ & QUẢN LÝ" />
-          <div className="grid grid-cols-2 gap-x-6 gap-y-4">
-            <FormField
-              control={form.control}
-              name="partNo"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Part Number</FormLabel>
+                  <FormLabel>Mã nội bộ (PhuMyTPC) *</FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="Vd: NC-559-ASM"
+                      placeholder="Vd: PM-CAP-ABC-013"
                       {...field}
                       disabled={viewMode}
                     />
@@ -277,14 +223,108 @@ export function MaterialForm({
             />
             <FormField
               control={form.control}
-              name="unit"
+              name="partNo"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Đơn vị tính</FormLabel>
+                  <FormLabel>Part Number (PN) *</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="Nhập part number"
+                      {...field}
+                      disabled={viewMode}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        </div>
+
+        {/* THÔNG TIN CƠ BẢN Section */}
+        <div className="border rounded-md">
+          <FormSectionHeader title="THÔNG TIN CƠ BẢN" />
+          <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Tên Vật tư (Tiếng Việt) *</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="Nhập tên vật tư"
+                      {...field}
+                      disabled={viewMode}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="nameEn"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="flex items-center gap-1.5">
+                    Tên Vật tư (Tiếng Anh) <Globe className="h-4 w-4 text-muted-foreground" />
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="Enter material name"
+                      {...field}
+                      disabled={viewMode}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="categoryId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Danh mục *</FormLabel>
                   <Select
                     onValueChange={field.onChange}
-                    defaultValue={field.value}
+                    value={field.value}
                     disabled={viewMode}
+                    onOpenChange={(open) => { if (!open) field.onBlur(); }}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Chọn danh mục" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {categoriesLoading ? (
+                        <SelectItem value="loading" disabled>Đang tải...</SelectItem>
+                      ) : categoryItems.length > 0 ? (
+                        categoryItems.map((item) => (
+                          <SelectItem key={item.id} value={item.id}>{item.name}</SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value="empty" disabled>Không có dữ liệu</SelectItem>
+                      )}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="unitId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Đơn vị tính *</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    value={field.value}
+                    disabled={viewMode}
+                    onOpenChange={(open) => { if (!open) field.onBlur(); }}
                   >
                     <FormControl>
                       <SelectTrigger>
@@ -292,32 +332,32 @@ export function MaterialForm({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="Cái">Cái</SelectItem>
-                      <SelectItem value="Hộp">Hộp</SelectItem>
-                      <SelectItem value="Kg">Kg</SelectItem>
-                      <SelectItem value="Lít">Lít</SelectItem>
-                      <SelectItem value="Mét">Mét</SelectItem>
-                      <SelectItem value="Đôi">Đôi</SelectItem>
-                      <SelectItem value="Viên">Viên</SelectItem>
-                      <SelectItem value="Bịch">Bịch</SelectItem>
-                      <SelectItem value="Bộ">Bộ</SelectItem>
-                      <SelectItem value="Sợi">Sợi</SelectItem>
+                      {unitsLoading ? (
+                        <SelectItem value="loading" disabled>Đang tải...</SelectItem>
+                      ) : unitItems.length > 0 ? (
+                        unitItems.map((item) => (
+                          <SelectItem key={item.id} value={item.id}>{item.name}</SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value="empty" disabled>Không có dữ liệu</SelectItem>
+                      )}
                     </SelectContent>
                   </Select>
                   <FormMessage />
                 </FormItem>
               )}
             />
-             <FormField
+            <FormField
               control={form.control}
-              name="status"
+              name="statusId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Trạng thái vật tư</FormLabel>
+                  <FormLabel>Trạng thái vật tư *</FormLabel>
                   <Select
                     onValueChange={field.onChange}
-                    defaultValue={field.value}
+                    value={field.value}
                     disabled={viewMode}
+                    onOpenChange={(open) => { if (!open) field.onBlur(); }}
                   >
                     <FormControl>
                       <SelectTrigger>
@@ -325,11 +365,48 @@ export function MaterialForm({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="Mới">Mới</SelectItem>
-                      <SelectItem value="Cũ nhưng dùng được">Cũ nhưng dùng được</SelectItem>
-                      <SelectItem value="Hư hỏng">Hư hỏng</SelectItem>
-                      <SelectItem value="Hư hỏng không thể sửa chữa">Hư hỏng không thể sửa chữa</SelectItem>
-                      <SelectItem value="Thanh lý">Thanh lý</SelectItem>
+                      {statusLoading ? (
+                        <SelectItem value="loading" disabled>Đang tải...</SelectItem>
+                      ) : statusItems.length > 0 ? (
+                        statusItems.map((item) => (
+                          <SelectItem key={item.id} value={item.id}>{item.name}</SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value="empty" disabled>Không có dữ liệu</SelectItem>
+                      )}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="managementTypeId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Loại quản lý *</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    value={field.value}
+                    disabled={viewMode}
+                    onOpenChange={(open) => { if (!open) field.onBlur(); }}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Chọn loại quản lý" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {managementTypesLoading ? (
+                        <SelectItem value="loading" disabled>Đang tải...</SelectItem>
+                      ) : managementTypeItems.length > 0 ? (
+                        managementTypeItems.map((item) => (
+                          <SelectItem key={item.id} value={item.id}>{item.name}</SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value="empty" disabled>Không có dữ liệu</SelectItem>
+                      )}
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -355,13 +432,13 @@ export function MaterialForm({
             />
             <FormField
               control={form.control}
-              name="origin"
+              name="countryId"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Xuất xứ</FormLabel>
-                   <Select
+                  <Select
                     onValueChange={field.onChange}
-                    defaultValue={field.value}
+                    value={field.value}
                     disabled={viewMode}
                   >
                     <FormControl>
@@ -370,12 +447,15 @@ export function MaterialForm({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="USA">USA</SelectItem>
-                      <SelectItem value="Việt Nam">Việt Nam</SelectItem>
-                      <SelectItem value="Trung Quốc">Trung Quốc</SelectItem>
-                      <SelectItem value="Nhật Bản">Nhật Bản</SelectItem>
-                      <SelectItem value="Đức">Đức</SelectItem>
-                      <SelectItem value="Hàn Quốc">Hàn Quốc</SelectItem>
+                      {countriesLoading ? (
+                        <SelectItem value="loading" disabled>Đang tải...</SelectItem>
+                      ) : countryItems.length > 0 ? (
+                        countryItems.map((item) => (
+                          <SelectItem key={item.id} value={item.id}>{item.name}</SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value="empty" disabled>Không có dữ liệu</SelectItem>
+                      )}
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -409,7 +489,7 @@ export function MaterialForm({
                   <FormControl>
                     <Input
                       type="number"
-                      placeholder="200"
+                      placeholder="1000"
                       {...field}
                       disabled={viewMode}
                     />
@@ -419,82 +499,69 @@ export function MaterialForm({
               )}
             />
           </div>
-          <FormField
-            control={form.control}
-            name="isSerial"
-            render={({ field }) => (
-              <FormItem className="flex flex-row items-center space-x-3 space-y-0">
-                <FormControl>
-                  <Checkbox
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                    disabled={viewMode}
-                  />
-                </FormControl>
-                <FormLabel className="font-normal mb-0 mt-0!">
-                  Quản lý theo Serial/IMEI
-                </FormLabel>
-              </FormItem>
-            )}
-          />
         </div>
 
-        {/* THÔNG SỐ KỸ THUẬT */}
-        <div className="space-y-4">
-          <FormSectionHeader title="THÔNG SỐ KỸ THUẬT" />
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="bg-muted">THUỘC TÍNH</TableHead>
-                <TableHead className="bg-muted">GIÁ TRỊ</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {(form.getValues("technicalSpecs") || []).map((spec, index) => (
-                <TableRow key={index}>
-                  <TableCell>{spec.property}</TableCell>
-                  <TableCell>{spec.value}</TableCell>
-                </TableRow>
-              ))}
-              {(form.getValues("technicalSpecs") || []).length === 0 && (
-                 <TableRow>
-                    <TableCell colSpan={2} className="text-center text-muted-foreground">Không có thông số kỹ thuật.</TableCell>
-                 </TableRow>
+        {/* GHI CHÚ Section */}
+        <div className="border rounded-md">
+          <FormSectionHeader title="GHI CHÚ" />
+          <div className="p-4">
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Nhập ghi chú..."
+                      className="min-h-[80px]"
+                      {...field}
+                      disabled={viewMode}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
               )}
-            </TableBody>
-          </Table>
+            />
+          </div>
         </div>
 
-        <FormField
-          control={form.control}
-          name="description"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Ghi chú</FormLabel>
-              <FormControl>
-                <Textarea
-                  placeholder="Ghi chú chi tiết về vật tư..."
-                  className="min-h-[100px]"
-                  {...field}
-                  disabled={viewMode}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        {/* THÔNG SỐ KỸ THUẬT Section */}
+        {technicalSpecs && technicalSpecs.length > 0 && (
+          <div className="border rounded-md">
+            <FormSectionHeader title="THÔNG SỐ KỸ THUẬT">
+              {!viewMode && (
+                <Button variant="ghost" size="sm" type="button">
+                  <Pencil className="mr-1.5 h-4 w-4" /> Sửa
+                </Button>
+              )}
+            </FormSectionHeader>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-1/3 font-semibold">Thuộc tính</TableHead>
+                  <TableHead className="font-semibold">Giá trị</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {Array.isArray(technicalSpecs) && technicalSpecs.map((spec, index) => (
+                  <TableRow key={index}>
+                    <TableCell className="font-medium">{spec.property}</TableCell>
+                    <TableCell>{spec.value}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
 
-        <DialogFooter className="!justify-start items-center pt-6 sticky bottom-0 bg-background py-4">
-          <Button type="button" variant="outline" disabled={viewMode}>
-            <QrCode className="mr-2" /> In Tem QR
-          </Button>
-          <div className="flex-grow" />
+        <DialogFooter className="pt-4">
           <Button type="button" variant="outline" onClick={onCancel}>
-            Đóng
+            {viewMode ? "Đóng" : "Hủy"}
           </Button>
           {!viewMode && (
             <Button type="submit">
-              <Save className="mr-2" /> Lưu dữ liệu
+              <Save className="mr-2 h-4 w-4" />
+              Lưu
             </Button>
           )}
         </DialogFooter>

@@ -8,9 +8,8 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '10')
     const search = searchParams.get('search') || ''
-    const department = searchParams.get('department') || ''
-    const role = searchParams.get('role') || ''
-    const status = searchParams.get('status') || ''
+    const departmentId = searchParams.get('departmentId') || ''
+    const statusId = searchParams.get('statusId') || ''
 
     const skip = (page - 1) * limit
 
@@ -26,27 +25,32 @@ export async function GET(request: NextRequest) {
       ]
     }
 
-    if (department) {
-      where.department = department
+    if (departmentId) {
+      where.departmentId = departmentId
     }
 
-    if (role) {
-      where.role = role
-    }
-
-    if (status) {
-      where.status = status
+    if (statusId) {
+      where.statusId = statusId
     }
 
     // Get total count for pagination
     const total = await prisma.user.count({ where })
 
-    // Get users with pagination
+    // Get users with pagination and include relations
     const users = await prisma.user.findMany({
       where,
       skip,
       take: limit,
       orderBy: { employeeCode: 'asc' },
+      include: {
+        department: true,
+        userStatus: true,
+        userRoles: {
+          include: {
+            role: true
+          }
+        }
+      }
     })
 
     return NextResponse.json({
@@ -71,12 +75,12 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { employeeCode, name, email, phone, department, role, status } = body
+    const { employeeCode, name, email, phone, departmentId, statusId } = body
 
     // Validate required fields
-    if (!employeeCode || !name || !email || !department || !role) {
+    if (!employeeCode || !name || !email || !departmentId || !statusId) {
       return NextResponse.json(
-        { error: 'Missing required fields: employeeCode, name, email, department, role' },
+        { error: 'Missing required fields: employeeCode, name, email, departmentId, statusId' },
         { status: 400 }
       )
     }
@@ -88,10 +92,13 @@ export async function POST(request: NextRequest) {
         name,
         email,
         phone: phone || null,
-        department,
-        role,
-        status: status || 'Active',
+        departmentId,
+        statusId,
       },
+      include: {
+        department: true,
+        userStatus: true,
+      }
     })
 
     return NextResponse.json(user, { status: 201 })

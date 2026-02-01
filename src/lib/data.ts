@@ -923,7 +923,7 @@ export const materialRequests: MaterialRequest[] = Array.from({ length: 25 }, (_
             materialCode: item1.code,
             materialName: item1.name,
             partNumber: item1.partNo,
-            unit: item1.unit,
+            unit: item1.unit || "Cái",
             requestedQuantity: Math.floor(Math.random() * 5) + 1,
             stock: item1.stock,
             notes: `Cho tổ máy GT1${i % 2 + 1}`
@@ -936,7 +936,7 @@ export const materialRequests: MaterialRequest[] = Array.from({ length: 25 }, (_
             materialCode: item2.code,
             materialName: item2.name,
             partNumber: item2.partNo,
-            unit: item2.unit,
+            unit: item2.unit || "Cái",
             requestedQuantity: Math.floor(Math.random() * 10) + 1,
             stock: item2.stock,
             notes: 'Dự phòng'
@@ -971,8 +971,8 @@ export const purchaseRequests: PurchaseRequest[] = Array.from({ length: 25 }, (_
     const item2 = materials[(i + 7) % materials.length];
     
     const items: PurchaseRequestItem[] = [
-        { id: `item-${id}-1`, name: item1.name, unit: item1.unit, quantity: Math.max(1, (item1.maxStock || 2) - item1.stock), estimatedPrice: Math.floor(Math.random() * 5000000) + 100000, suggestedSupplier: suppliers[i % suppliers.length].name },
-        { id: `item-${id}-2`, name: item2.name, unit: item2.unit, quantity: Math.max(1, (item2.maxStock || 2) - item2.stock), estimatedPrice: Math.floor(Math.random() * 2000000) + 50000, suggestedSupplier: suppliers[(i + 1) % suppliers.length].name },
+        { id: `item-${id}-1`, name: item1.name, unit: item1.unit || "Cái", quantity: Math.max(1, (item1.maxStock || 2) - item1.stock), estimatedPrice: Math.floor(Math.random() * 5000000) + 100000, suggestedSupplier: suppliers[i % suppliers.length].name },
+        { id: `item-${id}-2`, name: item2.name, unit: item2.unit || "Cái", quantity: Math.max(1, (item2.maxStock || 2) - item2.stock), estimatedPrice: Math.floor(Math.random() * 2000000) + 50000, suggestedSupplier: suppliers[(i + 1) % suppliers.length].name },
     ];
     const totalAmount = items.reduce((acc, item) => acc + (item.quantity * item.estimatedPrice), 0);
 
@@ -1051,33 +1051,6 @@ export const biddingPackages: BiddingPackage[] = Array.from({ length: 25 }, (_, 
     };
 });
 
-export const inboundReceipts: InboundReceipt[] = Array.from({ length: 25 }, (_, i) => {
-  const id = i + 1;
-  const types: InboundReceipt['inboundType'][] = ['Theo PO', 'Sau Sửa chữa', 'Hàng Mượn', 'Hoàn trả'];
-  const statuses: InboundReceipt['status'][] = ['Hoàn thành', 'Đang nhập', 'KCS & Hồ sơ', 'Yêu cầu nhập'];
-  const material = materials[i % materials.length];
-  
-  const items: InboundReceiptItem[] = [
-      { id: `item-${id}-1`, materialCode: material.code, materialName: material.name, orderedQuantity: 20, receivedQuantity: 0, receivingQuantity: 20, serialBatch: `SN-2025-${i}`, location: `A${id%5+1}-01-01`, kcs: true },
-  ];
-
-  const documents: InboundReceiptDocument[] = [
-      { id: `doc-${id}-1`, type: 'CO (Certificate of Origin)', fileName: `CO_NCC_${id}.pdf` },
-      { id: `doc-${id}-2`, type: 'CQ (Certificate of Quality)', fileName: `CQ_NCC_${id}.pdf` },
-  ];
-
-  return {
-      id: `PNK-2025-${String(id).padStart(3, '0')}`,
-      inboundType: types[i % types.length],
-      reference: `PO-2025-${String(id + 9).padStart(2, '0')}`,
-      inboundDate: new Date(2025, i%6, id%28 + 1).toISOString(),
-      partner: suppliers[i % suppliers.length].name,
-      status: statuses[i % statuses.length],
-      step: (i % 4) + 1,
-      items: items,
-      documents: documents,
-  };
-});
 
 export const outboundVouchers: OutboundVoucher[] = Array.from({ length: 25 }, (_, i) => {
     const id = i + 1;
@@ -1100,7 +1073,7 @@ export const outboundVouchers: OutboundVoucher[] = Array.from({ length: 25 }, (_
             materialId: item.materialId,
             materialCode: item.materialCode,
             materialName: item.materialName,
-            unit: item.unit,
+            unit: item.unit || "Cái",
             requestedQuantity: item.requestedQuantity,
             issuedQuantity: item.requestedQuantity,
             pickLocationSuggestion: `Khu A-${index + 1} (Tồn: ${item.stock})`,
@@ -1407,10 +1380,6 @@ export const getBiddingPackages = async (): Promise<BiddingPackage[]> => {
     return biddingPackages.sort((a, b) => a.id.localeCompare(b.id));
 }
 
-export const getInboundReceipts = async (): Promise<InboundReceipt[]> => {
-  await new Promise(resolve => setTimeout(resolve, 100));
-  return inboundReceipts.sort((a, b) => a.id.localeCompare(b.id));
-}
 
 export const getOutboundVouchers = async (): Promise<OutboundVoucher[]> => {
     await new Promise(resolve => setTimeout(resolve, 100));

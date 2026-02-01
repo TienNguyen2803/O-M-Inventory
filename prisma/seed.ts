@@ -147,6 +147,24 @@ async function main() {
     skipDuplicates: true
   })
 
+  // 11. Country (Xuất xứ)
+  console.log('  Seeding Country...')
+  await prisma.country.createMany({
+    data: [
+      { code: "VN", name: "Việt Nam", sortOrder: 1 },
+      { code: "US", name: "USA", sortOrder: 2 },
+      { code: "CN", name: "Trung Quốc", sortOrder: 3 },
+      { code: "JP", name: "Nhật Bản", sortOrder: 4 },
+      { code: "DE", name: "Đức", sortOrder: 5 },
+      { code: "KR", name: "Hàn Quốc", sortOrder: 6 },
+      { code: "TW", name: "Đài Loan", sortOrder: 7 },
+      { code: "SG", name: "Singapore", sortOrder: 8 },
+      { code: "UK", name: "Anh", sortOrder: 9 },
+      { code: "FR", name: "Pháp", sortOrder: 10 },
+    ],
+    skipDuplicates: true
+  })
+
   // === YÊU CẦU VẬT TƯ ===
 
   // 11. Request Priority
@@ -406,22 +424,33 @@ async function main() {
   // 28. Roles
   console.log('  Seeding Roles...')
   
-  // Build permissions object from all feature-actions
-  const permissionsObj: Record<string, string[]> = {}
-  for (const feature of allFeatures) {
-    permissionsObj[feature.code] = allActions.map(action => action.code)
-  }
-  
   await prisma.role.createMany({
     data: [
-      { name: 'Quản trị hệ thống', description: 'Toàn quyền quản lý hệ thống', permissions: permissionsObj },
-      { name: 'Quản lý kho', description: 'Quản lý và phê duyệt các hoạt động kho', permissions: {} },
-      { name: 'Nhân viên kho', description: 'Thực hiện nhập/xuất kho', permissions: {} },
-      { name: 'Kế toán', description: 'Xem báo cáo và phê duyệt tài chính', permissions: {} },
-      { name: 'Người xem', description: 'Chỉ xem dữ liệu', permissions: {} },
+      { name: 'Quản trị hệ thống', description: 'Toàn quyền quản lý hệ thống' },
+      { name: 'Quản lý kho', description: 'Quản lý và phê duyệt các hoạt động kho' },
+      { name: 'Nhân viên kho', description: 'Thực hiện nhập/xuất kho' },
+      { name: 'Kế toán', description: 'Xem báo cáo và phê duyệt tài chính' },
+      { name: 'Người xem', description: 'Chỉ xem dữ liệu' },
     ],
     skipDuplicates: true
   })
+
+  // 29. RoleFeatureAction - Assign all permissions to Admin role
+  console.log('  Seeding RoleFeatureAction...')
+  const adminRole = await prisma.role.findUnique({ where: { name: 'Quản trị hệ thống' } })
+  const allFeatureActions = await prisma.featureAction.findMany()
+  
+  if (adminRole && allFeatureActions.length > 0) {
+    const roleFeatureActionData = allFeatureActions.map(fa => ({
+      roleId: adminRole.id,
+      featureActionId: fa.id
+    }))
+    
+    await prisma.roleFeatureAction.createMany({
+      data: roleFeatureActionData,
+      skipDuplicates: true
+    })
+  }
 
   console.log('Permission management seeded!')
 
@@ -432,21 +461,78 @@ async function main() {
   const departments = await prisma.department.findMany()
   const deptMap = Object.fromEntries(departments.map(d => [d.code, d.id]))
   
+  // Get user statuses for reference
+  const userStatuses = await prisma.userStatus.findMany()
+  const statusMap = Object.fromEntries(userStatuses.map(s => [s.code, s.id]))
+  const activeStatusId = statusMap['active'] || statusMap['Active'] || userStatuses[0]?.id
+  
   await prisma.user.createMany({
     data: [
-      { employeeCode: 'NV001', name: 'Nguyễn Văn Admin', email: 'admin@powertrack.vn', department: deptMap['BGD'] || 'BGD', role: 'Quản trị hệ thống', status: 'Active' },
-      { employeeCode: 'NV002', name: 'Trần Thị Kho', email: 'kho@powertrack.vn', department: deptMap['PKH'] || 'PKH', role: 'Quản lý kho', status: 'Active' },
-      { employeeCode: 'NV003', name: 'Lê Văn Nhập', email: 'nhap@powertrack.vn', department: deptMap['PKH'] || 'PKH', role: 'Nhân viên kho', status: 'Active' },
-      { employeeCode: 'NV004', name: 'Phạm Thị Xuất', email: 'xuat@powertrack.vn', department: deptMap['PKH'] || 'PKH', role: 'Nhân viên kho', status: 'Active' },
-      { employeeCode: 'NV005', name: 'Hoàng Văn Kế', email: 'ketoan@powertrack.vn', department: deptMap['PTC'] || 'PTC', role: 'Kế toán', status: 'Active' },
-      { employeeCode: 'NV006', name: 'Vũ Thị Xem', email: 'viewer@powertrack.vn', department: deptMap['PKT'] || 'PKT', role: 'Người xem', status: 'Active' },
-      { employeeCode: 'NV007', name: 'Đặng Văn Kỹ', email: 'kythuat@powertrack.vn', phone: '0901234567', department: deptMap['PKT'] || 'PKT', role: 'Nhân viên kho', status: 'Active' },
-      { employeeCode: 'NV008', name: 'Bùi Thị Vận', email: 'vanhanh@powertrack.vn', phone: '0907654321', department: deptMap['PXVH'] || 'PXVH', role: 'Nhân viên kho', status: 'Active' },
+      { employeeCode: 'NV001', name: 'Nguyễn Văn Admin', email: 'admin@powertrack.vn', departmentId: deptMap['BGD'], statusId: activeStatusId },
+      { employeeCode: 'NV002', name: 'Trần Thị Kho', email: 'kho@powertrack.vn', departmentId: deptMap['PKH'], statusId: activeStatusId },
+      { employeeCode: 'NV003', name: 'Lê Văn Nhập', email: 'nhap@powertrack.vn', departmentId: deptMap['PKH'], statusId: activeStatusId },
+      { employeeCode: 'NV004', name: 'Phạm Thị Xuất', email: 'xuat@powertrack.vn', departmentId: deptMap['PKH'], statusId: activeStatusId },
+      { employeeCode: 'NV005', name: 'Hoàng Văn Kế', email: 'ketoan@powertrack.vn', departmentId: deptMap['PTC'], statusId: activeStatusId },
+      { employeeCode: 'NV006', name: 'Vũ Thị Xem', email: 'viewer@powertrack.vn', departmentId: deptMap['PKT'], statusId: activeStatusId },
+      { employeeCode: 'NV007', name: 'Đặng Văn Kỹ', email: 'kythuat@powertrack.vn', phone: '0901234567', departmentId: deptMap['PKT'], statusId: activeStatusId },
+      { employeeCode: 'NV008', name: 'Bùi Thị Vận', email: 'vanhanh@powertrack.vn', phone: '0907654321', departmentId: deptMap['PXVH'], statusId: activeStatusId },
     ],
     skipDuplicates: true
   })
   
   console.log('Users seeded!')
+
+  // === SEED MATERIALS ===
+  console.log('  Seeding Materials...')
+  
+  // Get master data IDs for FK relations
+  const categoryMap: Record<string, string> = {}
+  const categories = await prisma.materialCategory.findMany()
+  categories.forEach(c => { categoryMap[c.code] = c.id })
+  
+  const unitMap: Record<string, string> = {}
+  const units = await prisma.materialUnit.findMany()
+  units.forEach(u => { unitMap[u.code] = u.id })
+  
+  const materialStatusMap: Record<string, string> = {}
+  const statuses = await prisma.materialStatus.findMany()
+  statuses.forEach(s => { materialStatusMap[s.code] = s.id })
+  
+  const mgmtTypeMap: Record<string, string> = {}
+  const mgmtTypes = await prisma.managementType.findMany()
+  mgmtTypes.forEach(m => { mgmtTypeMap[m.code] = m.id })
+  
+  const countryMap: Record<string, string> = {}
+  const countries = await prisma.country.findMany()
+  countries.forEach(c => { countryMap[c.code] = c.id })
+
+  await prisma.material.createMany({
+    data: [
+      { code: 'PM-TDH-001', name: 'Cảm biến áp suất', nameEn: 'Pressure Sensor', partNo: 'PS-2021-A1', categoryId: categoryMap['TDH'], unitId: unitMap['CAI'], statusId: materialStatusMap['NEW'], managementTypeId: mgmtTypeMap['SERIAL'], countryId: countryMap['JP'], manufacturer: 'Yokogawa', stock: 15, minStock: 5, maxStock: 50 },
+      { code: 'PM-TDH-002', name: 'Cảm biến nhiệt độ PT100', nameEn: 'PT100 Temperature Sensor', partNo: 'TS-PT100-B2', categoryId: categoryMap['TDH'], unitId: unitMap['CAI'], statusId: materialStatusMap['NEW'], managementTypeId: mgmtTypeMap['SERIAL'], countryId: countryMap['DE'], manufacturer: 'Siemens', stock: 25, minStock: 10, maxStock: 100 },
+      { code: 'PM-TDH-003', name: 'PLC S7-1500', nameEn: 'PLC S7-1500', partNo: 'S7-1516-3PN', categoryId: categoryMap['TDH'], unitId: unitMap['CAI'], statusId: materialStatusMap['NEW'], managementTypeId: mgmtTypeMap['SERIAL'], countryId: countryMap['DE'], manufacturer: 'Siemens', stock: 5, minStock: 2, maxStock: 10 },
+      { code: 'PM-MEAS-001', name: 'Đồng hồ đo lưu lượng', nameEn: 'Flow Meter', partNo: 'FM-2022-C3', categoryId: categoryMap['MEAS'], unitId: unitMap['CAI'], statusId: materialStatusMap['NEW'], managementTypeId: mgmtTypeMap['SERIAL'], countryId: countryMap['JP'], manufacturer: 'Yokogawa', stock: 8, minStock: 3, maxStock: 20 },
+      { code: 'PM-MEAS-002', name: 'Thiết bị đo pH', nameEn: 'pH Meter', partNo: 'PH-M100-D4', categoryId: categoryMap['MEAS'], unitId: unitMap['CAI'], statusId: materialStatusMap['USED'], managementTypeId: mgmtTypeMap['SERIAL'], countryId: countryMap['US'], manufacturer: 'Emerson', stock: 3, minStock: 2, maxStock: 10 },
+      { code: 'PM-TURB-001', name: 'Cánh tuabin HPT', nameEn: 'HPT Blade', partNo: 'HPT-BLD-E5', categoryId: categoryMap['TURB'], unitId: unitMap['CAI'], statusId: materialStatusMap['NEW'], managementTypeId: mgmtTypeMap['SERIAL'], countryId: countryMap['US'], manufacturer: 'GE', stock: 20, minStock: 5, maxStock: 50 },
+      { code: 'PM-TURB-002', name: 'Vòng bi trục tuabin', nameEn: 'Turbine Bearing', partNo: 'TB-BRG-F6', categoryId: categoryMap['TURB'], unitId: unitMap['BO'], statusId: materialStatusMap['NEW'], managementTypeId: mgmtTypeMap['SERIAL'], countryId: countryMap['JP'], manufacturer: 'NSK', stock: 6, minStock: 2, maxStock: 15 },
+      { code: 'PM-VALVE-001', name: 'Van điều khiển DN100', nameEn: 'Control Valve DN100', partNo: 'CV-DN100-G7', categoryId: categoryMap['VALVE'], unitId: unitMap['CAI'], statusId: materialStatusMap['NEW'], managementTypeId: mgmtTypeMap['SERIAL'], countryId: countryMap['DE'], manufacturer: 'Samson', stock: 4, minStock: 2, maxStock: 10 },
+      { code: 'PM-VALVE-002', name: 'Van an toàn PSV', nameEn: 'Pressure Safety Valve', partNo: 'PSV-200-H8', categoryId: categoryMap['VALVE'], unitId: unitMap['CAI'], statusId: materialStatusMap['USED'], managementTypeId: mgmtTypeMap['SERIAL'], countryId: countryMap['US'], manufacturer: 'Fisher', stock: 10, minStock: 5, maxStock: 30 },
+      { code: 'PM-CONS-001', name: 'Gioăng cao su chịu nhiệt', nameEn: 'Heat Resistant Gasket', partNo: 'GSK-HR-I9', categoryId: categoryMap['CONS'], unitId: unitMap['CAI'], statusId: materialStatusMap['NEW'], managementTypeId: mgmtTypeMap['BATCH'], stock: 500, minStock: 100, maxStock: 2000 },
+      { code: 'PM-CONS-002', name: 'Bulong M12x50 inox', nameEn: 'Stainless Bolt M12x50', partNo: 'BLT-M12-J0', categoryId: categoryMap['CONS'], unitId: unitMap['CAI'], statusId: materialStatusMap['NEW'], managementTypeId: mgmtTypeMap['BATCH'], countryId: countryMap['VN'], stock: 1000, minStock: 200, maxStock: 5000 },
+      { code: 'PM-CONS-003', name: 'Đai ốc M12 inox', nameEn: 'Stainless Nut M12', partNo: 'NUT-M12-K1', categoryId: categoryMap['CONS'], unitId: unitMap['CAI'], statusId: materialStatusMap['NEW'], managementTypeId: mgmtTypeMap['BATCH'], countryId: countryMap['VN'], stock: 1200, minStock: 300, maxStock: 6000 },
+      { code: 'PM-CHEM-001', name: 'Dầu bôi trơn tuabin', nameEn: 'Turbine Lube Oil', partNo: 'OIL-T46-L2', categoryId: categoryMap['CHEM'], unitId: unitMap['LIT'], statusId: materialStatusMap['NEW'], managementTypeId: mgmtTypeMap['BATCH'], countryId: countryMap['US'], manufacturer: 'ExxonMobil', stock: 2000, minStock: 500, maxStock: 10000 },
+      { code: 'PM-CHEM-002', name: 'Hóa chất xử lý nước', nameEn: 'Water Treatment Chemical', partNo: 'WTC-PH-M3', categoryId: categoryMap['CHEM'], unitId: unitMap['KG'], statusId: materialStatusMap['NEW'], managementTypeId: mgmtTypeMap['BATCH'], countryId: countryMap['KR'], manufacturer: 'LG Chem', stock: 500, minStock: 100, maxStock: 2000 },
+      { code: 'PM-MECH-001', name: 'Bơm ly tâm 10HP', nameEn: 'Centrifugal Pump 10HP', partNo: 'PUMP-10HP-N4', categoryId: categoryMap['MECH'], unitId: unitMap['CAI'], statusId: materialStatusMap['NEW'], managementTypeId: mgmtTypeMap['SERIAL'], countryId: countryMap['JP'], manufacturer: 'Ebara', stock: 2, minStock: 1, maxStock: 5 },
+      { code: 'PM-MECH-002', name: 'Khớp nối mềm', nameEn: 'Flexible Coupling', partNo: 'CPL-FLX-O5', categoryId: categoryMap['MECH'], unitId: unitMap['CAI'], statusId: materialStatusMap['NEW'], managementTypeId: mgmtTypeMap['BATCH'], countryId: countryMap['CN'], stock: 30, minStock: 10, maxStock: 100 },
+      { code: 'PM-PPE-001', name: 'Găng tay chịu nhiệt', nameEn: 'Heat Resistant Gloves', partNo: 'GLV-HT-P6', categoryId: categoryMap['PPE'], unitId: unitMap['DOI'], statusId: materialStatusMap['NEW'], managementTypeId: mgmtTypeMap['BATCH'], countryId: countryMap['VN'], stock: 100, minStock: 30, maxStock: 300 },
+      { code: 'PM-PPE-002', name: 'Kính bảo hộ', nameEn: 'Safety Glasses', partNo: 'GLS-SF-Q7', categoryId: categoryMap['PPE'], unitId: unitMap['CAI'], statusId: materialStatusMap['NEW'], managementTypeId: mgmtTypeMap['BATCH'], countryId: countryMap['VN'], stock: 80, minStock: 20, maxStock: 200 },
+      { code: 'PM-SERVER-001', name: 'RAM Server 32GB DDR4', nameEn: 'Server RAM 32GB DDR4', partNo: 'RAM-32G-R8', categoryId: categoryMap['SERVER'], unitId: unitMap['CAI'], statusId: materialStatusMap['NEW'], managementTypeId: mgmtTypeMap['SERIAL'], countryId: countryMap['KR'], manufacturer: 'Samsung', stock: 10, minStock: 4, maxStock: 30 },
+      { code: 'PM-SERVER-002', name: 'SSD Server 1TB NVMe', nameEn: 'Server SSD 1TB NVMe', partNo: 'SSD-1TB-S9', categoryId: categoryMap['SERVER'], unitId: unitMap['CAI'], statusId: materialStatusMap['NEW'], managementTypeId: mgmtTypeMap['SERIAL'], countryId: countryMap['US'], manufacturer: 'Intel', stock: 8, minStock: 3, maxStock: 25 },
+    ],
+    skipDuplicates: true
+  })
+  
+  console.log('Materials seeded! 20 records added.')
 }
 
 main()

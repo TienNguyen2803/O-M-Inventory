@@ -25,7 +25,7 @@ export async function GET(request: Request, { params }: RouteParams) {
 
     if (!model) {
       return NextResponse.json(
-        { error: `Model not found: ${tableConfig.modelName}` },
+        { error: `Model not found: ${String(tableConfig.modelName)}` },
         { status: 500 }
       )
     }

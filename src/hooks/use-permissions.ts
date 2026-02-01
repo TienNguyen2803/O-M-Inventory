@@ -31,14 +31,39 @@ export interface FeatureAction {
   action?: Action
 }
 
+export interface RoleFeatureAction {
+  id: string
+  roleId: string
+  featureActionId: string
+  featureAction: {
+    id: string
+    feature: Feature
+    action: Action
+  }
+}
+
 export interface Role {
   id: string
   name: string
   description: string | null
   userCount: number
-  permissions: Record<string, string[]> // { featureCode: [actionCode, ...] }
   createdAt: string
   updatedAt: string
+  roleFeatureActions?: RoleFeatureAction[]
+}
+
+// Helper: Convert roleFeatureActions to permissions map for UI compatibility
+export function getPermissionsMap(role: Role): Record<string, string[]> {
+  const map: Record<string, string[]> = {}
+  role.roleFeatureActions?.forEach(rfa => {
+    const featureCode = rfa.featureAction.feature.code
+    const actionCode = rfa.featureAction.action.code
+    if (!map[featureCode]) map[featureCode] = []
+    if (!map[featureCode].includes(actionCode)) {
+      map[featureCode].push(actionCode)
+    }
+  })
+  return map
 }
 
 // ==================== useActions ====================
@@ -342,7 +367,7 @@ export function useRolesManagement() {
     }
   }, [])
 
-  const createRole = useCallback(async (role: { name: string; description?: string; permissions?: Record<string, string[]> }) => {
+  const createRole = useCallback(async (role: { name: string; description?: string; featureActionIds?: string[] }) => {
     try {
       const response = await fetch('/api/roles', {
         method: 'POST',
@@ -363,7 +388,7 @@ export function useRolesManagement() {
     }
   }, [fetchRoles])
 
-  const updateRole = useCallback(async (id: string, updates: Partial<Role>) => {
+  const updateRole = useCallback(async (id: string, updates: Partial<Role> & { featureActionIds?: string[] }) => {
     try {
       const response = await fetch(`/api/roles/${id}`, {
         method: 'PUT',
@@ -384,8 +409,8 @@ export function useRolesManagement() {
     }
   }, [fetchRoles])
 
-  const updateRolePermissions = useCallback(async (id: string, permissions: Record<string, string[]>) => {
-    return updateRole(id, { permissions })
+  const updateRolePermissions = useCallback(async (id: string, featureActionIds: string[]) => {
+    return updateRole(id, { featureActionIds })
   }, [updateRole])
 
   const deleteRole = useCallback(async (id: string) => {
@@ -418,8 +443,18 @@ export interface RoleUser {
   employeeCode: string
   name: string
   email: string
-  department: string
-  status: string
+  departmentId: string
+  statusId: string
+  department?: {
+    id: string
+    code: string
+    name: string
+  }
+  userStatus?: {
+    id: string
+    code: string
+    name: string
+  }
 }
 
 export function useRoleUsers(roleId: string | null) {

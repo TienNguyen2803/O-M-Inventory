@@ -14,30 +14,47 @@ export async function POST(request: NextRequest) {
     }
 
     // Find user by email
-    const user = await prisma.user.findFirst({
+    const dbUser = await prisma.user.findFirst({
       where: {
         email: email.toLowerCase().trim(),
-        status: "Active",
+        userStatus: {
+          code: "ACT" // Assuming 'ACT' is the code for Active
+        }
       },
-      select: {
-        id: true,
-        employeeCode: true,
-        name: true,
-        email: true,
-        phone: true,
+      include: {
         department: true,
-        role: true,
-        status: true,
-        createdAt: true,
+        userStatus: true,
+        userRoles: {
+          include: {
+            role: true
+          }
+        }
       },
     });
 
-    if (!user) {
+    if (!dbUser) {
       return NextResponse.json(
         { success: false, error: "Email không tồn tại trong hệ thống" },
         { status: 401 }
       );
     }
+
+    // Map to User type
+    const user = {
+      id: dbUser.id,
+      employeeCode: dbUser.employeeCode,
+      name: dbUser.name,
+      email: dbUser.email,
+      phone: dbUser.phone,
+      departmentId: dbUser.departmentId,
+      statusId: dbUser.statusId,
+      department: dbUser.department,
+      userStatus: dbUser.userStatus,
+      userRoles: dbUser.userRoles,
+      role: dbUser.userRoles[0]?.role.name || "", // Legacy/Simple role
+      status: dbUser.userStatus.name || "", // Legacy/Simple status
+      createdAt: dbUser.createdAt.toISOString(),
+    };
 
     return NextResponse.json({ success: true, user });
   } catch (error) {

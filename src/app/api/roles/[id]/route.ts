@@ -12,6 +12,18 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     
     const role = await prisma.role.findUnique({
       where: { id },
+      include: {
+        roleFeatureActions: {
+          include: {
+            featureAction: {
+              include: {
+                feature: true,
+                action: true,
+              }
+            }
+          }
+        }
+      }
     })
 
     if (!role) {
@@ -36,15 +48,45 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
   try {
     const { id } = await params
     const body = await request.json()
-    const { name, description, permissions } = body
+    const { name, description, featureActionIds } = body
 
+    // If featureActionIds is provided, update permissions
+    if (featureActionIds !== undefined) {
+      // Delete existing RoleFeatureAction records
+      await prisma.roleFeatureAction.deleteMany({
+        where: { roleId: id }
+      })
+
+      // Create new RoleFeatureAction records
+      if (featureActionIds.length > 0) {
+        await prisma.roleFeatureAction.createMany({
+          data: featureActionIds.map((faId: string) => ({
+            roleId: id,
+            featureActionId: faId
+          }))
+        })
+      }
+    }
+
+    // Update role basic info if provided
     const role = await prisma.role.update({
       where: { id },
       data: {
         ...(name !== undefined && { name }),
         ...(description !== undefined && { description }),
-        ...(permissions !== undefined && { permissions }),
       },
+      include: {
+        roleFeatureActions: {
+          include: {
+            featureAction: {
+              include: {
+                feature: true,
+                action: true,
+              }
+            }
+          }
+        }
+      }
     })
 
     return NextResponse.json({ data: role })
