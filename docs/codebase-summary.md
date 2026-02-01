@@ -1,7 +1,7 @@
 # Codebase Summary
 
 **Last Updated:** 2026-02-01
-**Version:** 1.2.0
+**Version:** 1.3.0-dev
 **Status:** Hybrid (Connected & Mock/Prototype)
 
 ## Overview
@@ -16,9 +16,9 @@ The application uses the App Router structure with distinct modules:
 
 | Directory | Module | Status | Description |
 |-----------|--------|--------|-------------|
-| `api/` | **API Routes** | ✅ **Real** | REST endpoints for Auth, Users, Roles, Materials, Requests, Warehouse Locations, Suppliers. Connected to Prisma. |
+| `api/` | **API Routes** | ✅ **Real** | REST endpoints for Auth, Users, Roles, Materials, Material Requests, Warehouse Locations, Suppliers. Connected to Prisma. |
 | `materials/` | **Materials** | ✅ **Real** | Full CRUD for materials. Fetches data from API. |
-| `material-requests/` | **Requests** | ✅ **Real** | Request creation and approval workflow. Connected to DB. |
+| `material-requests/` | **Requests** | ✅ **Real** | Request creation with items, approval workflow. FK relations to User, Department, Priority, Status. |
 | `warehouses/` | **Warehouse Locations** | ✅ **Real** | Full CRUD with FK relations. Uses Zod validation. |
 | `suppliers/` | **Suppliers** | ✅ **Real** | Full CRUD with contacts management. FK relations to master data. |
 | `inbound/` | **Inbound** | 🚧 **Mock** | UI prototype for inbound shipments. Partial API. |

@@ -228,20 +228,66 @@ model WarehouseLocation {
 
 ```prisma
 model MaterialRequest {
-  id            String   @id @default(uuid())
-  requestCode   String   @unique
-  requesterName String
-  requesterDept String
-  reason        String
-  requestDate   DateTime
-  workOrder     String?
-  priority      String
-  status        String
-  approver      String?
-  step          Int      @default(1)
-  items         MaterialRequestItem[]
+  id           String   @id @default(uuid())
+  requestCode  String   @unique
+
+  // FK Relations
+  requesterId  String
+  departmentId String
+  priorityId   String
+  statusId     String
+  approverId   String?
+
+  requester    User            @relation("RequesterRequests", fields: [requesterId], references: [id])
+  department   Department      @relation(fields: [departmentId], references: [id])
+  priority     RequestPriority @relation(fields: [priorityId], references: [id])
+  status       RequestStatus   @relation(fields: [statusId], references: [id])
+  approver     User?           @relation("ApproverRequests", fields: [approverId], references: [id])
+
+  reason       String
+  requestDate  DateTime
+  workOrder    String?
+  step         Int      @default(1)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  items MaterialRequestItem[]
+
+  @@map("material_requests")
 }
 ```
+
+> **Note**: MaterialRequest model đã được refactor để sử dụng FK relations:
+> - `requesterId` → FK to `User` (người yêu cầu)
+> - `departmentId` → FK to `Department`
+> - `priorityId` → FK to `RequestPriority`
+> - `statusId` → FK to `RequestStatus`
+> - `approverId` → FK to `User` (người duyệt, optional)
+> - Removed: `requesterName`, `requesterDept`, `priority`, `status`, `approver` string columns
+
+### Material Request Item (Chi tiết yêu cầu vật tư)
+
+```prisma
+model MaterialRequestItem {
+  id                String   @id @default(uuid())
+  requestId         String
+  materialId        String
+  unitId            String
+  requestedQuantity Int
+  stock             Int
+  notes             String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  request  MaterialRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  material Material        @relation(fields: [materialId], references: [id])
+  unit     MaterialUnit    @relation(fields: [unitId], references: [id])
+
+  @@map("material_request_items")
+}
+```
+
+> **Note**: MaterialRequestItem sử dụng `onDelete: Cascade` - khi xóa MaterialRequest, tất cả items sẽ tự động bị xóa.
 
 ### Purchase Request (Yêu cầu mua sắm)
 

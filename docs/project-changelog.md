@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **MaterialRequestItem Model**: Items list with FK relations to Material, MaterialUnit.
+- **Material Picker Dialog**: UI component for selecting materials in request form.
+
+### Changed
+- **MaterialRequest Schema**: Refactored from string columns to FK relations:
+  - `requesterId` → FK to User (người yêu cầu)
+  - `departmentId` → FK to Department
+  - `priorityId` → FK to RequestPriority
+  - `statusId` → FK to RequestStatus
+  - `approverId` → FK to User (người duyệt)
+- **MaterialRequest API**: Updated filters to use FK IDs (`departmentId`, `priorityId`, `statusId`) instead of string values.
+- **MaterialRequest Items**: Cascade delete on request deletion.
+
 ### Planned
 - Inbound Logistics API completion.
 - Outbound Logistics API implementation.

@@ -21,10 +21,12 @@ To provide a comprehensive, real-time inventory management solution for power pl
 ### 2.2 Material Requests (✅ Live)
 **Goal:** Workflow for operational teams to request materials.
 - **Features:**
-    - Request creation with justification.
+    - Request creation with justification and item picker.
+    - FK relations to master data (Department, Priority, Status).
+    - Requester/Approver user references.
     - Multi-level approval workflow.
-    - Status tracking (Pending, Approved, Rejected).
-- **Current State:** Functional API and UI.
+    - Material items with quantity tracking.
+- **Current State:** Full CRUD with FK relations. Uses transactional updates.
 
 ### 2.3 Warehouse Locations (✅ Live)
 **Goal:** Manage warehouse storage locations and zones.
@@ -42,15 +44,6 @@ To provide a comprehensive, real-time inventory management solution for power pl
     - Nested contacts management (create/update/delete with supplier).
     - Cascade delete for contacts.
 - **Current State:** Full CRUD with API backend. Transactional updates.
-
-### 2.5 Inbound Logistics (🚧 Prototype)
-**Goal:** Manage the receipt of goods into warehouses.
-- **Requirements:**
-    - Create Goods Receipt Notes (GRN).
-    - Purchase Order (PO) matching.
-    - Barcode/QR scanning for entry.
-    - Batch/Serial number recording.
-- **Current State:** UI Mockups available. No backend logic.
 
 ### 2.5 Inbound Logistics (🚧 Prototype)
 **Goal:** Manage the receipt of goods into warehouses.

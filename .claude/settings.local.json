@@ -23,7 +23,14 @@
       "Bash(npm run lint)",
       "Bash(npx next build:*)",
       "Bash(done)",
-      "Bash(PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION=\"Yes, reset dev DB\" npx prisma db push:*)"
+      "Bash(PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION=\"Yes, reset dev DB\" npx prisma db push:*)",
+      "Bash(npx prisma validate:*)",
+      "Bash(PGPASSWORD=localpassword psql:*)",
+      "Bash(set NODE_ENV=production)",
+      "Bash(timeout:*)",
+      "Bash(curl:*)",
+      "Bash(powershell:*)",
+      "Bash(npx eslint:*)"
     ]
   }
 }

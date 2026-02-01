@@ -164,7 +164,7 @@ Generic API cho quản lý 25 bảng master data:
 | `useUsers()` | CRUD operations cho User Management với pagination, search, filter |
 | `useRoles()` | Fetch roles cho dropdowns |
 | `useDepartments()` | Fetch departments cho dropdowns |
-| `useMaterialRequests()` | CRUD operations cho Material Request với pagination, search, filter |
+| `useMaterialRequests()` | CRUD operations cho Material Request với FK relations, pagination, search, filter |
 | `useRoleUsers(roleId)` | CRUD operations cho gán User vào Role |
 
 ---
@@ -459,16 +459,15 @@ Role ↔ RoleFeatureAction ↔ FeatureAction ↔ Feature + Action
 
 ## Material Request API
 
-API cho quản lý yêu cầu vật tư:
+API cho quản lý yêu cầu vật tư với FK relations:
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | GET | `/api/material-requests` | Danh sách yêu cầu (pagination, search, filter) |
-| POST | `/api/material-requests` | Tạo yêu cầu mới |
+| POST | `/api/material-requests` | Tạo yêu cầu mới (transactional với items) |
 | GET | `/api/material-requests/{id}` | Chi tiết 1 yêu cầu |
 | PUT | `/api/material-requests/{id}` | Cập nhật yêu cầu |
-| DELETE | `/api/material-requests/{id}` | Xóa yêu cầu (soft delete) |
-| POST | `/api/material-requests/{id}/approve` | Phê duyệt yêu cầu |
+| DELETE | `/api/material-requests/{id}` | Xóa yêu cầu (cascade delete items) |
 
 ### Query Parameters cho GET `/api/material-requests`
 
@@ -477,8 +476,66 @@ API cho quản lý yêu cầu vật tư:
 | `page` | number | Số trang (mặc định: 1) |
 | `limit` | number | Số lượng mỗi trang (mặc định: 10) |
 | `search` | string | Tìm theo mã yêu cầu, tên người yêu cầu |
-| `department` | string | Filter theo phòng ban |
-| `status` | string | Filter theo trạng thái |
-| `priority` | string | Filter theo độ ưu tiên |
+| `departmentId` | string | Filter theo ID phòng ban (FK) |
+| `statusId` | string | Filter theo ID trạng thái (FK) |
+| `priorityId` | string | Filter theo ID độ ưu tiên (FK) |
+
+### Request Body (POST/PUT)
+
+```json
+{
+  "requesterId": "user-uuid",
+  "departmentId": "dept-uuid",
+  "priorityId": "priority-uuid",
+  "statusId": "status-uuid",
+  "reason": "Thay thế bơm hỏng",
+  "requestDate": "2026-02-01T00:00:00Z",
+  "workOrder": "WO-2026-001",
+  "items": [
+    {
+      "materialId": "material-uuid",
+      "unitId": "unit-uuid",
+      "requestedQuantity": 2,
+      "stock": 5,
+      "notes": "Cần gấp"
+    }
+  ]
+}
+```
+
+### Response Format (GET list)
+
+```json
+{
+  "data": [{
+    "id": "uuid",
+    "requestCode": "MR-2026-001",
+    "requesterId": "user-uuid",
+    "departmentId": "dept-uuid",
+    "priorityId": "priority-uuid",
+    "statusId": "status-uuid",
+    "requester": { "id": "...", "name": "Nguyễn Văn A", "employeeCode": "NV001" },
+    "department": { "id": "...", "name": "Vận hành" },
+    "priority": { "id": "...", "name": "Cao", "color": "#FF0000" },
+    "status": { "id": "...", "name": "Chờ duyệt", "color": "#FFA500" },
+    "reason": "Thay thế bơm hỏng",
+    "requestDate": "2026-02-01T00:00:00Z",
+    "items": [
+      {
+        "id": "item-uuid",
+        "materialId": "material-uuid",
+        "material": { "id": "...", "code": "PM-001", "name": "Bơm thủy lực" },
+        "unitId": "unit-uuid",
+        "unit": { "id": "...", "name": "Cái" },
+        "requestedQuantity": 2,
+        "stock": 5
+      }
+    ]
+  }],
+  "pagination": { "page": 1, "limit": 10, "total": 20, "totalPages": 2 }
+}
+```
+
+> **Note**: Material Request API sử dụng FK relations. Client gửi IDs, API trả về nested objects. Items được tạo/cập nhật trong transaction.
 
 
