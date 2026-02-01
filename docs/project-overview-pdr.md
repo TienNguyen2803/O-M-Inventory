@@ -54,14 +54,15 @@ To provide a comprehensive, real-time inventory management solution for power pl
     - Multi-level approval workflow.
 - **Current State:** Full CRUD with API backend. Uses transactional updates.
 
-### 2.6 Inbound Logistics (Partial)
+### 2.6 Inbound Logistics (Live)
 **Goal:** Manage the receipt of goods into warehouses.
-- **Requirements:**
+- **Features:**
     - Create Goods Receipt Notes (GRN).
     - Purchase Order (PO) matching.
     - Barcode/QR scanning for entry.
     - Batch/Serial number recording.
-- **Current State:** UI complete. API endpoints available at `/api/inbound`. Uses string columns (not FK relations).
+    - FK relations to master data (InboundType, Supplier, InboundStatus).
+- **Current State:** Full CRUD with FK relations. API at `/api/inbound`.
 
 ### 2.7 Outbound Logistics (Prototype)
 **Goal:** Control the issuance of materials to plant subsystems.

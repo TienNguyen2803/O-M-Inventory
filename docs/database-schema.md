@@ -3,10 +3,10 @@
 ## Overview
 
 Hệ thống sử dụng PostgreSQL với Prisma 7 ORM. Schema được chia thành 2 nhóm chính:
-- **Master Data Tables (25 bảng)**: Dữ liệu tham chiếu, lookup values
+- **Master Data Tables (27 bảng)**: Dữ liệu tham chiếu, lookup values
 - **Business Data Tables**: Dữ liệu nghiệp vụ chính
 
-## Master Data Tables (25 bảng)
+## Master Data Tables (27 bảng)
 
 Mỗi bảng master data có cấu trúc chuẩn:
 
@@ -492,18 +492,29 @@ model BidQuotation {
 model InboundReceipt {
   id          String   @id @default(uuid())
   receiptCode String   @unique
-  inboundType String   // Note: String column, not FK
+
+  // FK Relations to Master Data
+  typeId      String
+  supplierId  String
+  statusId    String
+
+  inboundType InboundType   @relation(fields: [typeId], references: [id])
+  supplier    Supplier      @relation(fields: [supplierId], references: [id])
+  inboundStatus InboundStatus @relation(fields: [statusId], references: [id])
+
   reference   String
   inboundDate DateTime
-  partner     String   // Note: String column, not FK
-  status      String   // Note: String column, not FK
   step        Int      @default(1)
   items       InboundReceiptItem[]
   documents   InboundDocument[]
 }
 ```
 
-> **Note**: InboundReceipt sử dụng string columns (`inboundType`, `partner`, `status`) thay vì FK relations. Cần refactor trong tương lai.
+> **Note**: InboundReceipt has been refactored to use FK relations:
+> - `typeId` -> FK to `InboundType`
+> - `supplierId` -> FK to `Supplier`
+> - `statusId` -> FK to `InboundStatus`
+> - Removed: `inboundType`, `partner`, `status` string columns
 
 ### InboundReceiptItem (Chi tiết phiếu nhập)
 
