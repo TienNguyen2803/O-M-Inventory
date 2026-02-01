@@ -32,21 +32,14 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-  TableFooter,
-} from "@/components/ui/table";
 import { DialogFooter } from "@/components/ui/dialog";
 import { CalendarIcon, Save, Check, Loader2 } from "lucide-react";
 import type { BiddingPackage, BiddingParticipant, MasterDataItem } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { BiddingParticipantsSection } from "./bidding-participants-section";
 import { BiddingWorkflowStepActions } from "./bidding-workflow-step-actions";
+import { BiddingScopeItemsEditor, type ScopeItem } from "./bidding-scope-items-editor";
+
 
 const formSchema = z.object({
   name: z.string().min(1, "Tên gói thầu là bắt buộc."),
@@ -209,7 +202,6 @@ export function BiddingForm({
   });
 
   const scopeItems = form.watch("scopeItems") || [];
-  const totalAmount = scopeItems.reduce((sum, item) => sum + (item.estimatedAmount || 0), 0);
 
   // Show winner info if package is complete
   const showResults = currentStep === 4 || !!winnerId;
@@ -229,8 +221,8 @@ export function BiddingForm({
         setWinnerId(supplierId);
         setCurrentStep(4);
         toast({
-          title: "Thanh cong",
-          description: "Da chon nha thau trung thau.",
+          title: "Thành công",
+          description: "Đã chọn nhà thầu trúng thầu.",
         });
         if (onRefresh) onRefresh();
       } else {
@@ -238,8 +230,8 @@ export function BiddingForm({
       }
     } catch {
       toast({
-        title: "Loi",
-        description: "Khong the chon nha thau trung thau.",
+        title: "Lỗi",
+        description: "Không thể chọn nhà thầu trúng thầu.",
         variant: "destructive",
       });
     }
@@ -266,12 +258,12 @@ export function BiddingForm({
   }
 
   return (
-    <div className="max-h-[85vh] overflow-y-auto pr-2">
+    <div className="space-y-4">
       {biddingPackage && <Stepper currentStep={currentStep} />}
 
       {/* Workflow Actions - show for existing packages in view mode */}
       {biddingPackage && (
-        <div className="mb-4 p-3 bg-muted/50 rounded-lg">
+        <div className="p-3 bg-muted/50 rounded-lg">
           <BiddingWorkflowStepActions
             packageId={biddingPackage.id}
             currentStep={currentStep}
@@ -287,20 +279,18 @@ export function BiddingForm({
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit)}
-          className="space-y-4 pt-2 pl-2"
+          className="space-y-4"
         >
-          <div className="grid grid-cols-2 gap-x-6 gap-y-4">
-            {/* Package Code - Read Only */}
+          {/* Row 1: Package Code (edit only) + Name */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {biddingPackage && (
-              <div className="col-span-1">
-                <FormItem>
-                  <FormLabel>Mã Gói</FormLabel>
-                  <Input value={biddingPackage.id} disabled className="bg-muted" />
-                </FormItem>
-              </div>
+              <FormItem>
+                <FormLabel>Mã Gói</FormLabel>
+                <Input value={biddingPackage.id} disabled className="bg-muted" />
+              </FormItem>
             )}
 
-            <div className={biddingPackage ? "col-span-1" : "col-span-2"}>
+            <div className={biddingPackage ? "md:col-span-2" : "md:col-span-3"}>
               <FormField
                 control={form.control}
                 name="name"
@@ -315,7 +305,10 @@ export function BiddingForm({
                 )}
               />
             </div>
+          </div>
 
+          {/* Row 2: Method, Created By, Budget */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <FormField
               control={form.control}
               name="methodId"
@@ -376,7 +369,10 @@ export function BiddingForm({
                 </FormItem>
               )}
             />
+          </div>
 
+          {/* Row 3: Open Date, Close Date, Notes */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <FormField
               control={form.control}
               name="openDate"
@@ -433,73 +429,40 @@ export function BiddingForm({
               )}
             />
 
-            <div className="col-span-2">
-              <FormField
-                control={form.control}
-                name="notes"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Ghi chú</FormLabel>
-                    <FormControl>
-                      <Textarea {...field} disabled={viewMode} placeholder="Nhập ghi chú (nếu có)" rows={2} />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-            </div>
+            <FormField
+              control={form.control}
+              name="notes"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Ghi chú</FormLabel>
+                  <FormControl>
+                    <Textarea {...field} disabled={viewMode} placeholder="Nhập ghi chú (nếu có)" rows={1} />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
           </div>
 
-          <div className="space-y-2 pt-2">
+          <div className="space-y-2 pt-4">
             <FormSectionHeader title="Phạm vi cung cấp" />
-            <div className="rounded-md border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-2/5">HẠNG MỤC</TableHead>
-                    <TableHead>ĐVT</TableHead>
-                    <TableHead className="text-right">KHỐI LƯỢNG</TableHead>
-                    <TableHead className="text-right">THÀNH TIỀN</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {scopeItems.length > 0 ? (
-                    scopeItems.map((item, index) => (
-                      <TableRow key={item.id || index}>
-                        <TableCell className="font-medium">{item.name}</TableCell>
-                        <TableCell>{typeof item.unitId === 'object' ? (item.unitId as MasterDataItem).name : item.unitId}</TableCell>
-                        <TableCell className="text-right">{item.quantity?.toLocaleString('vi-VN')}</TableCell>
-                        <TableCell className="text-right">{item.estimatedAmount?.toLocaleString('vi-VN')}</TableCell>
-                      </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
-                        Chưa có hạng mục nào
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-                <TableFooter>
-                  <TableRow>
-                    <TableCell colSpan={3} className="text-right font-bold">Tổng cộng</TableCell>
-                    <TableCell className="text-right font-bold text-red-600">{totalAmount.toLocaleString('vi-VN')}</TableCell>
-                  </TableRow>
-                </TableFooter>
-              </Table>
-            </div>
+            <BiddingScopeItemsEditor
+              items={scopeItems as ScopeItem[]}
+              onChange={(newItems) => form.setValue('scopeItems', newItems)}
+              viewMode={viewMode}
+            />
           </div>
 
           {showResults && biddingPackage?.winner && (
             <div className="space-y-4 pt-2">
-              <FormSectionHeader title="Ket qua lua chon" />
+              <FormSectionHeader title="Kết quả lựa chọn" />
               <div className="bg-green-50/50 p-4 rounded-lg border border-green-200 grid grid-cols-2 gap-x-6 gap-y-4">
                 <FormItem>
-                  <FormLabel>Nha thau trung</FormLabel>
+                  <FormLabel>Nhà thầu trúng</FormLabel>
                   <Input value={biddingPackage.winner.name} disabled className="font-bold bg-white" />
                 </FormItem>
                 <FormItem>
-                  <FormLabel>So nha thau tham gia</FormLabel>
-                  <Input value={`${participants.length} nha thau`} disabled className="bg-white" />
+                  <FormLabel>Số nhà thầu tham gia</FormLabel>
+                  <Input value={`${participants.length} nhà thầu`} disabled className="bg-white" />
                 </FormItem>
               </div>
             </div>
@@ -508,7 +471,7 @@ export function BiddingForm({
           {/* Participants section - always show for existing packages */}
           {biddingPackage && (
             <div className="space-y-2 pt-2">
-              <FormSectionHeader title="Nha thau tham gia" />
+              <FormSectionHeader title="Nhà thầu tham gia" />
               <BiddingParticipantsSection
                 packageId={biddingPackage.id}
                 participants={participants}

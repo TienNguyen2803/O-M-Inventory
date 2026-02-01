@@ -85,27 +85,33 @@ export function BiddingParticipantsSection({
 
     setIsAddingParticipant(true);
     try {
+      console.log('Adding participant:', { packageId, selectedSupplierId });
       const res = await fetch(`/api/bidding-packages/${packageId}/participants`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ supplierIds: [selectedSupplierId] }),
       });
 
+      const json = await res.json();
+      console.log('Add participant response:', { status: res.status, json });
+
       if (res.ok) {
-        const json = await res.json();
         onParticipantsChange(json.data || []);
         setSelectedSupplierId("");
         toast({
-          title: "Thanh cong",
-          description: "Da them nha thau tham gia.",
+          title: "Thành công",
+          description: "Đã thêm nhà thầu tham gia.",
         });
       } else {
-        throw new Error("Failed to add participant");
+        const errorMsg = json.error || json.message || 'Failed to add participant';
+        console.error('Add participant error:', errorMsg);
+        throw new Error(errorMsg);
       }
-    } catch {
+    } catch (error) {
+      console.error('Add participant exception:', error);
       toast({
-        title: "Loi",
-        description: "Khong the them nha thau.",
+        title: "Lỗi",
+        description: error instanceof Error ? error.message : "Không thể thêm nhà thầu.",
         variant: "destructive",
       });
     } finally {
@@ -125,16 +131,16 @@ export function BiddingParticipantsSection({
         const updated = participants.filter((p) => p.id !== participantId);
         onParticipantsChange(updated);
         toast({
-          title: "Thanh cong",
-          description: "Da xoa nha thau khoi danh sach.",
+          title: "Thành công",
+          description: "Đã xóa nhà thầu khỏi danh sách.",
         });
       } else {
         throw new Error("Failed to remove participant");
       }
     } catch {
       toast({
-        title: "Loi",
-        description: "Khong the xoa nha thau.",
+        title: "Lỗi",
+        description: "Không thể xóa nhà thầu.",
         variant: "destructive",
       });
     } finally {
@@ -186,16 +192,16 @@ export function BiddingParticipantsSection({
           return updated;
         });
         toast({
-          title: "Thanh cong",
-          description: "Da cap nhat diem.",
+          title: "Thành công",
+          description: "Đã cập nhật điểm.",
         });
       } else {
         throw new Error("Failed to update score");
       }
     } catch {
       toast({
-        title: "Loi",
-        description: "Khong the cap nhat diem.",
+        title: "Lỗi",
+        description: "Không thể cập nhật điểm.",
         variant: "destructive",
       });
     } finally {
@@ -233,10 +239,10 @@ export function BiddingParticipantsSection({
       {canAddParticipants && availableSuppliers.length > 0 && (
         <div className="flex gap-2 items-end">
           <div className="flex-1">
-            <label className="text-sm font-medium mb-1 block">Moi nha thau</label>
+            <label className="text-sm font-medium mb-1 block">Mời nhà thầu</label>
             <Select value={selectedSupplierId} onValueChange={setSelectedSupplierId}>
               <SelectTrigger>
-                <SelectValue placeholder="Chon nha thau..." />
+                <SelectValue placeholder="Chọn nhà thầu..." />
               </SelectTrigger>
               <SelectContent>
                 {availableSuppliers.map((s) => (
@@ -256,7 +262,7 @@ export function BiddingParticipantsSection({
             ) : (
               <Plus className="h-4 w-4 mr-2" />
             )}
-            Them
+            Thêm
           </Button>
         </div>
       )}
@@ -266,13 +272,13 @@ export function BiddingParticipantsSection({
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>NHA THAU</TableHead>
-              <TableHead className="text-center w-[80px]">BAO GIA</TableHead>
-              <TableHead className="text-center w-[100px]">DIEM KT</TableHead>
-              <TableHead className="text-center w-[100px]">DIEM GIA</TableHead>
-              <TableHead className="text-center w-[100px]">TONG DIEM</TableHead>
-              <TableHead className="text-center w-[80px]">XEP HANG</TableHead>
-              <TableHead className="w-[120px]">THAO TAC</TableHead>
+              <TableHead>NHÀ THẦU</TableHead>
+              <TableHead className="text-center w-[80px]">BÁO GIÁ</TableHead>
+              <TableHead className="text-center w-[100px]">ĐIỂM KT</TableHead>
+              <TableHead className="text-center w-[100px]">ĐIỂM GIÁ</TableHead>
+              <TableHead className="text-center w-[100px]">TỔNG ĐIỂM</TableHead>
+              <TableHead className="text-center w-[80px]">XẾP HẠNG</TableHead>
+              <TableHead className="w-[120px]">THAO TÁC</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -290,7 +296,7 @@ export function BiddingParticipantsSection({
                       {p.supplier?.name}
                       {isWinner && (
                         <span className="ml-2 text-xs bg-green-500 text-white px-2 py-0.5 rounded inline-flex items-center gap-1">
-                          <Trophy className="h-3 w-3" /> Trung thau
+                          <Trophy className="h-3 w-3" /> Trúng thầu
                         </span>
                       )}
                     </TableCell>
@@ -350,7 +356,7 @@ export function BiddingParticipantsSection({
                             onClick={() => handleSaveScore(p.id)}
                             disabled={isLoading}
                           >
-                            Luu
+                            Lưu
                           </Button>
                         )}
                         {canSelectWinner && p.totalScore !== null && p.totalScore !== undefined && (
@@ -362,7 +368,7 @@ export function BiddingParticipantsSection({
                             className="bg-green-600 hover:bg-green-700"
                           >
                             <Trophy className="h-3 w-3 mr-1" />
-                            Chon
+                            Chọn
                           </Button>
                         )}
                         {canAddParticipants && (
@@ -384,7 +390,7 @@ export function BiddingParticipantsSection({
             ) : (
               <TableRow>
                 <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
-                  Chua co nha thau nao duoc moi
+                  Chưa có nhà thầu nào được mời
                 </TableCell>
               </TableRow>
             )}

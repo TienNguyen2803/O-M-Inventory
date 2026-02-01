@@ -28,10 +28,10 @@ type BiddingWorkflowStepActionsProps = {
 
 // Step status mapping: 1=INVITE, 2=OPEN, 3=EVAL, 4=DONE
 const STEP_STATUS_MAP: Record<number, { code: string; name: string; action: string }> = {
-  1: { code: "INVITE", name: "Moi thau", action: "Chuyen sang Mo thau" },
-  2: { code: "OPEN", name: "Mo thau", action: "Chuyen sang Cham thau" },
-  3: { code: "EVAL", name: "Cham thau", action: "Chon nha thau trung" },
-  4: { code: "DONE", name: "Hoan thanh", action: "" },
+  1: { code: "INVITE", name: "Mời thầu", action: "Chuyển sang Mở thầu" },
+  2: { code: "OPEN", name: "Mở thầu", action: "Chuyển sang Chấm thầu" },
+  3: { code: "EVAL", name: "Chấm thầu", action: "Chọn nhà thầu trúng" },
+  4: { code: "DONE", name: "Hoàn thành", action: "" },
 };
 
 export function BiddingWorkflowStepActions({
@@ -55,18 +55,28 @@ export function BiddingWorkflowStepActions({
     setIsLoading(true);
     try {
       // Fetch status ID by code
+      console.log('Fetching bidding statuses...');
       const statusRes = await fetch(`/api/master-data/bidding-status`);
+      const statusData = await statusRes.json();
+      console.log('Status response:', { ok: statusRes.ok, data: statusData });
+      
       if (!statusRes.ok) throw new Error("Failed to fetch statuses");
 
-      const statusData = await statusRes.json();
-      const statuses = statusData.data || statusData || [];
+      // API returns { tableId, tableName, group, items: [...] }
+      const statuses = statusData.items || statusData.data || [];
+      if (!Array.isArray(statuses)) {
+        console.error('Invalid statuses format:', statusData);
+        throw new Error("Invalid status data format");
+      }
       const targetStatus = statuses.find((s: { code: string }) => s.code === nextStatus.code);
+      console.log('Looking for status code:', nextStatus.code, 'Found:', targetStatus);
 
       if (!targetStatus) {
-        throw new Error(`Status ${nextStatus.code} not found`);
+        throw new Error(`Status ${nextStatus.code} not found in database`);
       }
 
       // Update package step and status
+      console.log('Updating package:', { packageId, nextStep, statusId: targetStatus.id });
       const updateRes = await fetch(`/api/bidding-packages/${packageId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -76,18 +86,24 @@ export function BiddingWorkflowStepActions({
         }),
       });
 
-      if (!updateRes.ok) throw new Error("Failed to update step");
+      const updateData = await updateRes.json();
+      console.log('Update response:', { ok: updateRes.ok, data: updateData });
+
+      if (!updateRes.ok) {
+        const errorMsg = updateData.error || updateData.message || 'Failed to update step';
+        throw new Error(errorMsg);
+      }
 
       onStepChange(nextStep, nextStatus.code);
       toast({
-        title: "Thanh cong",
-        description: `Da chuyen sang buoc ${nextStep}: ${nextStatus.name}`,
+        title: "Thành công",
+        description: `Đã chuyển sang bước ${nextStep}: ${nextStatus.name}`,
       });
     } catch (error) {
       console.error("Failed to advance step:", error);
       toast({
-        title: "Loi",
-        description: "Khong the chuyen buoc. Vui long thu lai.",
+        title: "Lỗi",
+        description: error instanceof Error ? error.message : "Không thể chuyển bước. Vui lòng thử lại.",
         variant: "destructive",
       });
     } finally {
@@ -105,7 +121,7 @@ export function BiddingWorkflowStepActions({
       return (
         <div className="flex items-center gap-2 text-green-600">
           <CheckCircle2 className="h-5 w-5" />
-          <span className="font-medium">Goi thau da hoan thanh</span>
+          <span className="font-medium">Gói thầu đã hoàn thành</span>
         </div>
       );
     }
@@ -124,20 +140,20 @@ export function BiddingWorkflowStepActions({
               ) : (
                 <ArrowRight className="h-4 w-4 mr-2" />
               )}
-              Chuyen sang Mo thau
+              Chuyển sang Mở thầu
             </Button>
           </AlertDialogTrigger>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Xac nhan chuyen buoc</AlertDialogTitle>
+              <AlertDialogTitle>Xác nhận chuyển bước</AlertDialogTitle>
               <AlertDialogDescription>
-                Ban co chac chan muon chuyen goi thau sang giai doan &quot;Mo thau&quot;?
-                Sau khi mo thau, cac nha thau se khong the duoc them hoac xoa.
+                Bạn có chắc chắn muốn chuyển gói thầu sang giai đoạn &quot;Mở thầu&quot;?
+                Sau khi mở thầu, các nhà thầu sẽ không thể được thêm hoặc xóa.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Huy</AlertDialogCancel>
-              <AlertDialogAction onClick={handleAdvanceStep}>Xac nhan</AlertDialogAction>
+              <AlertDialogCancel>Hủy</AlertDialogCancel>
+              <AlertDialogAction onClick={handleAdvanceStep}>Xác nhận</AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
@@ -153,20 +169,20 @@ export function BiddingWorkflowStepActions({
               ) : (
                 <ArrowRight className="h-4 w-4 mr-2" />
               )}
-              Chuyen sang Cham thau
+              Chuyển sang Chấm thầu
             </Button>
           </AlertDialogTrigger>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Xac nhan chuyen buoc</AlertDialogTitle>
+              <AlertDialogTitle>Xác nhận chuyển bước</AlertDialogTitle>
               <AlertDialogDescription>
-                Ban co chac chan muon chuyen goi thau sang giai doan &quot;Cham thau&quot;?
-                Trong giai doan nay, ban se cham diem va lua chon nha thau trung thau.
+                Bạn có chắc chắn muốn chuyển gói thầu sang giai đoạn &quot;Chấm thầu&quot;?
+                Trong giai đoạn này, bạn sẽ chấm điểm và lựa chọn nhà thầu trúng thầu.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Huy</AlertDialogCancel>
-              <AlertDialogAction onClick={handleAdvanceStep}>Xac nhan</AlertDialogAction>
+              <AlertDialogCancel>Hủy</AlertDialogCancel>
+              <AlertDialogAction onClick={handleAdvanceStep}>Xác nhận</AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
@@ -178,8 +194,8 @@ export function BiddingWorkflowStepActions({
           <Trophy className="h-5 w-5" />
           <span className="text-sm">
             {hasScores
-              ? "San sang chon nha thau trung thau"
-              : "Vui long cham diem cho cac nha thau truoc khi chon"}
+              ? "Sẵn sàng chọn nhà thầu trúng thầu"
+              : "Vui lòng chấm điểm cho các nhà thầu trước khi chọn"}
           </span>
         </div>
       )}
@@ -187,7 +203,7 @@ export function BiddingWorkflowStepActions({
       {/* Validation messages */}
       {currentStep === 1 && !hasParticipants && (
         <span className="text-sm text-muted-foreground">
-          Can moi it nhat 1 nha thau de chuyen buoc
+          Cần mời ít nhất 1 nhà thầu để chuyển bước
         </span>
       )}
     </div>

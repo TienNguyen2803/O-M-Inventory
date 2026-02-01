@@ -111,8 +111,8 @@ export function BiddingQuotationDialog({
     const validQuotations = quotations.filter((q) => q.unitPrice > 0);
     if (validQuotations.length === 0) {
       toast({
-        title: "Loi",
-        description: "Vui long nhap gia cho it nhat 1 hang muc.",
+        title: "Lỗi",
+        description: "Vui lòng nhập giá cho ít nhất 1 hạng mục.",
         variant: "destructive",
       });
       return;
@@ -136,8 +136,8 @@ export function BiddingQuotationDialog({
 
       if (res.ok) {
         toast({
-          title: "Thanh cong",
-          description: "Da luu bao gia thanh cong.",
+          title: "Thành công",
+          description: "Đã lưu báo giá thành công.",
         });
         onQuotationsSaved();
         onOpenChange(false);
@@ -146,8 +146,8 @@ export function BiddingQuotationDialog({
       }
     } catch {
       toast({
-        title: "Loi",
-        description: "Khong the luu bao gia.",
+        title: "Lỗi",
+        description: "Không thể lưu báo giá.",
         variant: "destructive",
       });
     } finally {
@@ -163,7 +163,7 @@ export function BiddingQuotationDialog({
       <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
-            {viewOnly ? "Xem bao gia" : "Nhap bao gia"} - {participant.supplier?.name}
+            {viewOnly ? "Xem báo giá" : "Nhập báo giá"} - {participant.supplier?.name}
           </DialogTitle>
         </DialogHeader>
 
@@ -171,11 +171,11 @@ export function BiddingQuotationDialog({
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-2/5">HANG MUC</TableHead>
-                <TableHead className="text-center w-[80px]">DVT</TableHead>
-                <TableHead className="text-right w-[100px]">KHOI LUONG</TableHead>
-                <TableHead className="text-right w-[140px]">DON GIA</TableHead>
-                <TableHead className="text-right w-[140px]">THANH TIEN</TableHead>
+                <TableHead className="w-2/5">HẠNG MỤC</TableHead>
+                <TableHead className="text-center w-[80px]">ĐVT</TableHead>
+                <TableHead className="text-right w-[100px]">KHỐI LƯỢNG</TableHead>
+                <TableHead className="text-right w-[140px]">ĐƠN GIÁ</TableHead>
+                <TableHead className="text-right w-[140px]">THÀNH TIỀN</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -228,7 +228,7 @@ export function BiddingQuotationDialog({
                             )
                           }
                           className="h-8 w-32 text-right ml-auto"
-                          placeholder="Nhap don gia"
+                          placeholder="Nhập đơn giá"
                         />
                       )}
                     </TableCell>
@@ -242,7 +242,7 @@ export function BiddingQuotationDialog({
             <TableFooter>
               <TableRow>
                 <TableCell colSpan={4} className="text-right font-bold">
-                  Tong gia du thau
+                  Tổng giá dự thầu
                 </TableCell>
                 <TableCell className="text-right font-bold text-primary">
                   {totalAmount.toLocaleString("vi-VN")}
@@ -254,7 +254,7 @@ export function BiddingQuotationDialog({
 
         <DialogFooter className="pt-4">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Dong
+            Đóng
           </Button>
           {!viewOnly && (
             <Button onClick={handleSave} disabled={isSaving}>
@@ -263,7 +263,7 @@ export function BiddingQuotationDialog({
               ) : (
                 <Save className="h-4 w-4 mr-2" />
               )}
-              Luu bao gia
+              Lưu báo giá
             </Button>
           )}
         </DialogFooter>

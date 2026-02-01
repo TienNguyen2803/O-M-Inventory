@@ -225,14 +225,18 @@ export function BiddingsClient({
         ? `/api/bidding-packages/${selectedBidding.id}`
         : '/api/bidding-packages';
 
+      console.log('Submitting form:', { method, url, values });
+
       const response = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(values),
       });
 
+      const json = await response.json();
+      console.log('API response:', { status: response.status, json });
+
       if (response.ok) {
-        const json = await response.json();
         if (isEditing) {
           setBiddings(biddings.map((b) => b.id === json.data.id ? json.data : b));
         } else {
@@ -244,16 +248,20 @@ export function BiddingsClient({
           description: isEditing ? "Đã cập nhật gói thầu." : "Đã tạo gói thầu mới.",
         });
       } else {
-        throw new Error('Failed to save');
+        const errorMsg = json.error || json.message || 'Failed to save';
+        console.error('API error:', errorMsg);
+        throw new Error(errorMsg);
       }
-    } catch {
+    } catch (error) {
+      console.error('Form submission error:', error);
       toast({
         title: "Lỗi",
-        description: "Không thể lưu gói thầu.",
+        description: error instanceof Error ? error.message : "Không thể lưu gói thầu.",
         variant: "destructive",
       });
     }
   };
+
 
   // Helper to display method/status name
   const getDisplayName = (value?: MasterDataItem | string): string => {

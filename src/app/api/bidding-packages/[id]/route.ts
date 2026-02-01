@@ -209,9 +209,26 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
     // Update scope items if provided
     if (scopeItems !== undefined) {
+      // First, delete any quotations that reference the old scope items
+      // to avoid FK constraint errors
+      const existingScopeItems = await prisma.biddingScopeItem.findMany({
+        where: { biddingPackageId: existing.id },
+        select: { id: true }
+      })
+      const existingScopeItemIds = existingScopeItems.map(item => item.id)
+      
+      if (existingScopeItemIds.length > 0) {
+        await prisma.bidQuotation.deleteMany({
+          where: { scopeItemId: { in: existingScopeItemIds } }
+        })
+      }
+
+      // Now delete the old scope items
       await prisma.biddingScopeItem.deleteMany({
         where: { biddingPackageId: existing.id }
       })
+      
+      // Create new scope items
       if (scopeItems.length > 0) {
         await prisma.biddingScopeItem.createMany({
           data: scopeItems.map((item: {
