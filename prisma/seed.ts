@@ -533,6 +533,26 @@ async function main() {
   })
   
   console.log('Materials seeded! 20 records added.')
+
+  // === WAREHOUSE LOCATIONS ===
+  console.log('  Seeding WarehouseLocations...')
+  await prisma.warehouseLocation.createMany({
+    data: [
+      { code: 'A1-01-01', name: 'Kệ 01 - Tầng 1 - Dãy A', area: 'Khu A', type: 'Kệ Pallet', status: 'Active', barcode: 'LOC-A10101', maxWeight: 2000, dimensions: '2.7m x 1.2m' },
+      { code: 'A1-01-02', name: 'Kệ 01 - Tầng 2 - Dãy A', area: 'Khu A', type: 'Kệ Pallet', status: 'Active', barcode: 'LOC-A10102', maxWeight: 1500, dimensions: '2.7m x 1.2m' },
+      { code: 'A1-01-03', name: 'Kệ 01 - Tầng 3 - Dãy A', area: 'Khu A', type: 'Kệ Pallet', status: 'Active', barcode: 'LOC-A10103', maxWeight: 1000, dimensions: '2.7m x 1.2m' },
+      { code: 'A1-02-01', name: 'Kệ 02 - Tầng 1 - Dãy A', area: 'Khu A', type: 'Kệ Pallet', status: 'Inactive', barcode: 'LOC-A10201', maxWeight: 2000 },
+      { code: 'A1-02-02', name: 'Kệ 02 - Tầng 2 - Dãy A', area: 'Khu A', type: 'Kệ Pallet', status: 'Active' },
+      { code: 'B1-01-01', name: 'Kệ 01 - Tầng 1 - Dãy B', area: 'Khu B', type: 'Kệ Trung Tải', status: 'Active', barcode: 'LOC-B10101', maxWeight: 800, dimensions: '2.0m x 1.0m' },
+      { code: 'B1-01-02', name: 'Kệ 01 - Tầng 2 - Dãy B', area: 'Khu B', type: 'Kệ Trung Tải', status: 'Active', barcode: 'LOC-B10102', maxWeight: 600 },
+      { code: 'B1-02-01', name: 'Kệ 02 - Tầng 1 - Dãy B', area: 'Khu B', type: 'Kệ Trung Tải', status: 'Active' },
+      { code: 'C1-FLOOR-01', name: 'Vị trí sàn - Khu C', area: 'Khu C', type: 'Sàn', status: 'Active', maxWeight: 5000, dimensions: '10m x 5m' },
+      { code: 'COLD-01-01', name: 'Kệ Lạnh - Tầng 1', area: 'Kho Lạnh', type: 'Kệ Pallet', status: 'Active', maxWeight: 1500, dimensions: '2.5m x 1.2m' },
+      { code: 'CHEM-01-01', name: 'Kệ Hóa chất - Tầng 1', area: 'Kho Hóa chất', type: 'Kệ Trung Tải', status: 'Active', maxWeight: 500, dimensions: '2.0m x 0.8m' },
+    ],
+    skipDuplicates: true
+  })
+  console.log('WarehouseLocations seeded! 11 records added.')
 }
 
 main()
