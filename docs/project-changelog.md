@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **PurchaseRequest FK Relations**: Refactored from string columns to FK relations:
+  - `requesterId` → FK to User
+  - `departmentId` → FK to Department
+  - `statusId` → FK to RequestStatus
+  - `sourceId` → FK to MaterialOrigin
+  - `fundingSourceId` → FK to FundingSource
+- **PurchaseRequestItem Model**: Items with FK relations to Material, MaterialUnit, Supplier.
+- **Purchase Requests API**: Full CRUD endpoints at `/api/purchase-requests`.
 - **MaterialRequestItem Model**: Items list with FK relations to Material, MaterialUnit.
 - **Material Picker Dialog**: UI component for selecting materials in request form.
 

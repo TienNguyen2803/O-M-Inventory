@@ -13,7 +13,7 @@ PowerTrack Logistics là hệ thống quản lý vật tư O&M (Operation & Main
 │  │              Next.js 15.5 App Router                  │   │
 │  │  ┌────────────┐  ┌────────────┐  ┌────────────────┐  │   │
 │  │  │   Pages    │  │ Components │  │   API Routes   │  │   │
-│  │  │ (18 routes)│  │    (39)    │  │  (/api/...)    │  │   │
+│  │  │ (21 routes)│  │    (39)    │  │  (/api/...)    │  │   │
 │  │  └────────────┘  └────────────┘  └────────────────┘  │   │
 │  └──────────────────────────────────────────────────────┘   │
 └─────────────────────────────────────────────────────────────┘
@@ -56,7 +56,7 @@ PowerTrack Logistics là hệ thống quản lý vật tư O&M (Operation & Main
 
 ## Key Components
 
-### Frontend Pages (18 routes)
+### Frontend Pages (21 routes)
 
 | Route | Description |
 |-------|-------------|
@@ -165,6 +165,7 @@ Generic API cho quản lý 25 bảng master data:
 | `useRoles()` | Fetch roles cho dropdowns |
 | `useDepartments()` | Fetch departments cho dropdowns |
 | `useMaterialRequests()` | CRUD operations cho Material Request với FK relations, pagination, search, filter |
+| `usePurchaseRequests()` | CRUD operations cho Purchase Request với FK relations, pagination, search, filter |
 | `useRoleUsers(roleId)` | CRUD operations cho gán User vào Role |
 
 ---
@@ -537,5 +538,92 @@ API cho quản lý yêu cầu vật tư với FK relations:
 ```
 
 > **Note**: Material Request API sử dụng FK relations. Client gửi IDs, API trả về nested objects. Items được tạo/cập nhật trong transaction.
+
+---
+
+## Purchase Request API
+
+API cho quản lý yêu cầu mua sắm với FK relations:
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/purchase-requests` | Danh sách yêu cầu (pagination, search, filter) |
+| POST | `/api/purchase-requests` | Tạo yêu cầu mới (transactional với items) |
+| GET | `/api/purchase-requests/{id}` | Chi tiết 1 yêu cầu |
+| PUT | `/api/purchase-requests/{id}` | Cập nhật yêu cầu |
+| DELETE | `/api/purchase-requests/{id}` | Xóa yêu cầu (cascade delete items) |
+
+### Query Parameters cho GET `/api/purchase-requests`
+
+| Param | Type | Description |
+|-------|------|-------------|
+| `page` | number | Số trang (mặc định: 1) |
+| `limit` | number | Số lượng mỗi trang (mặc định: 10) |
+| `search` | string | Tìm theo mã yêu cầu, tên người yêu cầu, mô tả |
+| `sourceId` | string | Filter theo ID nguồn vật tư (FK) |
+| `statusId` | string | Filter theo ID trạng thái (FK) |
+
+### Request Body (POST/PUT)
+
+```json
+{
+  "requesterId": "user-uuid",
+  "departmentId": "dept-uuid",
+  "sourceId": "source-uuid",
+  "fundingSourceId": "funding-uuid",
+  "description": "Mua thiết bị thay thế",
+  "items": [
+    {
+      "materialId": "material-uuid",
+      "name": "Bơm thủy lực ABC",
+      "unitId": "unit-uuid",
+      "quantity": 2,
+      "estimatedPrice": 50000000,
+      "suggestedSupplierId": "supplier-uuid"
+    }
+  ]
+}
+```
+
+### Response Format (GET list)
+
+```json
+{
+  "data": [{
+    "id": "PR-2026-001",
+    "requestCode": "PR-2026-001",
+    "requesterId": "user-uuid",
+    "departmentId": "dept-uuid",
+    "statusId": "status-uuid",
+    "sourceId": "source-uuid",
+    "fundingSourceId": "funding-uuid",
+    "requester": { "id": "...", "name": "Nguyễn Văn A", "employeeCode": "NV001" },
+    "department": { "id": "...", "code": "VH", "name": "Vận hành" },
+    "status": { "id": "...", "code": "PEND", "name": "Chờ duyệt", "color": "#FFA500" },
+    "source": { "id": "...", "code": "NB", "name": "Trong nước" },
+    "fundingSource": { "id": "...", "code": "OPEX", "name": "Chi phí vận hành" },
+    "description": "Mua thiết bị thay thế",
+    "totalAmount": 100000000,
+    "step": 2,
+    "items": [
+      {
+        "id": "item-uuid",
+        "materialId": "material-uuid",
+        "material": { "id": "...", "code": "PM-001", "name": "Bơm thủy lực" },
+        "name": "Bơm thủy lực ABC",
+        "unitId": "unit-uuid",
+        "unit": { "id": "...", "code": "CAI", "name": "Cái" },
+        "suggestedSupplierId": "supplier-uuid",
+        "suggestedSupplier": { "id": "...", "name": "ABC Company" },
+        "quantity": 2,
+        "estimatedPrice": 50000000
+      }
+    ]
+  }],
+  "pagination": { "page": 1, "limit": 10, "total": 20, "totalPages": 2 }
+}
+```
+
+> **Note**: Purchase Request API sử dụng FK relations. Client gửi IDs, API trả về nested objects. Items cascade delete khi xóa request.
 
 

@@ -295,17 +295,68 @@ model MaterialRequestItem {
 model PurchaseRequest {
   id            String   @id @default(uuid())
   requestCode   String   @unique
-  requesterName String
-  requesterDept String
+
+  // FK Relations
+  requesterId     String
+  departmentId    String
+  statusId        String
+  sourceId        String
+  fundingSourceId String
+
+  requester     User            @relation("PurchaseRequester", fields: [requesterId], references: [id])
+  department    Department      @relation("PurchaseDepartment", fields: [departmentId], references: [id])
+  status        RequestStatus   @relation("PurchaseStatus", fields: [statusId], references: [id])
+  source        MaterialOrigin  @relation(fields: [sourceId], references: [id])
+  fundingSource FundingSource   @relation(fields: [fundingSourceId], references: [id])
+
   description   String
-  source        String
-  fundingSource String
   totalAmount   Float
-  status        String
   step          Int?
-  items         PurchaseRequestItem[]
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  items PurchaseRequestItem[]
+
+  @@map("purchase_requests")
 }
 ```
+
+> **Note**: PurchaseRequest model đã được refactor để sử dụng FK relations:
+> - `requesterId` → FK to `User`
+> - `departmentId` → FK to `Department`
+> - `statusId` → FK to `RequestStatus`
+> - `sourceId` → FK to `MaterialOrigin`
+> - `fundingSourceId` → FK to `FundingSource`
+> - Removed: `requesterName`, `requesterDept`, `source`, `fundingSource`, `status` string columns
+
+### Purchase Request Item (Chi tiết yêu cầu mua sắm)
+
+```prisma
+model PurchaseRequestItem {
+  id                  String   @id @default(uuid())
+  requestId           String
+  materialId          String?
+  name                String
+  unitId              String
+  quantity            Int
+  estimatedPrice      Float
+  suggestedSupplierId String?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  request           PurchaseRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  material          Material?       @relation(fields: [materialId], references: [id])
+  unit              MaterialUnit    @relation(fields: [unitId], references: [id])
+  suggestedSupplier Supplier?       @relation(fields: [suggestedSupplierId], references: [id])
+
+  @@map("purchase_request_items")
+}
+```
+
+> **Note**: PurchaseRequestItem sử dụng `onDelete: Cascade`. FK relations:
+> - `materialId` → Optional FK to `Material`
+> - `unitId` → FK to `MaterialUnit`
+> - `suggestedSupplierId` → Optional FK to `Supplier`
 
 ### Inbound Receipt (Phiếu nhập kho)
 

@@ -16,11 +16,12 @@ The application uses the App Router structure with distinct modules:
 
 | Directory | Module | Status | Description |
 |-----------|--------|--------|-------------|
-| `api/` | **API Routes** | ✅ **Real** | REST endpoints for Auth, Users, Roles, Materials, Material Requests, Warehouse Locations, Suppliers. Connected to Prisma. |
+| `api/` | **API Routes** | ✅ **Real** | REST endpoints for Auth, Users, Roles, Materials, Material Requests, Purchase Requests, Warehouse Locations, Suppliers. Connected to Prisma. |
 | `materials/` | **Materials** | ✅ **Real** | Full CRUD for materials. Fetches data from API. |
 | `material-requests/` | **Requests** | ✅ **Real** | Request creation with items, approval workflow. FK relations to User, Department, Priority, Status. |
 | `warehouses/` | **Warehouse Locations** | ✅ **Real** | Full CRUD with FK relations. Uses Zod validation. |
 | `suppliers/` | **Suppliers** | ✅ **Real** | Full CRUD with contacts management. FK relations to master data. |
+| `purchase-requests/` | **Purchase Requests** | ✅ **Real** | Full CRUD with items, FK relations to master data. Transactional. |
 | `inbound/` | **Inbound** | 🚧 **Mock** | UI prototype for inbound shipments. Partial API. |
 | `outbound/` | **Outbound** | 🚧 **Mock** | UI prototype for outbound vouchers. No API backend yet. |
 | `lifecycle/` | **Lifecycle** | 🚧 **Mock** | Timeline view of material history. Uses mock data. |
@@ -29,7 +30,7 @@ The application uses the App Router structure with distinct modules:
 
 ### `src/lib` (Utilities)
 
-- **`data.ts`**: ⚠️ **Legacy/Mock Data** (1435 LOC). Large file containing static data used by prototype modules (Inbound, Outbound, Dashboard). Needs refactoring and deprecation as backend services are implemented.
+- **`data.ts`**: ⚠️ **Legacy/Mock Data** (1275 LOC). Large file containing static data used by prototype modules (Inbound, Outbound, Dashboard). Needs refactoring and deprecation as backend services are implemented.
 - **`prisma.ts`**: Database client instance.
 - **`utils.ts`**: Common utility functions (CN for Tailwind, formatters).
 - **`types.ts`**: TypeScript type definitions.
@@ -60,7 +61,7 @@ The application uses the App Router structure with distinct modules:
 
 ## Critical Technical Debt
 
-1.  **`src/lib/data.ts` dependency** (1435 LOC): Large legacy file. Prototype modules rely on this. Must be maintained until backend APIs for Inbound/Outbound are ready. Consider splitting by domain.
+1.  **`src/lib/data.ts` dependency** (1275 LOC): Large legacy file. Prototype modules rely on this. Must be maintained until backend APIs for Inbound/Outbound are ready. Consider splitting by domain.
 2.  **`src/hooks/use-permissions.ts`** (535 LOC): Contains 6 hooks in 1 file. Needs splitting into separate files.
 3.  **Client-side Reports**: Reporting logic happens in browser. Will not scale with real data. Needs migration to server-side aggregation (Prisma `groupBy` / Raw SQL).
 4.  **Missing API Routes**: `outbound` and `stock-take` modules have UI but no backend logic.

@@ -45,7 +45,16 @@ To provide a comprehensive, real-time inventory management solution for power pl
     - Cascade delete for contacts.
 - **Current State:** Full CRUD with API backend. Transactional updates.
 
-### 2.5 Inbound Logistics (🚧 Prototype)
+### 2.5 Purchase Requests (✅ Live)
+**Goal:** Workflow for purchasing materials not in stock.
+- **Features:**
+    - Request creation with items and estimated pricing.
+    - FK relations to master data (Status, Source, FundingSource, Department).
+    - Items with material, unit, and suggested supplier references.
+    - Multi-level approval workflow.
+- **Current State:** Full CRUD with API backend. Uses transactional updates.
+
+### 2.6 Inbound Logistics (🚧 Prototype)
 **Goal:** Manage the receipt of goods into warehouses.
 - **Requirements:**
     - Create Goods Receipt Notes (GRN).
@@ -54,7 +63,7 @@ To provide a comprehensive, real-time inventory management solution for power pl
     - Batch/Serial number recording.
 - **Current State:** UI Mockups available. No backend logic.
 
-### 2.6 Outbound Logistics (🚧 Prototype)
+### 2.7 Outbound Logistics (🚧 Prototype)
 **Goal:** Control the issuance of materials to plant subsystems.
 - **Requirements:**
     - Create Goods Issue Vouchers (GIV).
@@ -62,7 +71,7 @@ To provide a comprehensive, real-time inventory management solution for power pl
     - Cost center allocation.
 - **Current State:** UI Mockups available. No backend logic.
 
-### 2.7 Reports & Analytics (⚠️ Hybrid)
+### 2.8 Reports & Analytics (⚠️ Hybrid)
 **Goal:** Operational insights and inventory valuation.
 - **Requirements:**
     - Stock Level Reports.

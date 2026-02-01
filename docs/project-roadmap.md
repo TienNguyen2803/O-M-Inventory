@@ -27,6 +27,10 @@
     - [x] CRUD Operations with FK relations.
     - [x] Contacts management (nested create/update/delete).
     - [x] Master Data Integration (Country, Type, PaymentTerm, Currency).
+- [x] **Purchase Requests**:
+    - [x] CRUD Operations with FK relations.
+    - [x] Items management (nested create/update/delete).
+    - [x] Master Data Integration (Status, Source, FundingSource, Department).
 - [ ] **Inbound Logistics (Goods Receipt)**:
     - [x] UI Prototypes (Mock Data).
     - [ ] **Backend API**: Implement `/api/inbound`.
@@ -61,7 +65,8 @@
 |--------|-----------|----------------|----------|
 | Materials | ✅ Ready | ✅ Ready | - |
 | Users/Roles | ✅ Ready | ✅ Ready | - |
-| Requests | ✅ Ready | ✅ Ready | - |
+| Material Requests | ✅ Ready | ✅ Ready | - |
+| Purchase Requests | ✅ Ready | ✅ Ready | - |
 | Warehouse Locations | ✅ Ready | ✅ Ready | - |
 | Suppliers | ✅ Ready | ✅ Ready | - |
 | Inbound | 🚧 Prototype | ⚠️ Partial | High |
