@@ -34,7 +34,16 @@ To provide a comprehensive, real-time inventory management solution for power pl
     - Barcode/QR support, weight/dimension tracking.
 - **Current State:** Full CRUD with API backend. Uses Zod validation.
 
-### 2.4 Inbound Logistics (🚧 Prototype)
+### 2.4 Suppliers Management (✅ Live)
+**Goal:** Centralized registry of all material suppliers and vendors.
+- **Features:**
+    - CRUD operations for suppliers.
+    - FK relations to master data (Country, Type, PaymentTerm, Currency).
+    - Nested contacts management (create/update/delete with supplier).
+    - Cascade delete for contacts.
+- **Current State:** Full CRUD with API backend. Transactional updates.
+
+### 2.5 Inbound Logistics (🚧 Prototype)
 **Goal:** Manage the receipt of goods into warehouses.
 - **Requirements:**
     - Create Goods Receipt Notes (GRN).
@@ -43,7 +52,16 @@ To provide a comprehensive, real-time inventory management solution for power pl
     - Batch/Serial number recording.
 - **Current State:** UI Mockups available. No backend logic.
 
-### 2.5 Outbound Logistics (🚧 Prototype)
+### 2.5 Inbound Logistics (🚧 Prototype)
+**Goal:** Manage the receipt of goods into warehouses.
+- **Requirements:**
+    - Create Goods Receipt Notes (GRN).
+    - Purchase Order (PO) matching.
+    - Barcode/QR scanning for entry.
+    - Batch/Serial number recording.
+- **Current State:** UI Mockups available. No backend logic.
+
+### 2.6 Outbound Logistics (🚧 Prototype)
 **Goal:** Control the issuance of materials to plant subsystems.
 - **Requirements:**
     - Create Goods Issue Vouchers (GIV).
@@ -51,7 +69,7 @@ To provide a comprehensive, real-time inventory management solution for power pl
     - Cost center allocation.
 - **Current State:** UI Mockups available. No backend logic.
 
-### 2.6 Reports & Analytics (⚠️ Hybrid)
+### 2.7 Reports & Analytics (⚠️ Hybrid)
 **Goal:** Operational insights and inventory valuation.
 - **Requirements:**
     - Stock Level Reports.

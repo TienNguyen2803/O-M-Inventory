@@ -219,6 +219,76 @@ API cho quản lý vị trí kho với FK relations đến master data:
 
 ---
 
+## Suppliers Management API
+
+API cho quản lý nhà cung cấp với FK relations và contacts management:
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/suppliers` | Danh sách nhà cung cấp (với relations) |
+| POST | `/api/suppliers` | Tạo nhà cung cấp mới (với contacts) |
+| GET | `/api/suppliers/{id}` | Chi tiết 1 nhà cung cấp |
+| PUT | `/api/suppliers/{id}` | Cập nhật nhà cung cấp (transactional) |
+| DELETE | `/api/suppliers/{id}` | Xóa nhà cung cấp (cascade delete contacts) |
+
+### Request Body (POST/PUT)
+
+```json
+{
+  "code": "SUP-001",
+  "taxCode": "0123456789",
+  "name": "ABC Company Ltd",
+  "address": "123 Main Street",
+  "countryId": "uuid",
+  "typeId": "uuid",
+  "paymentTermId": "uuid",
+  "currencyId": "uuid",
+  "status": "Active",
+  "contacts": [
+    {
+      "name": "John Doe",
+      "position": "Sales Manager",
+      "email": "john@abc.com",
+      "phone": "+84 123 456 789"
+    }
+  ]
+}
+```
+
+### Response Format (GET list/detail)
+
+```json
+{
+  "id": "uuid",
+  "code": "SUP-001",
+  "taxCode": "0123456789",
+  "name": "ABC Company Ltd",
+  "address": "123 Main Street",
+  "countryId": "country-uuid",
+  "typeId": "type-uuid",
+  "paymentTermId": "term-uuid",
+  "currencyId": "currency-uuid",
+  "status": "Active",
+  "country": { "id": "...", "name": "Vietnam" },
+  "supplierType": { "id": "...", "name": "Manufacturer" },
+  "paymentTerm": { "id": "...", "name": "Net 30" },
+  "currency": { "id": "...", "name": "VND" },
+  "contacts": [
+    {
+      "id": "contact-uuid",
+      "name": "John Doe",
+      "position": "Sales Manager",
+      "email": "john@abc.com",
+      "phone": "+84 123 456 789"
+    }
+  ]
+}
+```
+
+> **Note**: Suppliers API sử dụng FK relations và nested contacts. PUT operation sử dụng transaction để replace contacts.
+
+---
+
 ## Materials Management API
 
 API cho quản lý vật tư với FK relations đến master data:

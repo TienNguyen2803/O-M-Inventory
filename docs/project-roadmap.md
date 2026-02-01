@@ -23,6 +23,10 @@
     - [x] CRUD Operations with FK relations.
     - [x] Zod validation schema.
     - [x] Master Data Integration (Area, Type, Status).
+- [x] **Suppliers Management**:
+    - [x] CRUD Operations with FK relations.
+    - [x] Contacts management (nested create/update/delete).
+    - [x] Master Data Integration (Country, Type, PaymentTerm, Currency).
 - [ ] **Inbound Logistics (Goods Receipt)**:
     - [x] UI Prototypes (Mock Data).
     - [ ] **Backend API**: Implement `/api/inbound`.
@@ -59,6 +63,7 @@
 | Users/Roles | ✅ Ready | ✅ Ready | - |
 | Requests | ✅ Ready | ✅ Ready | - |
 | Warehouse Locations | ✅ Ready | ✅ Ready | - |
+| Suppliers | ✅ Ready | ✅ Ready | - |
 | Inbound | 🚧 Prototype | ⚠️ Partial | High |
 | Outbound | 🚧 Prototype | ❌ Missing | High |
 | Reports | ⚠️ Hybrid | ❌ Mock Data | Medium |

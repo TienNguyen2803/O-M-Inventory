@@ -1,7 +1,7 @@
 # PowerTrack Logistics - O&M Inventory Management System
 
 > **Status:** Active Development (Hybrid State)
-> **Version:** 1.0.0
+> **Version:** 1.2.0
 
 A comprehensive inventory management system for Power Plant Operation & Maintenance (O&M), built with the modern Next.js 14 stack.
 
@@ -62,6 +62,7 @@ The application is currently in a **Hybrid State**:
 | **Requests** | ✅ Live | Connected to DB. Approval workflow. |
 | **Users/Roles**| ✅ Live | RBAC System fully functional. |
 | **Warehouse Locations** | ✅ Live | Full CRUD with FK relations. |
+| **Suppliers** | ✅ Live | Full CRUD with contacts management. FK relations. |
 | **Inbound** | 🚧 Prototype | UI + partial API. Mock data. |
 | **Outbound** | 🚧 Prototype | UI only. Mock data. |
 | **Reports** | ⚠️ Hybrid | UI exists, calculations are client-side. |
@@ -75,6 +76,7 @@ src/
 │   ├── materials/          # Materials Module (Real)
 │   ├── material-requests/  # Request Module (Real)
 │   ├── warehouses/         # Warehouse Locations (Real)
+│   ├── suppliers/          # Suppliers Module (Real)
 │   ├── inbound/            # Inbound Module (Prototype)
 │   └── ...
 ├── components/             # Shadcn UI & Shared Components

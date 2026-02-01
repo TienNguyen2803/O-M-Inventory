@@ -139,19 +139,60 @@ model Country {
 
 ```prisma
 model Supplier {
-  id          String   @id @default(uuid())
-  code        String   @unique
-  taxCode     String
-  name        String
-  address     String
-  country     String
-  type        String
-  paymentTerm String
-  currency    String
-  status      String   @default("Active")
-  contacts    SupplierContact[]
+  id            String   @id @default(uuid())
+  code          String   @unique
+  taxCode       String
+  name          String
+  address       String
+
+  // FK Relations to Master Data
+  countryId     String
+  typeId        String
+  paymentTermId String
+  currencyId    String
+
+  country       Country      @relation(fields: [countryId], references: [id])
+  supplierType  SupplierType @relation(fields: [typeId], references: [id])
+  paymentTerm   PaymentTerm  @relation(fields: [paymentTermId], references: [id])
+  currency      Currency     @relation(fields: [currencyId], references: [id])
+
+  status        String   @default("Active")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  contacts SupplierContact[]
+
+  @@map("suppliers")
 }
 ```
+
+> **Note**: Supplier model đã được refactor để sử dụng FK relations thay vì string columns:
+> - `countryId` → FK to `Country`
+> - `typeId` → FK to `SupplierType`
+> - `paymentTermId` → FK to `PaymentTerm`
+> - `currencyId` → FK to `Currency`
+> - Removed: `country`, `type`, `paymentTerm`, `currency` string columns
+
+### SupplierContact (Liên hệ nhà cung cấp)
+
+```prisma
+model SupplierContact {
+  id         String   @id @default(uuid())
+  supplierId String
+  name       String
+  position   String
+  email      String
+  phone      String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  supplier Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+
+  @@map("supplier_contacts")
+}
+```
+
+> **Note**: SupplierContact sử dụng `onDelete: Cascade` - khi xóa Supplier, tất cả contacts sẽ tự động bị xóa.
 
 ### Warehouse Location (Vị trí kho)
 

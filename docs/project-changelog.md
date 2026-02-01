@@ -12,6 +12,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Outbound Logistics API implementation.
 - Server-side reporting engine.
 
+## [1.2.0] - 2026-02-01
+
+### Added
+- **Suppliers Management Module**: Full CRUD with FK relations to master data (Country, Type, PaymentTerm, Currency).
+- **SupplierContact Model**: Nested contacts management with cascade delete.
+- **Suppliers API**: GET/POST `/api/suppliers`, GET/PUT/DELETE `/api/suppliers/[id]`.
+- **Transactional Updates**: PUT supplier uses database transaction to atomically replace contacts.
+
+### Changed
+- **Supplier Schema**: Refactored from string columns (`country`, `type`, `paymentTerm`, `currency`) to FK relations (`countryId`, `typeId`, `paymentTermId`, `currencyId`).
+- **Documentation**: Updated all docs to reflect Suppliers module completion.
+
 ## [1.1.0] - 2026-02-01
 
 ### Added
