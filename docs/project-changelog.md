@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Bidding Packages API**: Full CRUD endpoints at `/api/bidding-packages`.
   - Participants sub-API for managing invited suppliers.
   - Winner selection endpoint `/api/bidding-packages/{id}/select-winner`.
-- **Bidding UI Components**: `bidding-form.tsx`, `bidding-participants-section.tsx`, `bidding-quotation-dialog.tsx`, `bidding-workflow-step-actions.tsx`.
+- **Bidding UI Components**: `bidding-form.tsx`, `bidding-participants-section.tsx`, `bidding-quotation-dialog.tsx`, `bidding-workflow-step-actions.tsx`, `bidding-scope-items-editor.tsx`.
 - **PurchaseRequest FK Relations**: Refactored from string columns to FK relations:
   - `requesterId` → FK to User
   - `departmentId` → FK to Department
@@ -27,7 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **PurchaseRequestItem Model**: Items with FK relations to Material, MaterialUnit, Supplier.
 - **Purchase Requests API**: Full CRUD endpoints at `/api/purchase-requests`.
 - **MaterialRequestItem Model**: Items list with FK relations to Material, MaterialUnit.
-- **Material Picker Dialog**: UI component for selecting materials in request form.
+- **Inbound API**: CRUD endpoints at `/api/inbound` (uses string columns, not FK relations).
 
 ### Changed
 - **MaterialRequest Schema**: Refactored from string columns to FK relations:

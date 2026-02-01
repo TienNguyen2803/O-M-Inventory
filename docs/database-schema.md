@@ -46,6 +46,8 @@ model [TableName] {
 | **MUA SẮM** | | | |
 | | PurchaseSource | `purchase_sources` | 2 |
 | | PurchaseStatus | `purchase_statuses` | 4 |
+| | MaterialOrigin | `material_origins` | 2 |
+| | FundingSource | `funding_sources` | 3 |
 | **ĐẤU THẦU** | | | |
 | | BiddingMethod | `bidding_methods` | 2 |
 | | BiddingStatus | `bidding_statuses` | 5 |
@@ -66,7 +68,7 @@ model [TableName] {
 | **XUẤT XỨ** | | | |
 | | Country | `countries` | - |
 
-**Tổng: 25 Master Data Tables**
+**Tổng: 27 Master Data Tables**
 
 ---
 
@@ -490,14 +492,49 @@ model BidQuotation {
 model InboundReceipt {
   id          String   @id @default(uuid())
   receiptCode String   @unique
-  inboundType String
+  inboundType String   // Note: String column, not FK
   reference   String
   inboundDate DateTime
-  partner     String
-  status      String
+  partner     String   // Note: String column, not FK
+  status      String   // Note: String column, not FK
   step        Int      @default(1)
   items       InboundReceiptItem[]
   documents   InboundDocument[]
+}
+```
+
+> **Note**: InboundReceipt sử dụng string columns (`inboundType`, `partner`, `status`) thay vì FK relations. Cần refactor trong tương lai.
+
+### InboundReceiptItem (Chi tiết phiếu nhập)
+
+```prisma
+model InboundReceiptItem {
+  id              String   @id @default(uuid())
+  receiptId       String
+  materialId      String?
+  materialCode    String
+  materialName    String
+  unit            String
+  quantity        Float
+  unitPrice       Float
+  totalPrice      Float
+  notes           String?
+
+  receipt         InboundReceipt @relation(fields: [receiptId], references: [id], onDelete: Cascade)
+}
+```
+
+### InboundDocument (Chứng từ đính kèm)
+
+```prisma
+model InboundDocument {
+  id              String   @id @default(uuid())
+  receiptId       String
+  name            String
+  url             String
+  uploadedAt      DateTime @default(now())
+
+  receipt         InboundReceipt @relation(fields: [receiptId], references: [id], onDelete: Cascade)
 }
 ```
 
@@ -507,15 +544,34 @@ model InboundReceipt {
 model OutboundVoucher {
   id                String   @id @default(uuid())
   voucherCode       String   @unique
-  purpose           String
+  purpose           String   // Note: String column, not FK
   materialRequestId String
-  department        String
+  department        String   // Note: String column, not FK
   receiverName      String
   reason            String
-  status            String
+  status            String   // Note: String column, not FK
   step              Int      @default(1)
   issueDate         DateTime
   items             OutboundVoucherItem[]
+}
+```
+
+> **Note**: OutboundVoucher sử dụng string columns thay vì FK relations. Cần refactor trong tương lai.
+
+### OutboundVoucherItem (Chi tiết phiếu xuất)
+
+```prisma
+model OutboundVoucherItem {
+  id              String   @id @default(uuid())
+  voucherId       String
+  materialId      String?
+  materialCode    String
+  materialName    String
+  unit            String
+  quantity        Float
+  notes           String?
+
+  voucher         OutboundVoucher @relation(fields: [voucherId], references: [id], onDelete: Cascade)
 }
 ```
 
@@ -527,10 +583,30 @@ model StockTake {
   takeCode  String   @unique
   name      String
   date      DateTime
-  status    String
-  area      String
+  status    String   // Note: String column, not FK
+  area      String   // Note: String column, not FK
   leader    String
   results   StockTakeResult[]
+}
+```
+
+> **Note**: StockTake sử dụng string columns thay vì FK relations. Cần refactor trong tương lai.
+
+### StockTakeResult (Kết quả kiểm kê)
+
+```prisma
+model StockTakeResult {
+  id              String   @id @default(uuid())
+  stockTakeId     String
+  materialId      String?
+  materialCode    String
+  materialName    String
+  systemQty       Float
+  actualQty       Float
+  variance        Float
+  notes           String?
+
+  stockTake       StockTake @relation(fields: [stockTakeId], references: [id], onDelete: Cascade)
 }
 ```
 

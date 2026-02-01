@@ -37,10 +37,11 @@
     - [x] Quotations management per scope item.
     - [x] Winner selection workflow.
     - [x] UI Components (form, participants, quotation dialog, stepper).
+    - [x] Scope Items Editor component.
 - [ ] **Inbound Logistics (Goods Receipt)**:
     - [x] UI Prototypes (Mock Data).
-    - [ ] **Backend API**: Implement `/api/inbound`.
-    - [ ] **Database Integration**: Connect `InboundReceipt` model.
+    - [x] **Backend API**: Endpoints at `/api/inbound`.
+    - [ ] **FK Relations**: Refactor from string columns.
     - [ ] **Inventory Update**: Logic to increase stock on receipt.
 - [ ] **Outbound Logistics (Goods Issue)**:
     - [x] UI Prototypes (Mock Data).
@@ -76,7 +77,7 @@
 | Bidding Management | Ready | Ready | - |
 | Warehouse Locations | Ready | Ready | - |
 | Suppliers | Ready | Ready | - |
-| Inbound | Prototype | Partial | High |
+| Inbound | Prototype | Partial (API) | High |
 | Outbound | Prototype | Missing | High |
 | Reports | Hybrid | Mock Data | Medium |
 | Dashboard | Prototype | Mock Data | Medium |

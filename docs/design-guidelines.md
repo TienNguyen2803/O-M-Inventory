@@ -74,3 +74,45 @@
     - `Pencil`: Modify.
     - `Eye`: View details.
     - `ArrowRight`: Navigation.
+
+## 5. Dialog/Modal Patterns
+
+### Form Dialog
+- **Trigger**: Button click (e.g., "Add Item").
+- **Layout**: Shadcn `Dialog` with `DialogHeader`, `DialogContent`, `DialogFooter`.
+- **Actions**: Cancel (left) + Submit (right) in footer.
+- **Validation**: Inline errors on submit.
+
+### Confirmation Dialog
+- **Purpose**: Destructive actions (delete, reject).
+- **Layout**: `AlertDialog` with warning icon.
+- **Buttons**: Cancel + Confirm (destructive variant).
+
+## 6. Workflow Stepper Pattern
+
+For multi-step processes (Bidding, Inbound, Outbound):
+
+- **Component**: Custom stepper with numbered circles.
+- **States**: Completed (check icon, primary color), Active (filled circle), Pending (outline).
+- **Actions**: Step-specific action buttons below stepper.
+- **Navigation**: Click on completed steps to view (read-only).
+
+```tsx
+// Example step structure
+const steps = [
+  { id: 1, name: "Mời thầu", status: "complete" },
+  { id: 2, name: "Nhận hồ sơ", status: "current" },
+  { id: 3, name: "Chấm điểm", status: "upcoming" },
+  { id: 4, name: "Hoàn thành", status: "upcoming" },
+];
+```
+
+## 7. Inline Editor Patterns
+
+For editable tables (scope items, quotations):
+
+- **Display Mode**: Read-only text/numbers.
+- **Edit Mode**: Input fields appear on click or button.
+- **Save**: Auto-save on blur or explicit Save button.
+- **Cancel**: Escape key or Cancel button reverts changes.
+- **Validation**: Highlight invalid cells in red.

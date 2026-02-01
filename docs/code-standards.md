@@ -1,6 +1,6 @@
 # Code Standards & Guidelines
 
-**Stack:** Next.js 14, TypeScript, Prisma, Tailwind CSS, Shadcn UI.
+**Stack:** Next.js 15.5, TypeScript, Prisma 7, Tailwind CSS, Shadcn UI.
 
 ## 1. Directory Structure & Naming
 
@@ -115,3 +115,49 @@ export async function POST(request: Request) {
     - If a module is **Real**: Do NOT import from `src/lib/data.ts`. Fetch from API.
     - If a module is **Mock**: You may use `src/lib/data.ts` temporarily.
 - **Transition**: When upgrading a module, strictly delete the mock data reference and switch to the API hook.
+
+## 9. Transactional Patterns
+
+For operations that modify multiple related records, use Prisma transactions:
+
+```typescript
+// Example: Replace child records atomically
+await prisma.$transaction(async (tx) => {
+  // Delete existing children
+  await tx.purchaseRequestItem.deleteMany({
+    where: { requestId: id },
+  });
+
+  // Create new children
+  await tx.purchaseRequestItem.createMany({
+    data: items.map((item) => ({ ...item, requestId: id })),
+  });
+
+  // Update parent
+  return tx.purchaseRequest.update({
+    where: { id },
+    data: { ...parentData },
+  });
+});
+```
+
+## 10. Auto-Generated Codes
+
+For entities requiring sequential codes, use pattern `PREFIX-YYYY-XX`:
+
+```typescript
+// Example: Generate bidding package code
+const year = new Date().getFullYear();
+const count = await prisma.biddingPackage.count({
+  where: { packageCode: { startsWith: `TB-${year}` } },
+});
+const packageCode = `TB-${year}-${String(count + 1).padStart(2, "0")}`;
+// Result: TB-2026-01, TB-2026-02, etc.
+```
+
+**Code Patterns:**
+- Bidding Package: `TB-YYYY-XX`
+- Purchase Request: `PR-YYYY-XXX`
+- Material Request: `MR-YYYY-XXX`
+- Inbound Receipt: `NK-YYYY-XXX`
+- Outbound Voucher: `XK-YYYY-XXX`

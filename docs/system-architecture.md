@@ -13,7 +13,7 @@ PowerTrack Logistics là hệ thống quản lý vật tư O&M (Operation & Main
 │  │              Next.js 15.5 App Router                  │   │
 │  │  ┌────────────┐  ┌────────────┐  ┌────────────────┐  │   │
 │  │  │   Pages    │  │ Components │  │   API Routes   │  │   │
-│  │  │ (21 routes)│  │    (39)    │  │  (/api/...)    │  │   │
+│  │  │ (17 routes)│  │    (35+)   │  │  (32 routes)   │  │   │
 │  │  └────────────┘  └────────────┘  └────────────────┘  │   │
 │  └──────────────────────────────────────────────────────┘   │
 └─────────────────────────────────────────────────────────────┘
@@ -56,7 +56,7 @@ PowerTrack Logistics là hệ thống quản lý vật tư O&M (Operation & Main
 
 ## Key Components
 
-### Frontend Pages (21 routes)
+### Frontend Pages (17 routes)
 
 | Route | Description |
 |-------|-------------|
@@ -77,6 +77,7 @@ PowerTrack Logistics là hệ thống quản lý vật tư O&M (Operation & Main
 | `/activity-log` | Nhật ký hoạt động |
 | `/lifecycle` | Vòng đời vật tư |
 | `/goods-history` | Lịch sử hàng hóa |
+| `/profile` | Hồ sơ người dùng |
 
 ### Database Layer
 
@@ -97,16 +98,20 @@ User Action → React Component → API Route → Prisma Client → PostgreSQL
 ### Hybrid Implementation Strategy
 The system is currently transitioning from a prototype to a fully connected application.
 
-1.  **Fully Connected Modules** (Materials, Requests, Auth):
+1.  **Fully Connected Modules** (Materials, Requests, Biddings, Suppliers, Warehouses, Auth):
     - Follow standard **Next.js App Router** patterns.
     - **Server Components** for initial data fetch (where possible) or Skeleton loaders.
     - **Client Components** for interactivity (Forms, Tables) fetching data via `fetch` or `SWR` from `/api/*` endpoints.
     - **API Routes** handle business logic and DB interaction via Prisma.
 
-2.  **Prototype Modules** (Inbound, Outbound, Dashboard):
+2.  **Partial Modules** (Inbound):
+    - UI and API endpoints exist but use string columns instead of FK relations.
+    - Backend API available but not fully normalized.
+
+3.  **Prototype Modules** (Outbound, Dashboard):
     - UI Components are built but feed on **Mock Data** (`src/lib/data.ts`).
     - No backend integration yet.
-    - *Architecture Goal*: Migrate these to the Connected pattern in Phase 2.
+    - *Architecture Goal*: Migrate these to the Connected pattern.
 
 ### State Management
 - **Server State**: Managed via `React Query` / `SWR` (recommended) or simple `useEffect` fetchers in Client Components.
@@ -159,15 +164,12 @@ Generic API cho quản lý 25 bảng master data:
 
 | Hook | Usage |
 |------|-------|
-| `useMasterDataTable(tableId)` | CRUD operations cho 1 bảng master data |
-| `useMasterDataItems(tableId)` | Fetch items cho dropdowns/selects |
-| `useUsers()` | CRUD operations cho User Management với pagination, search, filter |
-| `useRoles()` | Fetch roles cho dropdowns |
-| `useDepartments()` | Fetch departments cho dropdowns |
-| `useMaterialRequests()` | CRUD operations cho Material Request với FK relations, pagination, search, filter |
-| `usePurchaseRequests()` | CRUD operations cho Purchase Request với FK relations, pagination, search, filter |
-| `useBiddingPackages()` | CRUD operations cho Bidding Package với workflow, participants, quotations |
-| `useRoleUsers(roleId)` | CRUD operations cho gán User vào Role |
+| `useMasterData(tableId)` | CRUD operations cho master data tables |
+| `useUsers()` | CRUD cho users, roles, departments |
+| `usePermissions()` | Actions, features, feature-actions, roles management |
+| `useMaterialRequests()` | CRUD cho Material Request với FK relations |
+| `useToast()` | Toast notifications |
+| `useMobile()` | Mobile breakpoint detection |
 
 ---
 
@@ -470,6 +472,7 @@ API cho quản lý yêu cầu vật tư với FK relations:
 | GET | `/api/material-requests/{id}` | Chi tiết 1 yêu cầu |
 | PUT | `/api/material-requests/{id}` | Cập nhật yêu cầu |
 | DELETE | `/api/material-requests/{id}` | Xóa yêu cầu (cascade delete items) |
+| POST | `/api/material-requests/{id}/approve` | Duyệt/từ chối yêu cầu (body: `{approved, approverId}`) |
 
 ### Query Parameters cho GET `/api/material-requests`
 
@@ -741,5 +744,40 @@ API cho quản lý gói thầu với full workflow:
 ```
 
 > **Note**: Bidding Packages API sử dụng `packageCode` làm ID trong URL. Workflow: Invite → Receive → Evaluate → Done.
+
+---
+
+## Inbound API
+
+API cho quản lý phiếu nhập kho:
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/inbound` | Danh sách phiếu nhập (pagination, search, filter) |
+| POST | `/api/inbound` | Tạo phiếu nhập mới |
+| GET | `/api/inbound/{id}` | Chi tiết 1 phiếu nhập |
+| PUT | `/api/inbound/{id}` | Cập nhật phiếu nhập |
+| DELETE | `/api/inbound/{id}` | Xóa phiếu nhập |
+
+### Request Body (POST/PUT)
+
+```json
+{
+  "inboundType": "Nhập mua",
+  "reference": "PO-2026-001",
+  "inboundDate": "2026-02-01T00:00:00Z",
+  "partner": "ABC Company",
+  "status": "Chờ nhập",
+  "items": [
+    {
+      "materialId": "uuid",
+      "quantity": 10,
+      "unitPrice": 500000
+    }
+  ]
+}
+```
+
+> **Note**: Inbound API sử dụng string columns thay vì FK relations (chưa được normalize). Cần refactor trong tương lai.
 
 

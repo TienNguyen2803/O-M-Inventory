@@ -54,14 +54,14 @@ To provide a comprehensive, real-time inventory management solution for power pl
     - Multi-level approval workflow.
 - **Current State:** Full CRUD with API backend. Uses transactional updates.
 
-### 2.6 Inbound Logistics (Prototype)
+### 2.6 Inbound Logistics (Partial)
 **Goal:** Manage the receipt of goods into warehouses.
 - **Requirements:**
     - Create Goods Receipt Notes (GRN).
     - Purchase Order (PO) matching.
     - Barcode/QR scanning for entry.
     - Batch/Serial number recording.
-- **Current State:** UI Mockups available. No backend logic.
+- **Current State:** UI complete. API endpoints available at `/api/inbound`. Uses string columns (not FK relations).
 
 ### 2.7 Outbound Logistics (Prototype)
 **Goal:** Control the issuance of materials to plant subsystems.
@@ -95,10 +95,10 @@ To provide a comprehensive, real-time inventory management solution for power pl
 ## 3. Technical Requirements
 
 ### 3.1 Architecture
-- **Frontend**: Next.js 14 (App Router).
+- **Frontend**: Next.js 15.5 (App Router).
 - **Backend**: Next.js API Routes (Serverless functions).
 - **Database**: PostgreSQL.
-- **ORM**: Prisma.
+- **ORM**: Prisma 7.
 
 ### 3.2 Performance Constraints
 - **Page Load**: < 2 seconds for dashboard and list views.

@@ -93,7 +93,7 @@ In production, **do not** use `db push`. Use Migrations.
 ### Seeding
 To initialize Master Data in production:
 ```bash
-npx prisma db seed
+npx tsx prisma/seed.ts
 ```
 
 ## 4. Monitoring & Maintenance
