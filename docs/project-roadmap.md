@@ -6,7 +6,7 @@
 
 ## 📌 Phase 1: Foundation (Completed)
 - [x] **Project Setup**: Next.js 14, TypeScript, Tailwind, Shadcn UI.
-- [x] **Database Design**: PostgreSQL schema with 25 Master Data tables.
+- [x] **Database Design**: PostgreSQL schema with 27 Master Data tables.
 - [x] **Authentication**: Basic email login (v1).
 - [x] **User Management**: Users, Roles, Permissions (RBAC) with API.
 
@@ -38,16 +38,18 @@
     - [x] Winner selection workflow.
     - [x] UI Components (form, participants, quotation dialog, stepper).
     - [x] Scope Items Editor component.
-- [ ] **Inbound Logistics (Goods Receipt)**:
-    - [x] UI Prototypes (Mock Data).
+- [x] **Inbound Logistics (Goods Receipt)**:
+    - [x] UI Implementation.
     - [x] **Backend API**: Endpoints at `/api/inbound`.
-    - [ ] **FK Relations**: Refactor from string columns.
+    - [x] **FK Relations**: Refactored to use FK (typeId, supplierId, statusId).
     - [ ] **Inventory Update**: Logic to increase stock on receipt.
-- [ ] **Outbound Logistics (Goods Issue)**:
-    - [x] UI Prototypes (Mock Data).
-    - [ ] **Backend API**: Implement `/api/outbound`.
-    - [ ] **Database Integration**: Connect `OutboundVoucher` model.
-    - [ ] **Inventory Update**: Logic to decrease stock on issue.
+- [x] **Outbound Logistics (Goods Issue)**:
+    - [x] UI Implementation (List & Form components).
+    - [x] **Backend API**: Endpoints at `/api/outbound`.
+    - [x] **FK Relations**: OutboundReceipt/Item models with FK relations.
+    - [x] **Workflow**: Approve and Issue endpoints.
+    - [x] **Inventory Update**: Stock decrement on issue.
+    - [x] **Seed Data**: 12 sample records.
 
 ## 📌 Phase 3: Advanced Operations (Planned)
 - [ ] **Stock Take (Physical Inventory)**:
@@ -77,7 +79,7 @@
 | Bidding Management | Ready | Ready | - |
 | Warehouse Locations | Ready | Ready | - |
 | Suppliers | Ready | Ready | - |
-| Inbound | Prototype | Partial (API) | High |
-| Outbound | Prototype | Missing | High |
+| Inbound | Ready | Ready | - |
+| Outbound | Ready | Ready | - |
 | Reports | Hybrid | Mock Data | Medium |
 | Dashboard | Prototype | Mock Data | Medium |

@@ -61,6 +61,7 @@ model MaterialUnit {
   purchaseRequestItems PurchaseRequestItem[] @relation("PurchaseItemUnit")
   biddingScopeItems    BiddingScopeItem[]    @relation("BiddingScopeUnit")
   inboundItems         InboundReceiptItem[]  @relation("InboundItemUnit")
+  outboundItems        OutboundReceiptItem[] @relation("OutboundItemUnit")
 
   @@map("material_units")
 }
@@ -374,6 +375,8 @@ model OutboundPurpose {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  receipts OutboundReceipt[]
+
   @@map("outbound_purposes")
 }
 
@@ -386,6 +389,8 @@ model OutboundStatus {
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  receipts OutboundReceipt[]
 
   @@map("outbound_statuses")
 }
@@ -516,6 +521,7 @@ model Material {
   purchaseRequestItems PurchaseRequestItem[] @relation("PurchaseItemMaterial")
   biddingScopeItems    BiddingScopeItem[]    @relation("BiddingScopeMaterial")
   inboundItems         InboundReceiptItem[]  @relation("InboundItemMaterial")
+  outboundItems        OutboundReceiptItem[] @relation("OutboundItemMaterial")
 
   @@map("materials")
 }
@@ -583,7 +589,8 @@ model WarehouseLocation {
   type   WarehouseType   @relation(fields: [typeId], references: [id])
   status WarehouseStatus @relation(fields: [statusId], references: [id])
   items  WarehouseItem[]
-  inboundItems InboundReceiptItem[] @relation("InboundItemLocation")
+  inboundItems  InboundReceiptItem[]  @relation("InboundItemLocation")
+  outboundItems OutboundReceiptItem[] @relation("OutboundItemLocation")
 
   @@map("warehouse_locations")
 }
@@ -631,6 +638,7 @@ model MaterialRequest {
   updatedAt    DateTime @updatedAt
 
   items MaterialRequestItem[]
+  outboundReceipts OutboundReceipt[]
 
   @@map("material_requests")
 }
@@ -894,42 +902,62 @@ model InboundDocument {
   @@map("inbound_documents")
 }
 
-model OutboundVoucher {
-  id                String   @id @default(uuid())
-  voucherCode       String   @unique
-  purpose           String
-  materialRequestId String
-  department        String
-  receiverName      String
-  reason            String
-  status            String
-  step              Int      @default(1)
-  issueDate         DateTime
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+model OutboundReceipt {
+  id          String   @id @default(uuid())
+  receiptCode String   @unique  // PXK-2026-001
 
-  items OutboundVoucherItem[]
+  // FK Relations
+  purposeId           String
+  statusId            String
+  receiverId          String              // Người/đơn vị nhận
+  materialRequestId   String?             // Optional - tham chiếu từ yêu cầu VT
+  createdById         String
+  approverId          String?             // Người duyệt (step 2)
 
-  @@map("outbound_vouchers")
+  purpose         OutboundPurpose    @relation(fields: [purposeId], references: [id])
+  status          OutboundStatus     @relation(fields: [statusId], references: [id])
+  receiver        User               @relation("OutboundReceiver", fields: [receiverId], references: [id])
+  materialRequest MaterialRequest?   @relation(fields: [materialRequestId], references: [id])
+  createdBy       User               @relation("OutboundCreator", fields: [createdById], references: [id])
+  approver        User?              @relation("OutboundApprover", fields: [approverId], references: [id])
+
+  reason          String?
+  outboundDate    DateTime
+  approvedAt      DateTime?
+  issuedAt        DateTime?
+  notes           String?
+  step            Int        @default(1)  // 1-4 for stepper
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  items OutboundReceiptItem[]
+
+  @@map("outbound_receipts")
 }
 
-model OutboundVoucherItem {
-  id                     String   @id @default(uuid())
-  voucherId              String
-  materialId             String
-  materialCode           String
-  materialName           String
-  unit                   String
-  requestedQuantity      Int
-  issuedQuantity         Int
-  pickLocationSuggestion String?
-  actualSerial           String?
-  createdAt              DateTime @default(now())
-  updatedAt              DateTime @updatedAt
+model OutboundReceiptItem {
+  id        String   @id @default(uuid())
+  receiptId String
 
-  voucher OutboundVoucher @relation(fields: [voucherId], references: [id], onDelete: Cascade)
+  // FK Relations
+  materialId String
+  unitId     String
+  locationId String?   // Vị trí lấy hàng (assign khi picking)
 
-  @@map("outbound_voucher_items")
+  material   Material           @relation("OutboundItemMaterial", fields: [materialId], references: [id])
+  unit       MaterialUnit       @relation("OutboundItemUnit", fields: [unitId], references: [id])
+  location   WarehouseLocation? @relation("OutboundItemLocation", fields: [locationId], references: [id])
+  receipt    OutboundReceipt    @relation(fields: [receiptId], references: [id], onDelete: Cascade)
+
+  requestedQuantity Int
+  issuedQuantity    Int       @default(0)
+  serialBatch       String?   // Serial/batch thực xuất
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("outbound_receipt_items")
 }
 
 model StockTake {
@@ -993,6 +1021,11 @@ model User {
 
   // InboundReceipt relations
   createdInboundReceipts InboundReceipt[] @relation("InboundCreator")
+
+  // OutboundReceipt relations
+  receivedOutboundReceipts  OutboundReceipt[] @relation("OutboundReceiver")
+  createdOutboundReceipts   OutboundReceipt[] @relation("OutboundCreator")
+  approvedOutboundReceipts  OutboundReceipt[] @relation("OutboundApprover")
 
   @@map("users")
 }

@@ -8,6 +8,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Outbound Management Module**: Full goods issue workflow implementation:
+  - `OutboundReceipt` model with FK relations to OutboundPurpose, OutboundStatus, User, Department.
+  - `OutboundReceiptItem` model with FK to Material, MaterialUnit, WarehouseLocation.
+  - CRUD API endpoints at `/api/outbound`.
+  - Approve endpoint `/api/outbound/{id}/approve`.
+  - Issue endpoint `/api/outbound/{id}/issue` with stock decrement logic.
+  - Frontend list and form components.
+  - 12 seed records for testing.
+- **Inbound FK Refactoring**: Complete migration from string columns to FK relations:
+  - `typeId` -> FK to `InboundType`
+  - `supplierId` -> FK to `Supplier`
+  - `statusId` -> FK to `InboundStatus`
+  - Removed: `inboundType`, `partner`, `status` string columns.
+- **Bidding Scope Items Editor**: New component for managing scope items in bidding packages.
+
+### Changed
+- **InboundReceipt Schema**: Refactored to use normalized FK relations.
+- **Inbound API**: Updated to accept FK IDs instead of string values.
+- **Master Data Count**: Updated from 25 to 27 tables (added FundingSource, MaterialOrigin).
+- **Outbound Module Status**: Migrated from Mock/Prototype to fully connected.
+
+### Planned
+- Inbound stock increase logic on receipt.
+- Stock Take API implementation (still uses string columns).
+- Server-side reporting engine.
+
+---
+
+## [1.3.0] - 2026-02-01
+
+### Added
 - **Bidding Management Module**: Full bidding package workflow implementation:
   - `BiddingPackage` model with FK relations to BiddingMethod, BiddingStatus, User (creator), Supplier (winner).
   - `BiddingPurchaseRequest` N:M junction for linking Purchase Requests.
@@ -27,7 +58,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **PurchaseRequestItem Model**: Items with FK relations to Material, MaterialUnit, Supplier.
 - **Purchase Requests API**: Full CRUD endpoints at `/api/purchase-requests`.
 - **MaterialRequestItem Model**: Items list with FK relations to Material, MaterialUnit.
-- **Inbound API**: CRUD endpoints at `/api/inbound` (uses string columns, not FK relations).
+- **Inbound API**: CRUD endpoints at `/api/inbound` with FK relations to InboundType, Supplier, InboundStatus.
 
 ### Changed
 - **MaterialRequest Schema**: Refactored from string columns to FK relations:
@@ -40,8 +71,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **MaterialRequest Items**: Cascade delete on request deletion.
 
 ### Planned
-- Inbound Logistics API completion.
 - Outbound Logistics API implementation.
+- Stock Take API implementation.
 - Server-side reporting engine.
 
 ## [1.2.0] - 2026-02-01

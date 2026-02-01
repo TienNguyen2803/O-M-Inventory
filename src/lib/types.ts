@@ -347,6 +347,68 @@ export interface OutboundVoucher {
   items?: OutboundVoucherItem[];
 }
 
+// New OutboundReceipt types with FK relations
+export interface OutboundReceiptItem {
+  id: string;
+  receiptId?: string;
+  // FK IDs
+  materialId: string;
+  unitId: string;
+  locationId?: string | null;
+  // Nested relations (populated from API)
+  material?: {
+    id: string;
+    code: string;
+    name: string;
+    partNo?: string;
+    stock?: number;
+  };
+  unit?: MasterDataItem;
+  location?: {
+    id: string;
+    code: string;
+    name: string;
+  } | null;
+  // Quantities
+  requestedQuantity: number;
+  issuedQuantity: number;
+  serialBatch?: string | null;
+}
+
+export interface OutboundReceipt {
+  id: string;
+  receiptCode: string;
+  // FK IDs
+  purposeId: string;
+  statusId: string;
+  receiverId: string;
+  materialRequestId?: string | null;
+  createdById: string;
+  approverId?: string | null;
+  // Nested relations (populated from API)
+  purpose?: MasterDataItem;
+  status?: MasterDataItem;
+  receiver?: {
+    id: string;
+    name: string;
+    employeeCode?: string;
+    department?: { id: string; code: string; name: string };
+  };
+  materialRequest?: { id: string; requestCode?: string } | null;
+  createdBy?: { id: string; name: string; employeeCode?: string };
+  approver?: { id: string; name: string; employeeCode?: string } | null;
+  // Other fields
+  reason?: string | null;
+  outboundDate: string;
+  approvedAt?: string | null;
+  issuedAt?: string | null;
+  notes?: string | null;
+  step: number;
+  items?: OutboundReceiptItem[];
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 
 export interface InboundReceiptItem {
   id: string;

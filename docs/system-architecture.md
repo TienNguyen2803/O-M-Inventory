@@ -13,7 +13,7 @@ PowerTrack Logistics là hệ thống quản lý vật tư O&M (Operation & Main
 │  │              Next.js 15.5 App Router                  │   │
 │  │  ┌────────────┐  ┌────────────┐  ┌────────────────┐  │   │
 │  │  │   Pages    │  │ Components │  │   API Routes   │  │   │
-│  │  │ (17 routes)│  │    (35+)   │  │  (32 routes)   │  │   │
+│  │  │ (21 routes)│  │    (36+)   │  │  (32+ routes)  │  │   │
 │  │  └────────────┘  └────────────┘  └────────────────┘  │   │
 │  └──────────────────────────────────────────────────────┘   │
 └─────────────────────────────────────────────────────────────┘
@@ -35,7 +35,7 @@ PowerTrack Logistics là hệ thống quản lý vật tư O&M (Operation & Main
 │  ┌──────────────────────────────────────────────────────┐   │
 │  │           PostgreSQL (Docker Container)               │   │
 │  │  ┌──────────────────┐  ┌───────────────────────────┐ │   │
-│  │  │ 25 Master Tables │  │  Business Data Tables     │ │   │
+│  │  │ 27 Master Tables │  │  Business Data Tables     │ │   │
 │  │  └──────────────────┘  └───────────────────────────┘ │   │
 │  └──────────────────────────────────────────────────────┘   │
 └─────────────────────────────────────────────────────────────┘
@@ -56,11 +56,13 @@ PowerTrack Logistics là hệ thống quản lý vật tư O&M (Operation & Main
 
 ## Key Components
 
-### Frontend Pages (17 routes)
+### Frontend Pages (21 routes)
 
 | Route | Description |
 |-------|-------------|
 | `/` | Dashboard |
+| `/login` | Đăng nhập |
+| `/profile` | Hồ sơ người dùng |
 | `/materials` | Quản lý vật tư |
 | `/suppliers` | Quản lý nhà cung cấp |
 | `/warehouses` | Quản lý vị trí kho |
@@ -70,18 +72,19 @@ PowerTrack Logistics là hệ thống quản lý vật tư O&M (Operation & Main
 | `/inbound` | Nhập kho |
 | `/outbound` | Xuất kho |
 | `/stock-take` | Kiểm kê |
-| `/reports` | Báo cáo |
+| `/reports/inventory` | Báo cáo tồn kho |
+| `/reports/safety-stock` | Cảnh báo tồn kho an toàn |
+| `/reports/slow-moving` | Báo cáo hàng chậm luân chuyển |
 | `/users` | Quản lý người dùng |
 | `/roles` | Quản lý vai trò |
 | `/settings` | Cài đặt hệ thống |
 | `/activity-log` | Nhật ký hoạt động |
 | `/lifecycle` | Vòng đời vật tư |
 | `/goods-history` | Lịch sử hàng hóa |
-| `/profile` | Hồ sơ người dùng |
 
 ### Database Layer
 
-- **25 Master Data Tables**: Các bảng lookup data riêng biệt, dễ mở rộng
+- **27 Master Data Tables**: Các bảng lookup data riêng biệt, dễ mở rộng
 - **Business Tables**: Materials, Suppliers, Warehouses, Requests, etc.
 - **Prisma 7 với PostgreSQL Adapter**: Sử dụng `@prisma/adapter-pg` cho connection pooling
 
@@ -98,17 +101,13 @@ User Action → React Component → API Route → Prisma Client → PostgreSQL
 ### Hybrid Implementation Strategy
 The system is currently transitioning from a prototype to a fully connected application.
 
-1.  **Fully Connected Modules** (Materials, Requests, Biddings, Suppliers, Warehouses, Auth):
+1.  **Fully Connected Modules** (Materials, Requests, Biddings, Suppliers, Warehouses, Inbound, Outbound, Auth):
     - Follow standard **Next.js App Router** patterns.
     - **Server Components** for initial data fetch (where possible) or Skeleton loaders.
     - **Client Components** for interactivity (Forms, Tables) fetching data via `fetch` or `SWR` from `/api/*` endpoints.
     - **API Routes** handle business logic and DB interaction via Prisma.
 
-2.  **Partial Modules** (Inbound):
-    - UI and API endpoints exist but use string columns instead of FK relations.
-    - Backend API available but not fully normalized.
-
-3.  **Prototype Modules** (Outbound, Dashboard):
+2.  **Prototype Modules** (Stock Take, Dashboard):
     - UI Components are built but feed on **Mock Data** (`src/lib/data.ts`).
     - No backend integration yet.
     - *Architecture Goal*: Migrate these to the Connected pattern.
@@ -134,7 +133,7 @@ The system is currently transitioning from a prototype to a fully connected appl
 
 ### Master Data API
 
-Generic API cho quản lý 25 bảng master data:
+Generic API cho quản lý 27 bảng master data:
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
@@ -144,7 +143,7 @@ Generic API cho quản lý 25 bảng master data:
 | PUT | `/api/master-data/{tableId}/{id}` | Cập nhật item |
 | DELETE | `/api/master-data/{tableId}/{id}` | Xóa item (soft delete) |
 
-**tableId** là một trong 25 giá trị:
+**tableId** là một trong 27 giá trị:
 - Vật tư: `material-status`, `material-category`, `material-unit`, `management-type`
 - Kho: `warehouse-area`, `warehouse-type`, `warehouse-status`
 - Nhà cung cấp: `supplier-type`, `payment-term`, `currency`
@@ -749,7 +748,7 @@ API cho quản lý gói thầu với full workflow:
 
 ## Inbound API
 
-API cho quản lý phiếu nhập kho:
+API cho quản lý phiếu nhập kho với FK relations:
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
@@ -763,11 +762,11 @@ API cho quản lý phiếu nhập kho:
 
 ```json
 {
-  "inboundType": "Nhập mua",
+  "typeId": "inbound-type-uuid",
   "reference": "PO-2026-001",
   "inboundDate": "2026-02-01T00:00:00Z",
-  "partner": "ABC Company",
-  "status": "Chờ nhập",
+  "supplierId": "supplier-uuid",
+  "statusId": "inbound-status-uuid",
   "items": [
     {
       "materialId": "uuid",
@@ -778,6 +777,90 @@ API cho quản lý phiếu nhập kho:
 }
 ```
 
-> **Note**: Inbound API sử dụng string columns thay vì FK relations (chưa được normalize). Cần refactor trong tương lai.
+> **Note**: Inbound API has been refactored to use FK relations (typeId, statusId, supplierId) instead of string columns.
+
+---
+
+## Outbound API
+
+API cho quản lý phiếu xuất kho với FK relations:
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/outbound` | Danh sách phiếu xuất (pagination, search, filter) |
+| POST | `/api/outbound` | Tạo phiếu xuất mới |
+| GET | `/api/outbound/{id}` | Chi tiết 1 phiếu xuất |
+| PUT | `/api/outbound/{id}` | Cập nhật phiếu xuất |
+| DELETE | `/api/outbound/{id}` | Xóa phiếu xuất |
+| POST | `/api/outbound/{id}/approve` | Duyệt phiếu xuất |
+| POST | `/api/outbound/{id}/issue` | Xuất kho (giảm tồn kho) |
+
+### Request Body (POST/PUT)
+
+```json
+{
+  "purposeId": "outbound-purpose-uuid",
+  "reference": "WO-2026-001",
+  "outboundDate": "2026-02-01T00:00:00Z",
+  "requesterId": "user-uuid",
+  "departmentId": "department-uuid",
+  "statusId": "outbound-status-uuid",
+  "notes": "Xuất cho bảo trì thiết bị",
+  "items": [
+    {
+      "materialId": "material-uuid",
+      "quantity": 5,
+      "unitId": "unit-uuid",
+      "locationId": "warehouse-location-uuid"
+    }
+  ]
+}
+```
+
+### Response Format (GET list)
+
+```json
+{
+  "data": [{
+    "id": "uuid",
+    "voucherCode": "XK-2026-001",
+    "purposeId": "purpose-uuid",
+    "statusId": "status-uuid",
+    "requesterId": "user-uuid",
+    "departmentId": "dept-uuid",
+    "purpose": { "id": "...", "name": "Bảo trì" },
+    "status": { "id": "...", "name": "Chờ duyệt", "color": "#FFA500" },
+    "requester": { "id": "...", "name": "Nguyễn Văn A", "employeeCode": "NV001" },
+    "department": { "id": "...", "name": "Vận hành" },
+    "outboundDate": "2026-02-01T00:00:00Z",
+    "items": [
+      {
+        "id": "item-uuid",
+        "materialId": "material-uuid",
+        "material": { "id": "...", "code": "PM-001", "name": "Bơm thủy lực" },
+        "quantity": 5,
+        "unitId": "unit-uuid",
+        "unit": { "id": "...", "name": "Cái" },
+        "locationId": "location-uuid",
+        "location": { "id": "...", "code": "A1-01", "name": "Kệ A1" }
+      }
+    ]
+  }],
+  "pagination": { "page": 1, "limit": 10, "total": 20, "totalPages": 2 }
+}
+```
+
+### Workflow Endpoints
+
+**Approve** (`POST /api/outbound/{id}/approve`):
+- Body: `{ "approverId": "user-uuid" }`
+- Updates status to "Đã duyệt"
+
+**Issue** (`POST /api/outbound/{id}/issue`):
+- Body: `{ "issuerId": "user-uuid" }`
+- Updates status to "Đã xuất"
+- Decrements stock quantities for all items
+
+> **Note**: Outbound API uses FK relations (purposeId, statusId, requesterId, departmentId). Stock is decremented atomically on issue.
 
 

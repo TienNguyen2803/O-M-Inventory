@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import type { OutboundVoucher } from "@/lib/types";
+import type { OutboundReceipt, MasterDataItem } from "@/lib/types";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import {
@@ -49,10 +49,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { format } from "date-fns";
 import { OutboundForm, type OutboundFormValues } from "./outbound-form";
 
 type OutboundClientProps = {
-  initialVouchers: OutboundVoucher[];
+  initialReceipts: OutboundReceipt[];
+  outboundPurposes: MasterDataItem[];
+  outboundStatuses: MasterDataItem[];
 };
 
 const Breadcrumbs = () => (
@@ -63,13 +66,17 @@ const Breadcrumbs = () => (
   </div>
 );
 
-export function OutboundClient({ initialVouchers }: OutboundClientProps) {
-  const [vouchers, setVouchers] = useState<OutboundVoucher[]>(initialVouchers);
+export function OutboundClient({
+  initialReceipts,
+  outboundPurposes,
+  outboundStatuses
+}: OutboundClientProps) {
+  const [receipts, setReceipts] = useState<OutboundReceipt[]>(initialReceipts);
   const { toast } = useToast();
 
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [selectedVoucher, setSelectedVoucher] =
-    useState<OutboundVoucher | null>(null);
+  const [selectedReceipt, setSelectedReceipt] =
+    useState<OutboundReceipt | null>(null);
   const [viewMode, setViewMode] = useState(false);
 
   // Filters
@@ -77,141 +84,175 @@ export function OutboundClient({ initialVouchers }: OutboundClientProps) {
   const [purposeFilter, setPurposeFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
 
-  const filteredVouchers = useMemo(() => {
-    return vouchers.filter((voucher) => {
+  const filteredReceipts = useMemo(() => {
+    return receipts.filter((receipt) => {
       const searchLower = searchQuery.toLowerCase();
+      const receiverName = typeof receipt.receiver === 'object' ? receipt.receiver?.name : '';
+      const deptName = typeof receipt.receiver === 'object' && receipt.receiver?.department
+        ? receipt.receiver.department.name
+        : '';
+
       const matchesSearch =
         !searchQuery ||
-        voucher.id.toLowerCase().includes(searchLower) ||
-        voucher.materialRequestId.toLowerCase().includes(searchLower) ||
-        voucher.department.toLowerCase().includes(searchLower) ||
-        voucher.reason.toLowerCase().includes(searchLower);
+        receipt.receiptCode?.toLowerCase().includes(searchLower) ||
+        receiverName?.toLowerCase().includes(searchLower) ||
+        deptName?.toLowerCase().includes(searchLower) ||
+        receipt.reason?.toLowerCase().includes(searchLower);
 
       const matchesPurpose =
-        purposeFilter === "all" || voucher.purpose === purposeFilter;
+        purposeFilter === "all" || receipt.purposeId === purposeFilter;
       const matchesStatus =
-        statusFilter === "all" || voucher.status === statusFilter;
+        statusFilter === "all" || receipt.statusId === statusFilter;
 
       return matchesSearch && matchesPurpose && matchesStatus;
     });
-  }, [vouchers, searchQuery, purposeFilter, statusFilter]);
+  }, [receipts, searchQuery, purposeFilter, statusFilter]);
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  const itemsPerPage = 6;
 
   useEffect(() => {
     setCurrentPage(1);
   }, [searchQuery, purposeFilter, statusFilter]);
 
-  const totalPages = Math.ceil(filteredVouchers.length / itemsPerPage);
-  const paginatedVouchers = filteredVouchers.slice(
+  const totalPages = Math.ceil(filteredReceipts.length / itemsPerPage);
+  const paginatedReceipts = filteredReceipts.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
   const startItem = (currentPage - 1) * itemsPerPage + 1;
   const endItem = Math.min(
     currentPage * itemsPerPage,
-    filteredVouchers.length
+    filteredReceipts.length
   );
 
+  // Get default status (first one - REQUEST)
+  const defaultStatus = outboundStatuses.find(s => s.code === "REQUEST") || outboundStatuses[0];
+  const defaultPurpose = outboundPurposes[0];
+
+  // Handlers
   const handleAdd = () => {
-    const newVoucherTemplate: OutboundVoucher = {
-      id: `PXK-2025-${String(vouchers.length + 1).padStart(3, "0")}`,
-      purpose: "Cấp O&M" as any,
-      materialRequestId: `YCVT-2025-${String(vouchers.length + 1).padStart(3, "0")}`,
-      department: "PX Vận hành 1",
-      receiverName: "Nguyễn Văn B",
-      reason: "Bảo dưỡng định kỳ",
-      status: "Đang soạn hàng" as any,
+    const newReceiptTemplate: OutboundReceipt = {
+      id: "",
+      receiptCode: "",
+      purposeId: defaultPurpose?.id || "",
+      statusId: defaultStatus?.id || "",
+      receiverId: "",
+      createdById: "",
+      outboundDate: new Date().toISOString(),
       step: 1,
-      issueDate: new Date().toISOString(),
       items: [],
     };
-    setSelectedVoucher(newVoucherTemplate);
+    setSelectedReceipt(newReceiptTemplate);
     setViewMode(false);
     setIsFormOpen(true);
   };
 
-  const handleEdit = (voucher: OutboundVoucher) => {
-    setSelectedVoucher(voucher);
+  const handleEdit = (receipt: OutboundReceipt) => {
+    setSelectedReceipt(receipt);
     setViewMode(false);
     setIsFormOpen(true);
   };
 
-  const handleView = (voucher: OutboundVoucher) => {
-    setSelectedVoucher(voucher);
+  const handleView = (receipt: OutboundReceipt) => {
+    setSelectedReceipt(receipt);
     setViewMode(true);
     setIsFormOpen(true);
   };
 
-  const handleDelete = (id: string) => {
-    setVouchers(vouchers.filter((v) => v.id !== id));
-    toast({
-      title: "Thành công",
-      description: `Đã xóa phiếu xuất ${id}.`,
-      variant: "destructive",
-    });
+  const handleDelete = async (id: string) => {
+    try {
+      const res = await fetch(`/api/outbound/${id}`, { method: "DELETE" });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Failed to delete");
+      }
+      setReceipts(receipts.filter((r) => r.id !== id));
+      toast({
+        title: "Thành công",
+        description: `Đã xóa phiếu xuất.`,
+        variant: "destructive",
+      });
+    } catch (error) {
+      toast({
+        title: "Lỗi",
+        description: error instanceof Error ? error.message : "Không thể xóa phiếu xuất",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleFormSubmit = (values: OutboundFormValues) => {
-     const submittedVoucher: OutboundVoucher = {
-      ...selectedVoucher!,
-      purpose: values.purpose as any,
-      issueDate: values.issueDate.toISOString(),
-      items: values.items?.map(item => ({
-        ...item,
-        materialId: "unknown", // Fallback
-      })) || [],
-    };
-
+  const handleFormSubmit = async (values: OutboundFormValues) => {
     if (viewMode) {
       setIsFormOpen(false);
       return;
     }
 
-    const isEditing = vouchers.some(v => v.id === submittedVoucher.id);
+    try {
+      const isEditing = selectedReceipt?.id && receipts.some((r) => r.id === selectedReceipt.id);
 
-    if (isEditing) {
-      setVouchers(vouchers.map((v) => v.id === submittedVoucher.id ? submittedVoucher : v));
-    } else {
-      setVouchers([submittedVoucher, ...vouchers]);
-    }
-    setIsFormOpen(false);
-    toast({
-      title: "Thành công",
-      description: isEditing ? "Đã cập nhật phiếu xuất." : "Đã tạo phiếu xuất mới.",
-    });
-  };
-  
-  const getPurposeBadgeClass = (purpose: OutboundVoucher["purpose"]) => {
-    switch (purpose) {
-      case "Khẩn cấp":
-        return "bg-red-100 text-red-800 border border-red-200";
-      case "Cấp O&M":
-        return "bg-green-100 text-green-800 border border-green-200";
-      case "Cho mượn":
-        return "bg-blue-100 text-blue-800 border border-blue-200";
-      case "Đi Sửa chữa":
-        return "bg-gray-200 text-gray-800 border border-gray-300";
-      default:
-        return "bg-gray-100 text-gray-800";
+      const res = await fetch(
+        isEditing ? `/api/outbound/${selectedReceipt.id}` : "/api/outbound",
+        {
+          method: isEditing ? "PUT" : "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(values),
+        }
+      );
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Failed to save");
+      }
+
+      const savedReceipt = await res.json();
+
+      if (isEditing) {
+        setReceipts(receipts.map((r) => (r.id === savedReceipt.id ? savedReceipt : r)));
+      } else {
+        setReceipts([savedReceipt, ...receipts]);
+      }
+
+      setIsFormOpen(false);
+      toast({
+        title: "Thành công",
+        description: isEditing ? "Đã cập nhật phiếu xuất." : "Đã tạo phiếu xuất mới.",
+      });
+    } catch (error) {
+      toast({
+        title: "Lỗi",
+        description: error instanceof Error ? error.message : "Không thể lưu phiếu xuất",
+        variant: "destructive",
+      });
     }
   };
 
-  const getStatusBadgeClass = (status: OutboundVoucher["status"]) => {
-    switch (status) {
-      case "Đã xuất":
-        return "bg-green-100 text-green-800";
-      case "Đang soạn hàng":
-        return "bg-blue-100 text-blue-800";
-      case "Chờ xuất":
-        return "bg-yellow-100 text-yellow-800";
-      case "Đã hủy":
-        return "bg-red-100 text-red-800";
-      default:
-        return "bg-gray-100 text-gray-800";
+  const getPurposeBadgeClass = (purposeId: string) => {
+    const purpose = outboundPurposes.find(p => p.id === purposeId);
+    return purpose?.color || "bg-gray-100 text-gray-800 border-gray-200";
+  };
+
+  const getStatusBadgeClass = (statusId: string) => {
+    const status = outboundStatuses.find(s => s.id === statusId);
+    return status?.color || "bg-gray-100 text-gray-800";
+  };
+
+  const getPurposeName = (purposeId: string) => {
+    return outboundPurposes.find(p => p.id === purposeId)?.name || purposeId;
+  };
+
+  const getStatusName = (statusId: string) => {
+    return outboundStatuses.find(s => s.id === statusId)?.name || statusId;
+  };
+
+  const getReceiverDisplay = (receipt: OutboundReceipt) => {
+    if (!receipt.receiver || typeof receipt.receiver !== 'object') return "-";
+    const dept = receipt.receiver.department;
+    if (dept && typeof dept === 'object') {
+      return `${receipt.receiver.name} (${dept.name})`;
     }
+    return receipt.receiver.name;
   };
 
   return (
@@ -219,7 +260,7 @@ export function OutboundClient({ initialVouchers }: OutboundClientProps) {
       <PageHeader title="Xuất kho" breadcrumbs={<Breadcrumbs />}>
         <Button onClick={handleAdd}>
           <Plus className="mr-2 h-4 w-4" />
-          Thêm mới
+          Tạo Phiếu xuất
         </Button>
       </PageHeader>
 
@@ -227,46 +268,48 @@ export function OutboundClient({ initialVouchers }: OutboundClientProps) {
         <CardContent className="pt-6">
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4 items-end">
             <div className="space-y-1">
-                <label className="text-sm font-medium">Mục đích xuất</label>
-                <Select value={purposeFilter} onValueChange={setPurposeFilter}>
+              <label className="text-sm font-medium">Mục đích xuất</label>
+              <Select value={purposeFilter} onValueChange={setPurposeFilter}>
                 <SelectTrigger>
-                    <SelectValue placeholder="-- Tất cả --" />
+                  <SelectValue placeholder="-- Tất cả --" />
                 </SelectTrigger>
                 <SelectContent>
-                    <SelectItem value="all">-- Tất cả --</SelectItem>
-                    <SelectItem value="Cấp O&M">Cấp O&M</SelectItem>
-                    <SelectItem value="Khẩn cấp">Khẩn cấp</SelectItem>
-                    <SelectItem value="Cho mượn">Cho mượn</SelectItem>
-                    <SelectItem value="Đi Sửa chữa">Đi Sửa chữa</SelectItem>
+                  <SelectItem value="all">-- Tất cả --</SelectItem>
+                  {outboundPurposes.map((purpose) => (
+                    <SelectItem key={purpose.id} value={purpose.id}>
+                      {purpose.name}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
-                </Select>
+              </Select>
             </div>
             <div className="space-y-1">
-                <label className="text-sm font-medium">Tìm kiếm</label>
-                <Input
-                placeholder="Số Phiếu, Yêu cầu, Bộ phận..."
+              <label className="text-sm font-medium">Tìm kiếm</label>
+              <Input
+                placeholder="Số Phiếu, Đơn vị nhận, Lý do..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                />
+              />
             </div>
             <div className="space-y-1">
-                <label className="text-sm font-medium">Trạng thái</label>
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <label className="text-sm font-medium">Trạng thái</label>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger>
-                    <SelectValue placeholder="-- Tất cả --" />
+                  <SelectValue placeholder="-- Tất cả --" />
                 </SelectTrigger>
                 <SelectContent>
-                    <SelectItem value="all">Tất cả</SelectItem>
-                    <SelectItem value="Đã xuất">Đã xuất</SelectItem>
-                    <SelectItem value="Chờ xuất">Chờ xuất</SelectItem>
-                    <SelectItem value="Đang soạn hàng">Đang soạn hàng</SelectItem>
-                    <SelectItem value="Đã hủy">Đã hủy</SelectItem>
+                  <SelectItem value="all">Tất cả</SelectItem>
+                  {outboundStatuses.map((status) => (
+                    <SelectItem key={status.id} value={status.id}>
+                      {status.name}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
-                </Select>
+              </Select>
             </div>
             <Button variant="outline">
-                <Filter className="mr-2 h-4 w-4" />
-                Lọc
+              <Filter className="mr-2 h-4 w-4" />
+              Lọc
             </Button>
           </div>
         </CardContent>
@@ -277,50 +320,50 @@ export function OutboundClient({ initialVouchers }: OutboundClientProps) {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>SỐ PHIẾU</TableHead>
-                <TableHead>MỤC ĐÍCH XUẤT</TableHead>
-                <TableHead>YÊU CẦU SỐ</TableHead>
-                <TableHead>BỘ PHẬN</TableHead>
+                <TableHead>MÃ PHIẾU</TableHead>
+                <TableHead>NGÀY XUẤT</TableHead>
+                <TableHead>MỤC ĐÍCH</TableHead>
+                <TableHead>ĐƠN VỊ NHẬN</TableHead>
                 <TableHead>LÝ DO</TableHead>
                 <TableHead>TRẠNG THÁI</TableHead>
                 <TableHead className="w-[120px]">THAO TÁC</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {paginatedVouchers.length > 0 ? (
-                paginatedVouchers.map((voucher) => (
-                  <TableRow key={voucher.id}>
+              {paginatedReceipts.length > 0 ? (
+                paginatedReceipts.map((receipt) => (
+                  <TableRow key={receipt.id}>
                     <TableCell
                       className="font-medium text-primary hover:underline cursor-pointer"
-                      onClick={() => handleView(voucher)}
+                      onClick={() => handleView(receipt)}
                     >
-                      {voucher.id}
+                      {receipt.receiptCode}
+                    </TableCell>
+                    <TableCell>
+                      {format(new Date(receipt.outboundDate), "dd/MM/yyyy")}
                     </TableCell>
                     <TableCell>
                       <span
                         className={cn(
-                          "rounded-md px-2.5 py-1 text-xs font-semibold",
-                          getPurposeBadgeClass(voucher.purpose)
+                          "rounded-md px-2.5 py-1 text-xs font-semibold border",
+                          getPurposeBadgeClass(receipt.purposeId)
                         )}
                       >
-                        {voucher.purpose}
+                        {receipt.purpose?.name || getPurposeName(receipt.purposeId)}
                       </span>
                     </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {voucher.materialRequestId}
-                    </TableCell>
-                    <TableCell>{voucher.department}</TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {voucher.reason}
+                    <TableCell>{getReceiverDisplay(receipt)}</TableCell>
+                    <TableCell className="text-muted-foreground max-w-[200px] truncate">
+                      {receipt.reason || "-"}
                     </TableCell>
                     <TableCell>
                       <span
                         className={cn(
                           "rounded-md px-2.5 py-1 text-xs font-semibold",
-                          getStatusBadgeClass(voucher.status)
+                          getStatusBadgeClass(receipt.statusId)
                         )}
                       >
-                        {voucher.status}
+                        {receipt.status?.name || getStatusName(receipt.statusId)}
                       </span>
                     </TableCell>
                     <TableCell>
@@ -329,7 +372,7 @@ export function OutboundClient({ initialVouchers }: OutboundClientProps) {
                           variant="ghost"
                           size="icon"
                           className="h-8 w-8 text-muted-foreground"
-                          onClick={() => handleView(voucher)}
+                          onClick={() => handleView(receipt)}
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
@@ -337,7 +380,7 @@ export function OutboundClient({ initialVouchers }: OutboundClientProps) {
                           variant="ghost"
                           size="icon"
                           className="h-8 w-8 text-muted-foreground"
-                          onClick={() => handleEdit(voucher)}
+                          onClick={() => handleEdit(receipt)}
                         >
                           <Pencil className="h-4 w-4" />
                         </Button>
@@ -357,14 +400,14 @@ export function OutboundClient({ initialVouchers }: OutboundClientProps) {
                                 Bạn có chắc chắn muốn xóa?
                               </AlertDialogTitle>
                               <AlertDialogDescription>
-                                Hành động này không thể được hoàn tác. Phiếu xuất "
-                                {voucher.id}" sẽ bị xóa vĩnh viễn.
+                                Hành động này không thể được hoàn tác. Phiếu
+                                xuất &quot;{receipt.receiptCode}&quot; sẽ bị xóa vĩnh viễn.
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
                               <AlertDialogCancel>Hủy</AlertDialogCancel>
                               <AlertDialogAction
-                                onClick={() => handleDelete(voucher.id)}
+                                onClick={() => handleDelete(receipt.id)}
                                 className="bg-destructive hover:bg-destructive/90"
                               >
                                 Xóa
@@ -391,7 +434,8 @@ export function OutboundClient({ initialVouchers }: OutboundClientProps) {
         </CardContent>
         <CardFooter className="flex items-center justify-between pt-4">
           <div className="text-sm text-muted-foreground">
-            Hiển thị {filteredVouchers.length > 0 ? startItem : 0}-{endItem} trên {filteredVouchers.length} bản ghi
+            Hiển thị {filteredReceipts.length > 0 ? startItem : 0}-{endItem} trên{" "}
+            {filteredReceipts.length} bản ghi
           </div>
           <div className="flex items-center space-x-1">
             <Button
@@ -432,21 +476,23 @@ export function OutboundClient({ initialVouchers }: OutboundClientProps) {
       </Card>
 
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-        <DialogContent className="max-w-6xl">
+        <DialogContent className="sm:max-w-7xl">
           <DialogHeader>
             <DialogTitle>
               {viewMode
-                ? `Chi tiết Phiếu xuất: ${selectedVoucher?.id}`
-                : vouchers.some(v => v.id === selectedVoucher?.id)
-                ? "Cập nhật Phiếu xuất"
+                ? `Chi tiết Phiếu xuất: ${selectedReceipt?.receiptCode}`
+                : selectedReceipt?.id && receipts.some((r) => r.id === selectedReceipt.id)
+                ? `Cập nhật Phiếu xuất: ${selectedReceipt?.receiptCode}`
                 : "Tạo Phiếu xuất mới"}
             </DialogTitle>
           </DialogHeader>
           <OutboundForm
-            voucher={selectedVoucher}
+            receipt={selectedReceipt}
             onSubmit={handleFormSubmit}
             onCancel={() => setIsFormOpen(false)}
             viewMode={viewMode}
+            outboundPurposes={outboundPurposes}
+            outboundStatuses={outboundStatuses}
           />
         </DialogContent>
       </Dialog>

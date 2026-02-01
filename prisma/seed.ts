@@ -311,10 +311,12 @@ async function main() {
   console.log('  Seeding OutboundPurpose...')
   await prisma.outboundPurpose.createMany({
     data: [
-      { code: "OM", name: "Cấp O&M", sortOrder: 1 },
-      { code: "URG", name: "Khẩn cấp", sortOrder: 2 },
-      { code: "LOAN", name: "Cho mượn", sortOrder: 3 },
-      { code: "REPAIR", name: "Đi Sửa chữa", sortOrder: 4 },
+      { code: "OM", name: "Cấp O&M", color: "bg-blue-100 text-blue-800", sortOrder: 1 },
+      { code: "PROJECT", name: "Dự án", color: "bg-purple-100 text-purple-800", sortOrder: 2 },
+      { code: "RETURN", name: "Trả NCC", color: "bg-orange-100 text-orange-800", sortOrder: 3 },
+      { code: "TRANSFER", name: "Chuyển kho", color: "bg-teal-100 text-teal-800", sortOrder: 4 },
+      { code: "SCRAP", name: "Thanh lý", color: "bg-red-100 text-red-800", sortOrder: 5 },
+      { code: "OTHER", name: "Khác", color: "bg-gray-100 text-gray-800", sortOrder: 6 },
     ],
     skipDuplicates: true
   })
@@ -323,10 +325,13 @@ async function main() {
   console.log('  Seeding OutboundStatus...')
   await prisma.outboundStatus.createMany({
     data: [
-      { code: "WAIT", name: "Chờ xuất", color: "bg-yellow-100 text-yellow-800", sortOrder: 1 },
-      { code: "PICK", name: "Đang soạn hàng", color: "bg-purple-100 text-purple-800", sortOrder: 2 },
-      { code: "DONE", name: "Đã xuất", color: "bg-green-100 text-green-800", sortOrder: 3 },
-      { code: "CANCEL", name: "Đã hủy", color: "bg-red-100 text-red-800", sortOrder: 4 },
+      { code: "DRAFT", name: "Nháp", color: "bg-gray-100 text-gray-800", sortOrder: 1 },
+      { code: "REQUESTED", name: "Chờ duyệt", color: "bg-yellow-100 text-yellow-800", sortOrder: 2 },
+      { code: "APPROVED", name: "Đã duyệt", color: "bg-blue-100 text-blue-800", sortOrder: 3 },
+      { code: "PICKING", name: "Đang soạn hàng", color: "bg-purple-100 text-purple-800", sortOrder: 4 },
+      { code: "ISSUED", name: "Đã xuất", color: "bg-green-100 text-green-800", sortOrder: 5 },
+      { code: "REJECTED", name: "Từ chối", color: "bg-red-100 text-red-800", sortOrder: 6 },
+      { code: "CANCELLED", name: "Đã hủy", color: "bg-gray-200 text-gray-600", sortOrder: 7 },
     ],
     skipDuplicates: true
   })
@@ -1045,6 +1050,12 @@ async function main() {
 
   for (const requestData of materialRequestsData) {
     const { items, ...requestFields } = requestData
+    // Check if already exists
+    const existingRequest = await prisma.materialRequest.findUnique({ where: { requestCode: requestFields.requestCode } })
+    if (existingRequest) {
+      console.log(`  MaterialRequest ${requestFields.requestCode} already exists, skipping...`)
+      continue
+    }
     await prisma.materialRequest.create({
       data: {
         ...requestFields,
@@ -1365,7 +1376,14 @@ async function main() {
 
   for (const prData of purchaseRequestsData) {
     const { items, ...requestFields } = prData
-    
+
+    // Check if already exists
+    const existingPR = await prisma.purchaseRequest.findUnique({ where: { requestCode: requestFields.requestCode } })
+    if (existingPR) {
+      console.log(`  PurchaseRequest ${requestFields.requestCode} already exists, skipping...`)
+      continue
+    }
+
     // Create PurchaseRequest first
     const createdPR = await prisma.purchaseRequest.create({
       data: {
@@ -1380,7 +1398,7 @@ async function main() {
         step: requestFields.step,
       }
     })
-    
+
     // Then create items
     for (const item of items) {
       await prisma.purchaseRequestItem.create({
@@ -2237,6 +2255,279 @@ async function main() {
   }
 
   console.log('InboundReceipts seeded! 20 records added.')
+
+  // === 27. OUTBOUND RECEIPTS ===
+  console.log('  Seeding OutboundReceipts...')
+
+  // Get OutboundPurpose and OutboundStatus maps
+  const outboundPurposes = await prisma.outboundPurpose.findMany()
+  const outboundPurposeMap: Record<string, string> = {}
+  outboundPurposes.forEach(p => { outboundPurposeMap[p.code] = p.id })
+
+  const outboundStatuses = await prisma.outboundStatus.findMany()
+  const outboundStatusMap: Record<string, string> = {}
+  outboundStatuses.forEach(s => { outboundStatusMap[s.code] = s.id })
+
+  // Approved material requests for reference
+  const approvedMRs = await prisma.materialRequest.findMany({
+    where: { status: { code: 'APPROVED' } },
+    take: 5,
+  })
+  const mrMap: Record<string, string> = {}
+  approvedMRs.forEach(mr => { mrMap[mr.requestCode] = mr.id })
+
+  // Generate outbound receipt code
+  const generateOutboundCode = (num: number) => {
+    const year = 2026
+    const month = '01'
+    return `PXK-${year}${month}-${String(num).padStart(3, '0')}`
+  }
+
+  const outboundReceiptsData = [
+    {
+      receiptCode: generateOutboundCode(1),
+      purposeId: outboundPurposeMap['OM'],
+      statusId: outboundStatusMap['ISSUED'],
+      receiverId: userMap['NV005'],
+      createdById: userMap['NV003'],
+      approverId: userMap['NV001'],
+      reason: 'Cấp vật tư cho bảo trì định kỳ tuabin GT-1',
+      outboundDate: new Date('2026-01-08'),
+      approvedAt: new Date('2026-01-08T10:00:00'),
+      issuedAt: new Date('2026-01-08T14:00:00'),
+      notes: 'Xuất theo kế hoạch bảo trì tháng 1',
+      step: 4,
+      items: [
+        { materialCode: 'PM-TDH-001', unitCode: 'CAI', locationCode: 'A1-01-01', requestedQuantity: 2, issuedQuantity: 2, serialBatch: 'SN-CARD-001' },
+        { materialCode: 'PM-MEAS-001', unitCode: 'CAI', locationCode: 'B1-01-01', requestedQuantity: 1, issuedQuantity: 1, serialBatch: 'LOAN-FM-001' },
+      ]
+    },
+    {
+      receiptCode: generateOutboundCode(2),
+      purposeId: outboundPurposeMap['OM'],
+      statusId: outboundStatusMap['PICKING'],
+      receiverId: userMap['NV006'],
+      createdById: userMap['NV003'],
+      approverId: userMap['NV001'],
+      reason: 'Cấp dầu bôi trơn cho hệ thống bơm nước làm mát',
+      outboundDate: new Date('2026-01-15'),
+      approvedAt: new Date('2026-01-15T09:00:00'),
+      notes: 'Đang soạn hàng',
+      step: 3,
+      items: [
+        { materialCode: 'PM-CHEM-001', unitCode: 'LIT', requestedQuantity: 500, issuedQuantity: 0 },
+      ]
+    },
+    {
+      receiptCode: generateOutboundCode(3),
+      purposeId: outboundPurposeMap['PROJECT'],
+      statusId: outboundStatusMap['APPROVED'],
+      receiverId: userMap['NV007'],
+      createdById: userMap['NV004'],
+      approverId: userMap['NV002'],
+      materialRequestId: mrMap['YCVT-2026-001'] || null,
+      reason: 'Cấp vật tư cho dự án nâng cấp hệ thống DCS',
+      outboundDate: new Date('2026-01-18'),
+      approvedAt: new Date('2026-01-18T11:00:00'),
+      notes: 'Chờ soạn hàng',
+      step: 2,
+      items: [
+        { materialCode: 'PM-TDH-003', unitCode: 'CAI', requestedQuantity: 3, issuedQuantity: 0 },
+        { materialCode: 'PM-TDH-002', unitCode: 'CAI', requestedQuantity: 5, issuedQuantity: 0 },
+      ]
+    },
+    {
+      receiptCode: generateOutboundCode(4),
+      purposeId: outboundPurposeMap['RETURN'],
+      statusId: outboundStatusMap['ISSUED'],
+      receiverId: userMap['NV005'],
+      createdById: userMap['NV003'],
+      approverId: userMap['NV001'],
+      reason: 'Trả NCC thiết bị hỏng theo chính sách bảo hành',
+      outboundDate: new Date('2026-01-10'),
+      approvedAt: new Date('2026-01-10T09:00:00'),
+      issuedAt: new Date('2026-01-10T15:00:00'),
+      notes: 'Đã xuất trả',
+      step: 4,
+      items: [
+        { materialCode: 'PM-MECH-001', unitCode: 'CAI', locationCode: 'C1-FLOOR-01', requestedQuantity: 1, issuedQuantity: 1, serialBatch: 'SN-PUMP-BROKEN' },
+      ]
+    },
+    {
+      receiptCode: generateOutboundCode(5),
+      purposeId: outboundPurposeMap['TRANSFER'],
+      statusId: outboundStatusMap['REQUESTED'],
+      receiverId: userMap['NV008'],
+      createdById: userMap['NV004'],
+      reason: 'Chuyển kho từ A sang B theo yêu cầu sắp xếp lại',
+      outboundDate: new Date('2026-01-20'),
+      notes: 'Chờ duyệt',
+      step: 1,
+      items: [
+        { materialCode: 'PM-CONS-001', unitCode: 'CAI', requestedQuantity: 200, issuedQuantity: 0 },
+        { materialCode: 'PM-CONS-002', unitCode: 'CAI', requestedQuantity: 100, issuedQuantity: 0 },
+      ]
+    },
+    {
+      receiptCode: generateOutboundCode(6),
+      purposeId: outboundPurposeMap['OM'],
+      statusId: outboundStatusMap['ISSUED'],
+      receiverId: userMap['NV006'],
+      createdById: userMap['NV003'],
+      approverId: userMap['NV002'],
+      reason: 'Cấp bảo hộ lao động cho đợt bảo trì lớn',
+      outboundDate: new Date('2026-01-12'),
+      approvedAt: new Date('2026-01-12T08:00:00'),
+      issuedAt: new Date('2026-01-12T10:00:00'),
+      step: 4,
+      items: [
+        { materialCode: 'PM-PPE-001', unitCode: 'DOI', locationCode: 'B1-01-02', requestedQuantity: 20, issuedQuantity: 20, serialBatch: 'BATCH-PPE-001' },
+        { materialCode: 'PM-PPE-002', unitCode: 'CAI', locationCode: 'B1-01-02', requestedQuantity: 30, issuedQuantity: 30, serialBatch: 'BATCH-PPE-002' },
+      ]
+    },
+    {
+      receiptCode: generateOutboundCode(7),
+      purposeId: outboundPurposeMap['SCRAP'],
+      statusId: outboundStatusMap['APPROVED'],
+      receiverId: userMap['NV005'],
+      createdById: userMap['NV004'],
+      approverId: userMap['NV001'],
+      reason: 'Thanh lý thiết bị cũ theo quyết định',
+      outboundDate: new Date('2026-01-22'),
+      approvedAt: new Date('2026-01-22T14:00:00'),
+      notes: 'Chờ xuất kho',
+      step: 2,
+      items: [
+        { materialCode: 'PM-MECH-002', unitCode: 'CAI', requestedQuantity: 5, issuedQuantity: 0 },
+      ]
+    },
+    {
+      receiptCode: generateOutboundCode(8),
+      purposeId: outboundPurposeMap['OM'],
+      statusId: outboundStatusMap['ISSUED'],
+      receiverId: userMap['NV007'],
+      createdById: userMap['NV003'],
+      approverId: userMap['NV001'],
+      reason: 'Cấp hóa chất xử lý nước cho tháp giải nhiệt',
+      outboundDate: new Date('2026-01-14'),
+      approvedAt: new Date('2026-01-14T09:30:00'),
+      issuedAt: new Date('2026-01-14T11:00:00'),
+      step: 4,
+      items: [
+        { materialCode: 'PM-CHEM-002', unitCode: 'KG', locationCode: 'CHEM-01-01', requestedQuantity: 100, issuedQuantity: 100, serialBatch: 'BATCH-CHEM-001' },
+      ]
+    },
+    {
+      receiptCode: generateOutboundCode(9),
+      purposeId: outboundPurposeMap['PROJECT'],
+      statusId: outboundStatusMap['PICKING'],
+      receiverId: userMap['NV008'],
+      createdById: userMap['NV004'],
+      approverId: userMap['NV002'],
+      reason: 'Cấp van cho dự án nâng cấp đường ống',
+      outboundDate: new Date('2026-01-25'),
+      approvedAt: new Date('2026-01-25T10:00:00'),
+      notes: 'Đang soạn hàng tại khu A',
+      step: 3,
+      items: [
+        { materialCode: 'PM-VALVE-001', unitCode: 'CAI', requestedQuantity: 4, issuedQuantity: 0 },
+        { materialCode: 'PM-VALVE-002', unitCode: 'CAI', requestedQuantity: 2, issuedQuantity: 0 },
+      ]
+    },
+    {
+      receiptCode: generateOutboundCode(10),
+      purposeId: outboundPurposeMap['OTHER'],
+      statusId: outboundStatusMap['DRAFT'],
+      receiverId: userMap['NV005'],
+      createdById: userMap['NV003'],
+      reason: 'Phiếu nháp - chờ xác nhận mục đích',
+      outboundDate: new Date('2026-01-28'),
+      notes: 'Nháp',
+      step: 1,
+      items: [
+        { materialCode: 'PM-TURB-002', unitCode: 'BO', requestedQuantity: 10, issuedQuantity: 0 },
+      ]
+    },
+    {
+      receiptCode: generateOutboundCode(11),
+      purposeId: outboundPurposeMap['OM'],
+      statusId: outboundStatusMap['REJECTED'],
+      receiverId: userMap['NV006'],
+      createdById: userMap['NV004'],
+      approverId: userMap['NV001'],
+      reason: 'Yêu cầu số lượng vượt định mức',
+      outboundDate: new Date('2026-01-16'),
+      notes: 'Từ chối: Vượt định mức cho phép, cần phê duyệt cấp cao hơn',
+      step: 1,
+      items: [
+        { materialCode: 'PM-TDH-001', unitCode: 'CAI', requestedQuantity: 50, issuedQuantity: 0 },
+      ]
+    },
+    {
+      receiptCode: generateOutboundCode(12),
+      purposeId: outboundPurposeMap['OM'],
+      statusId: outboundStatusMap['ISSUED'],
+      receiverId: userMap['NV007'],
+      createdById: userMap['NV003'],
+      approverId: userMap['NV002'],
+      reason: 'Cấp thiết bị đo lường cho ca vận hành A',
+      outboundDate: new Date('2026-01-17'),
+      approvedAt: new Date('2026-01-17T08:00:00'),
+      issuedAt: new Date('2026-01-17T09:00:00'),
+      step: 4,
+      items: [
+        { materialCode: 'PM-MEAS-002', unitCode: 'CAI', locationCode: 'CHEM-01-01', requestedQuantity: 2, issuedQuantity: 2, serialBatch: 'SN-PH-002' },
+      ]
+    },
+  ]
+
+  for (const receiptData of outboundReceiptsData) {
+    const { items, ...receiptFields } = receiptData
+
+    // Check if receipt already exists
+    const existingReceipt = await prisma.outboundReceipt.findUnique({ where: { receiptCode: receiptFields.receiptCode } })
+    if (existingReceipt) {
+      console.log(`  Outbound Receipt ${receiptFields.receiptCode} already exists, skipping...`)
+      continue
+    }
+
+    // Create OutboundReceipt
+    const createdReceipt = await prisma.outboundReceipt.create({
+      data: {
+        receiptCode: receiptFields.receiptCode,
+        purposeId: receiptFields.purposeId,
+        statusId: receiptFields.statusId,
+        receiverId: receiptFields.receiverId,
+        createdById: receiptFields.createdById,
+        approverId: receiptFields.approverId || null,
+        materialRequestId: receiptFields.materialRequestId || null,
+        reason: receiptFields.reason,
+        outboundDate: receiptFields.outboundDate,
+        approvedAt: receiptFields.approvedAt || null,
+        issuedAt: receiptFields.issuedAt || null,
+        notes: receiptFields.notes || null,
+        step: receiptFields.step,
+      }
+    })
+
+    // Create items
+    for (const item of items) {
+      const itemData = item as { materialCode: string; unitCode: string; locationCode?: string; requestedQuantity: number; issuedQuantity: number; serialBatch?: string }
+      await prisma.outboundReceiptItem.create({
+        data: {
+          receiptId: createdReceipt.id,
+          materialId: materialMap[itemData.materialCode],
+          unitId: unitMap[itemData.unitCode],
+          locationId: itemData.locationCode ? locationMap[itemData.locationCode] : null,
+          requestedQuantity: itemData.requestedQuantity,
+          issuedQuantity: itemData.issuedQuantity,
+          serialBatch: itemData.serialBatch || null,
+        }
+      })
+    }
+  }
+
+  console.log('OutboundReceipts seeded! 12 records added.')
 }
 
 main()

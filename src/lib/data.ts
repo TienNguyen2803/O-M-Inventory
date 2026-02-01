@@ -1,4 +1,4 @@
-import type { Material, InventoryLog, WarehouseLocation, WarehouseItem, Supplier, MaterialRequest, MaterialRequestItem, PurchaseRequest, PurchaseRequestItem, BiddingPackage, InboundReceipt, InboundReceiptItem, InboundReceiptDocument, OutboundVoucher, OutboundVoucherItem, StockTake, StockTakeResult, User, Role, ActivityLog, GoodsHistoryEvent, MasterDataItem } from "./types";
+import type { Material, InventoryLog, WarehouseLocation, WarehouseItem, Supplier, MaterialRequest, MaterialRequestItem, PurchaseRequest, PurchaseRequestItem, BiddingPackage, InboundReceipt, InboundReceiptItem, InboundReceiptDocument, OutboundVoucher, OutboundVoucherItem, OutboundReceipt, StockTake, StockTakeResult, User, Role, ActivityLog, GoodsHistoryEvent, MasterDataItem } from "./types";
 import prisma from "./db";
 
 export const materials: Material[] = [
@@ -1189,6 +1189,83 @@ export const getBiddingPackages = async (): Promise<BiddingPackage[]> => {
 export const getOutboundVouchers = async (): Promise<OutboundVoucher[]> => {
     await new Promise(resolve => setTimeout(resolve, 100));
     return outboundVouchers.sort((a, b) => a.id.localeCompare(b.id));
+}
+
+export const getOutboundReceipts = async (): Promise<OutboundReceipt[]> => {
+    try {
+        const receipts = await prisma.outboundReceipt.findMany({
+            take: 100,
+            orderBy: { createdAt: 'desc' },
+            include: {
+                purpose: true,
+                status: true,
+                receiver: {
+                    select: { id: true, name: true, employeeCode: true, department: true },
+                },
+                materialRequest: {
+                    select: { id: true, requestCode: true },
+                },
+                createdBy: {
+                    select: { id: true, name: true, employeeCode: true },
+                },
+                approver: {
+                    select: { id: true, name: true, employeeCode: true },
+                },
+                items: {
+                    include: {
+                        material: {
+                            select: { id: true, code: true, name: true, partNo: true, stock: true },
+                        },
+                        unit: true,
+                        location: {
+                            select: { id: true, code: true, name: true },
+                        },
+                    },
+                },
+            },
+        });
+
+        return receipts.map(receipt => ({
+            id: receipt.id,
+            receiptCode: receipt.receiptCode,
+            purposeId: receipt.purposeId,
+            statusId: receipt.statusId,
+            receiverId: receipt.receiverId,
+            materialRequestId: receipt.materialRequestId,
+            createdById: receipt.createdById,
+            approverId: receipt.approverId,
+            purpose: receipt.purpose,
+            status: receipt.status,
+            receiver: receipt.receiver,
+            materialRequest: receipt.materialRequest,
+            createdBy: receipt.createdBy,
+            approver: receipt.approver,
+            reason: receipt.reason,
+            outboundDate: receipt.outboundDate.toISOString(),
+            approvedAt: receipt.approvedAt?.toISOString() || null,
+            issuedAt: receipt.issuedAt?.toISOString() || null,
+            notes: receipt.notes,
+            step: receipt.step,
+            items: receipt.items.map(item => ({
+                id: item.id,
+                receiptId: item.receiptId,
+                materialId: item.materialId,
+                unitId: item.unitId,
+                locationId: item.locationId,
+                material: item.material,
+                unit: item.unit,
+                location: item.location,
+                requestedQuantity: item.requestedQuantity,
+                issuedQuantity: item.issuedQuantity,
+                serialBatch: item.serialBatch,
+            })),
+            createdAt: receipt.createdAt.toISOString(),
+            updatedAt: receipt.updatedAt.toISOString(),
+        })) as OutboundReceipt[];
+    } catch (error) {
+        console.error('Error fetching outbound receipts:', error);
+        return [];
+    }
 }
 
 export const getStockTakes = async (): Promise<StockTake[]> => {
