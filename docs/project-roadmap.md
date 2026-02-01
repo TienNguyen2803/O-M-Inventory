@@ -31,6 +31,12 @@
     - [x] CRUD Operations with FK relations.
     - [x] Items management (nested create/update/delete).
     - [x] Master Data Integration (Status, Source, FundingSource, Department).
+- [x] **Bidding Management**:
+    - [x] CRUD Operations with FK relations.
+    - [x] Participants/suppliers invitation and scoring.
+    - [x] Quotations management per scope item.
+    - [x] Winner selection workflow.
+    - [x] UI Components (form, participants, quotation dialog, stepper).
 - [ ] **Inbound Logistics (Goods Receipt)**:
     - [x] UI Prototypes (Mock Data).
     - [ ] **Backend API**: Implement `/api/inbound`.
@@ -63,13 +69,14 @@
 
 | Module | UI Status | Backend Status | Priority |
 |--------|-----------|----------------|----------|
-| Materials | ✅ Ready | ✅ Ready | - |
-| Users/Roles | ✅ Ready | ✅ Ready | - |
-| Material Requests | ✅ Ready | ✅ Ready | - |
-| Purchase Requests | ✅ Ready | ✅ Ready | - |
-| Warehouse Locations | ✅ Ready | ✅ Ready | - |
-| Suppliers | ✅ Ready | ✅ Ready | - |
-| Inbound | 🚧 Prototype | ⚠️ Partial | High |
-| Outbound | 🚧 Prototype | ❌ Missing | High |
-| Reports | ⚠️ Hybrid | ❌ Mock Data | Medium |
-| Dashboard | 🚧 Prototype | ❌ Mock Data | Medium |
+| Materials | Ready | Ready | - |
+| Users/Roles | Ready | Ready | - |
+| Material Requests | Ready | Ready | - |
+| Purchase Requests | Ready | Ready | - |
+| Bidding Management | Ready | Ready | - |
+| Warehouse Locations | Ready | Ready | - |
+| Suppliers | Ready | Ready | - |
+| Inbound | Prototype | Partial | High |
+| Outbound | Prototype | Missing | High |
+| Reports | Hybrid | Mock Data | Medium |
+| Dashboard | Prototype | Mock Data | Medium |

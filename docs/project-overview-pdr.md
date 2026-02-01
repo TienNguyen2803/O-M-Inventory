@@ -9,7 +9,7 @@ To provide a comprehensive, real-time inventory management solution for power pl
 
 ## 2. Core Modules & Status
 
-### 2.1 Materials Management (✅ Live)
+### 2.1 Materials Management (Live)
 **Goal:** Centralized registry of all spare parts and consumables.
 - **Features:**
     - CRUD operations for materials.
@@ -18,7 +18,7 @@ To provide a comprehensive, real-time inventory management solution for power pl
     - Master Data management.
 - **Current State:** Fully implemented with Database backing.
 
-### 2.2 Material Requests (✅ Live)
+### 2.2 Material Requests (Live)
 **Goal:** Workflow for operational teams to request materials.
 - **Features:**
     - Request creation with justification and item picker.
@@ -28,7 +28,7 @@ To provide a comprehensive, real-time inventory management solution for power pl
     - Material items with quantity tracking.
 - **Current State:** Full CRUD with FK relations. Uses transactional updates.
 
-### 2.3 Warehouse Locations (✅ Live)
+### 2.3 Warehouse Locations (Live)
 **Goal:** Manage warehouse storage locations and zones.
 - **Features:**
     - CRUD operations for warehouse locations.
@@ -36,7 +36,7 @@ To provide a comprehensive, real-time inventory management solution for power pl
     - Barcode/QR support, weight/dimension tracking.
 - **Current State:** Full CRUD with API backend. Uses Zod validation.
 
-### 2.4 Suppliers Management (✅ Live)
+### 2.4 Suppliers Management (Live)
 **Goal:** Centralized registry of all material suppliers and vendors.
 - **Features:**
     - CRUD operations for suppliers.
@@ -45,7 +45,7 @@ To provide a comprehensive, real-time inventory management solution for power pl
     - Cascade delete for contacts.
 - **Current State:** Full CRUD with API backend. Transactional updates.
 
-### 2.5 Purchase Requests (✅ Live)
+### 2.5 Purchase Requests (Live)
 **Goal:** Workflow for purchasing materials not in stock.
 - **Features:**
     - Request creation with items and estimated pricing.
@@ -54,7 +54,7 @@ To provide a comprehensive, real-time inventory management solution for power pl
     - Multi-level approval workflow.
 - **Current State:** Full CRUD with API backend. Uses transactional updates.
 
-### 2.6 Inbound Logistics (🚧 Prototype)
+### 2.6 Inbound Logistics (Prototype)
 **Goal:** Manage the receipt of goods into warehouses.
 - **Requirements:**
     - Create Goods Receipt Notes (GRN).
@@ -63,7 +63,7 @@ To provide a comprehensive, real-time inventory management solution for power pl
     - Batch/Serial number recording.
 - **Current State:** UI Mockups available. No backend logic.
 
-### 2.7 Outbound Logistics (🚧 Prototype)
+### 2.7 Outbound Logistics (Prototype)
 **Goal:** Control the issuance of materials to plant subsystems.
 - **Requirements:**
     - Create Goods Issue Vouchers (GIV).
@@ -71,13 +71,26 @@ To provide a comprehensive, real-time inventory management solution for power pl
     - Cost center allocation.
 - **Current State:** UI Mockups available. No backend logic.
 
-### 2.8 Reports & Analytics (⚠️ Hybrid)
+### 2.8 Reports & Analytics (Hybrid)
 **Goal:** Operational insights and inventory valuation.
 - **Requirements:**
     - Stock Level Reports.
     - Movement History (Cardex).
     - Slow-moving items analysis.
 - **Current State:** UI exists with mock/client-side calculation. Needs server-side aggregation.
+
+### 2.9 Bidding Management (Live)
+**Goal:** Manage procurement bidding packages from invitation to winner selection.
+- **Features:**
+    - CRUD for bidding packages with auto-generated codes (TB-YYYY-XX).
+    - Link to Purchase Requests (N:M).
+    - Scope items management from PRs.
+    - Supplier participant invitation and tracking.
+    - Quotation entry per scope item per participant.
+    - Scoring (technical 60%, price 40%) with auto-ranking.
+    - Winner selection workflow.
+    - 4-step workflow: Invite → Receive → Evaluate → Done.
+- **Current State:** Full CRUD with API backend. UI components complete.
 
 ## 3. Technical Requirements
 

@@ -8,6 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Bidding Management Module**: Full bidding package workflow implementation:
+  - `BiddingPackage` model with FK relations to BiddingMethod, BiddingStatus, User (creator), Supplier (winner).
+  - `BiddingPurchaseRequest` N:M junction for linking Purchase Requests.
+  - `BiddingScopeItem` for managing bid scope items from PRs.
+  - `BiddingParticipant` for supplier participation with scoring (technical, price, total).
+  - `BidQuotation` for per-item quotations from participants.
+- **Bidding Packages API**: Full CRUD endpoints at `/api/bidding-packages`.
+  - Participants sub-API for managing invited suppliers.
+  - Winner selection endpoint `/api/bidding-packages/{id}/select-winner`.
+- **Bidding UI Components**: `bidding-form.tsx`, `bidding-participants-section.tsx`, `bidding-quotation-dialog.tsx`, `bidding-workflow-step-actions.tsx`.
 - **PurchaseRequest FK Relations**: Refactored from string columns to FK relations:
   - `requesterId` → FK to User
   - `departmentId` → FK to Department

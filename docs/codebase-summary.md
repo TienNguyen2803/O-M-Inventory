@@ -16,17 +16,18 @@ The application uses the App Router structure with distinct modules:
 
 | Directory | Module | Status | Description |
 |-----------|--------|--------|-------------|
-| `api/` | **API Routes** | ✅ **Real** | REST endpoints for Auth, Users, Roles, Materials, Material Requests, Purchase Requests, Warehouse Locations, Suppliers. Connected to Prisma. |
-| `materials/` | **Materials** | ✅ **Real** | Full CRUD for materials. Fetches data from API. |
-| `material-requests/` | **Requests** | ✅ **Real** | Request creation with items, approval workflow. FK relations to User, Department, Priority, Status. |
-| `warehouses/` | **Warehouse Locations** | ✅ **Real** | Full CRUD with FK relations. Uses Zod validation. |
-| `suppliers/` | **Suppliers** | ✅ **Real** | Full CRUD with contacts management. FK relations to master data. |
-| `purchase-requests/` | **Purchase Requests** | ✅ **Real** | Full CRUD with items, FK relations to master data. Transactional. |
-| `inbound/` | **Inbound** | 🚧 **Mock** | UI prototype for inbound shipments. Partial API. |
-| `outbound/` | **Outbound** | 🚧 **Mock** | UI prototype for outbound vouchers. No API backend yet. |
-| `lifecycle/` | **Lifecycle** | 🚧 **Mock** | Timeline view of material history. Uses mock data. |
-| `reports/` | **Reports** | ⚠️ **Hybrid** | UI exists, but calculation logic is client-side heavy. |
-| `dashboard/` | **Dashboard** | 🚧 **Mock** | Charts and widgets using hardcoded/mock data. |
+| `api/` | **API Routes** | **Real** | REST endpoints for Auth, Users, Roles, Materials, Material Requests, Purchase Requests, Bidding Packages, Warehouse Locations, Suppliers. Connected to Prisma. |
+| `materials/` | **Materials** | **Real** | Full CRUD for materials. Fetches data from API. |
+| `material-requests/` | **Requests** | **Real** | Request creation with items, approval workflow. FK relations to User, Department, Priority, Status. |
+| `warehouses/` | **Warehouse Locations** | **Real** | Full CRUD with FK relations. Uses Zod validation. |
+| `suppliers/` | **Suppliers** | **Real** | Full CRUD with contacts management. FK relations to master data. |
+| `purchase-requests/` | **Purchase Requests** | **Real** | Full CRUD with items, FK relations to master data. Transactional. |
+| `biddings/` | **Bidding Management** | **Real** | Full CRUD with participants, quotations, winner selection. FK to BiddingMethod, BiddingStatus, User, Supplier. |
+| `inbound/` | **Inbound** | **Mock** | UI prototype for inbound shipments. Partial API. |
+| `outbound/` | **Outbound** | **Mock** | UI prototype for outbound vouchers. No API backend yet. |
+| `lifecycle/` | **Lifecycle** | **Mock** | Timeline view of material history. Uses mock data. |
+| `reports/` | **Reports** | **Hybrid** | UI exists, but calculation logic is client-side heavy. |
+| `dashboard/` | **Dashboard** | **Mock** | Charts and widgets using hardcoded/mock data. |
 
 ### `src/lib` (Utilities)
 

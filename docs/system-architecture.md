@@ -166,6 +166,7 @@ Generic API cho quản lý 25 bảng master data:
 | `useDepartments()` | Fetch departments cho dropdowns |
 | `useMaterialRequests()` | CRUD operations cho Material Request với FK relations, pagination, search, filter |
 | `usePurchaseRequests()` | CRUD operations cho Purchase Request với FK relations, pagination, search, filter |
+| `useBiddingPackages()` | CRUD operations cho Bidding Package với workflow, participants, quotations |
 | `useRoleUsers(roleId)` | CRUD operations cho gán User vào Role |
 
 ---
@@ -625,5 +626,120 @@ API cho quản lý yêu cầu mua sắm với FK relations:
 ```
 
 > **Note**: Purchase Request API sử dụng FK relations. Client gửi IDs, API trả về nested objects. Items cascade delete khi xóa request.
+
+---
+
+## Bidding Packages API
+
+API cho quản lý gói thầu với full workflow:
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/bidding-packages` | Danh sách gói thầu (pagination, search, filter) |
+| POST | `/api/bidding-packages` | Tạo gói thầu mới (với PRs, scope items) |
+| GET | `/api/bidding-packages/{id}` | Chi tiết gói thầu (id = packageCode) |
+| PUT | `/api/bidding-packages/{id}` | Cập nhật gói thầu |
+| DELETE | `/api/bidding-packages/{id}` | Xóa gói thầu (cascade) |
+
+### Participants Sub-API
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/bidding-packages/{id}/participants` | Danh sách nhà thầu tham gia |
+| POST | `/api/bidding-packages/{id}/participants` | Thêm nhà thầu (body: `{supplierIds: string[]}`) |
+| DELETE | `/api/bidding-packages/{id}/participants?participantId=...` | Xóa nhà thầu |
+| PATCH | `/api/bidding-packages/{id}/participants` | Cập nhật điểm, quotations |
+
+### Winner Selection
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/bidding-packages/{id}/select-winner` | Chọn nhà thầu trúng thầu (body: `{winnerId}`) |
+
+### Query Parameters cho GET `/api/bidding-packages`
+
+| Param | Type | Description |
+|-------|------|-------------|
+| `page` | number | Số trang (mặc định: 1) |
+| `limit` | number | Số lượng mỗi trang (mặc định: 10) |
+| `search` | string | Tìm theo mã gói thầu, tên |
+| `methodId` | string | Filter theo ID phương thức đấu thầu (FK) |
+| `statusId` | string | Filter theo ID trạng thái (FK) |
+
+### Request Body (POST)
+
+```json
+{
+  "name": "Mua thiết bị đo lường 2026",
+  "methodId": "method-uuid",
+  "createdById": "user-uuid",
+  "estimatedBudget": 500000000,
+  "openDate": "2026-02-15T00:00:00Z",
+  "closeDate": "2026-03-15T00:00:00Z",
+  "notes": "Gói thầu thiết bị đo lường",
+  "purchaseRequestIds": ["pr-uuid-1", "pr-uuid-2"],
+  "scopeItems": [
+    {
+      "materialId": "material-uuid",
+      "name": "Cảm biến áp suất",
+      "unitId": "unit-uuid",
+      "quantity": 10,
+      "estimatedAmount": 50000000
+    }
+  ]
+}
+```
+
+### Response Format (GET detail)
+
+```json
+{
+  "data": {
+    "id": "TB-2026-01",
+    "packageCode": "TB-2026-01",
+    "name": "Mua thiết bị đo lường 2026",
+    "methodId": "method-uuid",
+    "statusId": "status-uuid",
+    "method": { "id": "...", "code": "OPEN", "name": "Đấu thầu rộng rãi" },
+    "status": { "id": "...", "code": "INVITE", "name": "Đang mời thầu", "color": "#FFA500" },
+    "createdBy": { "id": "...", "name": "Nguyễn Văn A", "employeeCode": "NV001" },
+    "winner": null,
+    "estimatedBudget": 500000000,
+    "openDate": "2026-02-15T00:00:00Z",
+    "closeDate": "2026-03-15T00:00:00Z",
+    "step": 1,
+    "purchaseRequests": [
+      { "id": "...", "requestCode": "PR-2026-001", "description": "...", "totalAmount": 100000000 }
+    ],
+    "participants": [
+      {
+        "id": "participant-uuid",
+        "supplier": { "id": "...", "code": "SUP-001", "name": "ABC Company" },
+        "invitedAt": "2026-02-01T00:00:00Z",
+        "isSubmitted": true,
+        "technicalScore": 85,
+        "priceScore": 90,
+        "totalScore": 87,
+        "rank": 1,
+        "quotations": [...]
+      }
+    ],
+    "scopeItems": [
+      {
+        "id": "scope-uuid",
+        "materialId": "material-uuid",
+        "material": { "id": "...", "code": "PM-001", "name": "Cảm biến áp suất" },
+        "name": "Cảm biến áp suất",
+        "unitId": "unit-uuid",
+        "unit": { "id": "...", "code": "CAI", "name": "Cái" },
+        "quantity": 10,
+        "estimatedAmount": 50000000
+      }
+    ]
+  }
+}
+```
+
+> **Note**: Bidding Packages API sử dụng `packageCode` làm ID trong URL. Workflow: Invite → Receive → Evaluate → Done.
 
 

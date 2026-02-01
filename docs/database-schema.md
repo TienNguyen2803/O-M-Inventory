@@ -358,6 +358,132 @@ model PurchaseRequestItem {
 > - `unitId` → FK to `MaterialUnit`
 > - `suggestedSupplierId` → Optional FK to `Supplier`
 
+### Bidding Package (Gói thầu)
+
+```prisma
+model BiddingPackage {
+  id                String   @id @default(uuid())
+  packageCode       String   @unique  // TB-2026-01
+  name              String
+
+  // FK Relations
+  methodId          String
+  statusId          String
+  createdById       String
+  winnerId          String?  // Nhà thầu trúng thầu
+
+  method            BiddingMethod  @relation(fields: [methodId], references: [id])
+  status            BiddingStatus  @relation(fields: [statusId], references: [id])
+  createdBy         User           @relation("BiddingCreator", fields: [createdById], references: [id])
+  winner            Supplier?      @relation("BiddingWinner", fields: [winnerId], references: [id])
+
+  estimatedBudget   Float
+  openDate          DateTime
+  closeDate         DateTime
+  step              Int      @default(1)  // 1-4 for stepper
+  notes             String?
+
+  // Relations
+  purchaseRequests  BiddingPurchaseRequest[]
+  participants      BiddingParticipant[]
+  scopeItems        BiddingScopeItem[]
+
+  @@map("bidding_packages")
+}
+```
+
+> **Note**: BiddingPackage FK relations:
+> - `methodId` → FK to `BiddingMethod`
+> - `statusId` → FK to `BiddingStatus`
+> - `createdById` → FK to `User`
+> - `winnerId` → Optional FK to `Supplier`
+
+### BiddingPurchaseRequest (N:M junction)
+
+```prisma
+model BiddingPurchaseRequest {
+  id                String   @id @default(uuid())
+  biddingPackageId  String
+  purchaseRequestId String
+
+  biddingPackage    BiddingPackage   @relation(fields: [biddingPackageId], references: [id], onDelete: Cascade)
+  purchaseRequest   PurchaseRequest  @relation(fields: [purchaseRequestId], references: [id])
+
+  @@unique([biddingPackageId, purchaseRequestId])
+  @@map("bidding_purchase_requests")
+}
+```
+
+### BiddingScopeItem (Hạng mục thầu)
+
+```prisma
+model BiddingScopeItem {
+  id                String   @id @default(uuid())
+  biddingPackageId  String
+  materialId        String?
+  name              String
+  unitId            String
+  quantity          Float
+  estimatedAmount   Float
+
+  biddingPackage    BiddingPackage @relation(fields: [biddingPackageId], references: [id], onDelete: Cascade)
+  material          Material?      @relation(fields: [materialId], references: [id])
+  unit              MaterialUnit   @relation(fields: [unitId], references: [id])
+  quotations        BidQuotation[]
+
+  @@map("bidding_scope_items")
+}
+```
+
+### BiddingParticipant (Nhà thầu tham gia)
+
+```prisma
+model BiddingParticipant {
+  id                String   @id @default(uuid())
+  biddingPackageId  String
+  supplierId        String
+
+  biddingPackage    BiddingPackage @relation(fields: [biddingPackageId], references: [id], onDelete: Cascade)
+  supplier          Supplier       @relation(fields: [supplierId], references: [id])
+
+  invitedAt         DateTime @default(now())
+  submittedAt       DateTime?
+  isSubmitted       Boolean  @default(false)
+
+  // Scoring
+  technicalScore    Float?
+  priceScore        Float?
+  totalScore        Float?
+  rank              Int?
+
+  quotations        BidQuotation[]
+
+  @@unique([biddingPackageId, supplierId])
+  @@map("bidding_participants")
+}
+```
+
+### BidQuotation (Báo giá từng hạng mục)
+
+```prisma
+model BidQuotation {
+  id                  String   @id @default(uuid())
+  participantId       String
+  scopeItemId         String
+
+  participant         BiddingParticipant @relation(fields: [participantId], references: [id], onDelete: Cascade)
+  scopeItem           BiddingScopeItem   @relation(fields: [scopeItemId], references: [id])
+
+  unitPrice           Float
+  quantity            Float
+  totalPrice          Float
+  notes               String?
+
+  @@unique([participantId, scopeItemId])
+  @@map("bid_quotations")
+}
+```
+
 ### Inbound Receipt (Phiếu nhập kho)
 
 ```prisma
