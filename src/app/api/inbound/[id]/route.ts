@@ -2,6 +2,35 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { inboundSchema } from "@/lib/validations/inbound";
 
+// Include relations for nested data
+const includeRelations = {
+  type: true,
+  status: true,
+  supplier: true,
+  purchaseRequest: {
+    select: { id: true, requestCode: true, description: true },
+  },
+  createdBy: {
+    select: { id: true, name: true, employeeCode: true },
+  },
+  items: {
+    include: {
+      material: {
+        select: { id: true, code: true, name: true, partNo: true, stock: true },
+      },
+      unit: true,
+      location: {
+        select: { id: true, code: true, name: true },
+      },
+    },
+  },
+  documents: {
+    include: {
+      type: true,
+    },
+  },
+};
+
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -10,10 +39,7 @@ export async function GET(
     const { id } = await params;
     const receipt = await prisma.inboundReceipt.findUnique({
       where: { id },
-      include: {
-        items: true,
-        documents: true,
-      },
+      include: includeRelations,
     });
 
     if (!receipt) {
@@ -47,123 +73,161 @@ export async function PUT(
       );
     }
 
-    const { items, ...receiptData } = validationResult.data;
+    const { items, documents, ...receiptData } = validationResult.data;
 
-    // Check current status
+    // Check if receipt exists
     const existingReceipt = await prisma.inboundReceipt.findUnique({
       where: { id },
-      include: { items: true },
+      include: { status: true },
     });
 
     if (!existingReceipt) {
       return NextResponse.json({ error: "Receipt not found" }, { status: 404 });
     }
 
-    // Check if we are transitioning to 'Hoàn thành' from non-completed state
-    const isCompleting =
-      existingReceipt.status !== "Hoàn thành" &&
-      receiptData.status === "Hoàn thành";
+    // Check if already completed (by status code)
+    const newStatus = await prisma.inboundStatus.findUnique({
+      where: { id: receiptData.statusId },
+    });
 
-    // If already completed, prevent changes
-    if (existingReceipt.status === "Hoàn thành" && !isCompleting) {
-        return NextResponse.json(
-            { error: "Cannot modify a completed receipt." },
-            { status: 400 }
-        );
+    const isCompleting =
+      existingReceipt.status.code !== "COMPLETED" &&
+      newStatus?.code === "COMPLETED";
+
+    // Prevent modifying completed receipts
+    if (existingReceipt.status.code === "COMPLETED" && !isCompleting) {
+      return NextResponse.json(
+        { error: "Cannot modify a completed receipt." },
+        { status: 400 }
+      );
     }
 
+    // Determine step based on status
+    let step = receiptData.step || existingReceipt.step;
+    if (newStatus) {
+      switch (newStatus.code) {
+        case "DRAFT":
+        case "REQUESTED":
+          step = 1;
+          break;
+        case "KCS":
+          step = 2;
+          break;
+        case "RECEIVING":
+          step = 3;
+          break;
+        case "COMPLETED":
+          step = 4;
+          break;
+      }
+    }
+
+    const itemsToCreate = items || [];
+    const documentsToCreate = documents || [];
+
+    // Update receipt with transaction for stock update on completion
     if (isCompleting) {
-      // Execute Transaction
       const result = await prisma.$transaction(async (tx) => {
         // 1. Update Receipt
         const updatedReceipt = await tx.inboundReceipt.update({
           where: { id },
           data: {
-            ...receiptData,
-            step: 4, // Completed step
+            typeId: receiptData.typeId,
+            statusId: receiptData.statusId,
+            supplierId: receiptData.supplierId,
+            purchaseRequestId: receiptData.purchaseRequestId || null,
+            referenceCode: receiptData.referenceCode || null,
+            inboundDate: receiptData.inboundDate,
+            notes: receiptData.notes || null,
+            step: 4,
             items: {
-                deleteMany: {},
-                create: items?.map((item) => ({
-                    materialCode: item.materialCode,
-                    materialName: item.materialName,
-                    orderedQuantity: item.orderedQuantity,
-                    receivedQuantity: item.receivedQuantity,
-                    receivingQuantity: item.receivingQuantity,
-                    serialBatch: item.serialBatch,
-                    location: item.location,
-                    kcs: item.kcs ?? false,
-                })) || [],
-            }
+              deleteMany: {},
+              create: itemsToCreate.map((item) => ({
+                materialId: item.materialId,
+                unitId: item.unitId,
+                locationId: item.locationId || null,
+                orderedQuantity: item.orderedQuantity,
+                receivedQuantity: item.receivedQuantity || 0,
+                receivingQuantity: item.receivingQuantity || 0,
+                serialBatch: item.serialBatch || null,
+                kcs: item.kcs ?? false,
+              })),
+            },
+            documents: {
+              deleteMany: {},
+              create: documentsToCreate.map((doc) => ({
+                typeId: doc.typeId,
+                fileName: doc.fileName,
+                fileUrl: doc.fileUrl || null,
+              })),
+            },
           },
-          include: { items: true },
+          include: includeRelations,
         });
 
         // 2. Process Items for Stock Update
-        if (items && items.length > 0) {
-          for (const item of items) {
-             if (item.receivingQuantity > 0) {
-                 // 2a. Find Material
-                 const material = await tx.material.findUnique({
-                     where: { code: item.materialCode }
-                 });
+        for (const item of itemsToCreate) {
+          if (item.receivingQuantity && item.receivingQuantity > 0) {
+            // 2a. Update Material Stock
+            await tx.material.update({
+              where: { id: item.materialId },
+              data: {
+                stock: { increment: item.receivingQuantity },
+              },
+            });
 
-                 if (material) {
-                     // 2b. Update Stock
-                     await tx.material.update({
-                         where: { id: material.id },
-                         data: {
-                             stock: { increment: item.receivingQuantity }
-                         }
-                     });
+            // 2b. Create/Update Warehouse Item
+            if (item.locationId) {
+              const existingWhItem = await tx.warehouseItem.findFirst({
+                where: {
+                  locationId: item.locationId,
+                  materialId: item.materialId,
+                },
+              });
 
-                     // 2c. Create/Update Warehouse Item
-                     if (item.location) {
-                         const location = await tx.warehouseLocation.findUnique({
-                             where: { code: item.location }
-                         });
+              const material = await tx.material.findUnique({
+                where: { id: item.materialId },
+              });
 
-                         if (location) {
-                             // Check if item exists in this location
-                             const existingWhItem = await tx.warehouseItem.findFirst({
-                                 where: {
-                                     locationId: location.id,
-                                     materialId: material.id
-                                 }
-                             });
+              if (existingWhItem) {
+                await tx.warehouseItem.update({
+                  where: { id: existingWhItem.id },
+                  data: { quantity: { increment: item.receivingQuantity } },
+                });
+              } else if (material) {
+                await tx.warehouseItem.create({
+                  data: {
+                    locationId: item.locationId,
+                    materialId: item.materialId,
+                    materialCode: material.code,
+                    materialName: material.name,
+                    quantity: item.receivingQuantity,
+                    unitId: item.unitId,
+                  },
+                });
+              }
+            }
 
-                             if (existingWhItem) {
-                                 await tx.warehouseItem.update({
-                                     where: { id: existingWhItem.id },
-                                     data: { quantity: { increment: item.receivingQuantity } }
-                                 });
-                             } else {
-                                 await tx.warehouseItem.create({
-                                     data: {
-                                         locationId: location.id,
-                                         materialId: material.id,
-                                         materialCode: material.code,
-                                         materialName: material.name,
-                                         quantity: item.receivingQuantity,
-                                         unitId: material.unitId, // Use FK relation to MaterialUnit
-                                     }
-                                 });
-                             }
-                         }
-                     }
+            // 2c. Create Inventory Log
+            const material = await tx.material.findUnique({
+              where: { id: item.materialId },
+            });
+            const supplier = await tx.supplier.findUnique({
+              where: { id: receiptData.supplierId },
+            });
 
-                     // 2d. Create Inventory Log
-                     await tx.inventoryLog.create({
-                         data: {
-                             materialId: material.id,
-                             materialName: material.name,
-                             quantity: item.receivingQuantity,
-                             type: "inbound",
-                             date: new Date(),
-                             actor: receiptData.partner || "Unknown",
-                         }
-                     });
-                 }
-             }
+            if (material) {
+              await tx.inventoryLog.create({
+                data: {
+                  materialId: material.id,
+                  materialName: material.name,
+                  quantity: item.receivingQuantity,
+                  type: "inbound",
+                  date: new Date(),
+                  actor: supplier?.name || "Unknown",
+                },
+              });
+            }
           }
         }
 
@@ -171,34 +235,46 @@ export async function PUT(
       });
 
       return NextResponse.json(result);
-
     } else {
       // Normal Update (Not completing)
       const updatedReceipt = await prisma.inboundReceipt.update({
         where: { id },
         data: {
-            ...receiptData,
-            step: receiptData.status === 'Đang nhập' ? 2 : receiptData.status === 'KCS & Hồ sơ' ? 3 : 1,
-            items: {
-                deleteMany: {},
-                create: items?.map((item) => ({
-                    materialCode: item.materialCode,
-                    materialName: item.materialName,
-                    orderedQuantity: item.orderedQuantity,
-                    receivedQuantity: item.receivedQuantity,
-                    receivingQuantity: item.receivingQuantity,
-                    serialBatch: item.serialBatch,
-                    location: item.location,
-                    kcs: item.kcs ?? false,
-                })) || [],
-            }
+          typeId: receiptData.typeId,
+          statusId: receiptData.statusId,
+          supplierId: receiptData.supplierId,
+          purchaseRequestId: receiptData.purchaseRequestId || null,
+          referenceCode: receiptData.referenceCode || null,
+          inboundDate: receiptData.inboundDate,
+          notes: receiptData.notes || null,
+          step,
+          items: {
+            deleteMany: {},
+            create: itemsToCreate.map((item) => ({
+              materialId: item.materialId,
+              unitId: item.unitId,
+              locationId: item.locationId || null,
+              orderedQuantity: item.orderedQuantity,
+              receivedQuantity: item.receivedQuantity || 0,
+              receivingQuantity: item.receivingQuantity || 0,
+              serialBatch: item.serialBatch || null,
+              kcs: item.kcs ?? false,
+            })),
+          },
+          documents: {
+            deleteMany: {},
+            create: documentsToCreate.map((doc) => ({
+              typeId: doc.typeId,
+              fileName: doc.fileName,
+              fileUrl: doc.fileUrl || null,
+            })),
+          },
         },
-        include: { items: true },
+        include: includeRelations,
       });
 
       return NextResponse.json(updatedReceipt);
     }
-
   } catch (error) {
     console.error("Error updating receipt:", error);
     return NextResponse.json(
@@ -212,20 +288,29 @@ export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-    try {
-        const { id } = await params;
-        const receipt = await prisma.inboundReceipt.findUnique({ where: { id }});
+  try {
+    const { id } = await params;
+    const receipt = await prisma.inboundReceipt.findUnique({
+      where: { id },
+      include: { status: true },
+    });
 
-        if (!receipt) return NextResponse.json({ error: "Not found" }, { status: 404 });
-
-        if (receipt.status === 'Hoàn thành') {
-            return NextResponse.json({ error: "Cannot delete completed receipt" }, { status: 400 });
-        }
-
-        await prisma.inboundReceipt.delete({ where: { id } });
-
-        return NextResponse.json({ success: true });
-    } catch (error) {
-        return NextResponse.json({ error: "Failed to delete" }, { status: 500 });
+    if (!receipt) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
+
+    if (receipt.status.code === "COMPLETED") {
+      return NextResponse.json(
+        { error: "Cannot delete completed receipt" },
+        { status: 400 }
+      );
+    }
+
+    await prisma.inboundReceipt.delete({ where: { id } });
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Error deleting receipt:", error);
+    return NextResponse.json({ error: "Failed to delete" }, { status: 500 });
+  }
 }

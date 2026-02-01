@@ -3,13 +3,42 @@ import { prisma } from "@/lib/db";
 import { inboundSchema } from "@/lib/validations/inbound";
 import { Prisma } from "@prisma/client";
 
+// Include relations for nested data
+const includeRelations = {
+  type: true,
+  status: true,
+  supplier: true,
+  purchaseRequest: {
+    select: { id: true, requestCode: true, description: true },
+  },
+  createdBy: {
+    select: { id: true, name: true, employeeCode: true },
+  },
+  items: {
+    include: {
+      material: {
+        select: { id: true, code: true, name: true, partNo: true, stock: true },
+      },
+      unit: true,
+      location: {
+        select: { id: true, code: true, name: true },
+      },
+    },
+  },
+  documents: {
+    include: {
+      type: true,
+    },
+  },
+};
+
 export async function GET(req: NextRequest) {
   const searchParams = req.nextUrl.searchParams;
   const limit = parseInt(searchParams.get("limit") || "100");
   const offset = parseInt(searchParams.get("offset") || "0");
   const query = searchParams.get("query") || "";
-  const type = searchParams.get("type");
-  const status = searchParams.get("status");
+  const typeId = searchParams.get("typeId");
+  const statusId = searchParams.get("statusId");
 
   const where: Prisma.InboundReceiptWhereInput = {
     AND: [
@@ -17,13 +46,14 @@ export async function GET(req: NextRequest) {
         ? {
             OR: [
               { receiptCode: { contains: query, mode: "insensitive" } },
-              { partner: { contains: query, mode: "insensitive" } },
-              { reference: { contains: query, mode: "insensitive" } },
+              { supplier: { name: { contains: query, mode: "insensitive" } } },
+              { referenceCode: { contains: query, mode: "insensitive" } },
+              { purchaseRequest: { requestCode: { contains: query, mode: "insensitive" } } },
             ],
           }
         : {},
-      type && type !== "all" ? { inboundType: type } : {},
-      status && status !== "all" ? { status: status } : {},
+      typeId && typeId !== "all" ? { typeId } : {},
+      statusId && statusId !== "all" ? { statusId } : {},
     ],
   };
 
@@ -34,10 +64,7 @@ export async function GET(req: NextRequest) {
         take: limit,
         skip: offset,
         orderBy: { createdAt: "desc" },
-        include: {
-          items: true,
-          documents: true,
-        },
+        include: includeRelations,
       }),
       prisma.inboundReceipt.count({ where }),
     ]);
@@ -65,51 +92,67 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { items, ...receiptData } = validationResult.data;
+    const { items, documents, ...receiptData } = validationResult.data;
 
     // Generate receiptCode if not provided
-    // For simplicity, we can use a timestamp or a sequence if we had one.
-    // Or let Prisma ID handle UUID, and generate a readable code like PNK-YYYY-MM-XXXX
-    // Here we'll generate one if not present.
     let receiptCode = receiptData.receiptCode;
     if (!receiptCode) {
       const date = new Date();
       const year = date.getFullYear();
       const month = String(date.getMonth() + 1).padStart(2, "0");
-      const random = Math.floor(Math.random() * 1000)
-        .toString()
-        .padStart(3, "0");
-      receiptCode = `PNK-${year}${month}-${random}`;
+      const count = await prisma.inboundReceipt.count({
+        where: {
+          receiptCode: { startsWith: `PNK-${year}${month}` },
+        },
+      });
+      receiptCode = `PNK-${year}${month}-${String(count + 1).padStart(3, "0")}`;
     }
 
-    // Ensure items is defined (zod default or optional)
+    // Get default user (first user for now - should be replaced with auth)
+    const defaultUser = await prisma.user.findFirst();
+    if (!defaultUser) {
+      return NextResponse.json(
+        { error: "No user found for createdBy" },
+        { status: 400 }
+      );
+    }
+
     const itemsToCreate = items || [];
+    const documentsToCreate = documents || [];
 
     const newReceipt = await prisma.inboundReceipt.create({
       data: {
         receiptCode,
-        inboundType: receiptData.inboundType,
-        reference: receiptData.reference,
+        typeId: receiptData.typeId,
+        statusId: receiptData.statusId,
+        supplierId: receiptData.supplierId,
+        purchaseRequestId: receiptData.purchaseRequestId || null,
+        createdById: receiptData.createdById || defaultUser.id,
+        referenceCode: receiptData.referenceCode || null,
         inboundDate: receiptData.inboundDate,
-        partner: receiptData.partner,
-        status: receiptData.status,
-        step: receiptData.status === "Hoàn thành" ? 4 : 1, // Simple step logic
+        notes: receiptData.notes || null,
+        step: receiptData.step || 1,
         items: {
           create: itemsToCreate.map((item) => ({
-            materialCode: item.materialCode,
-            materialName: item.materialName,
+            materialId: item.materialId,
+            unitId: item.unitId,
+            locationId: item.locationId || null,
             orderedQuantity: item.orderedQuantity,
-            receivedQuantity: item.receivedQuantity,
-            receivingQuantity: item.receivingQuantity,
-            serialBatch: item.serialBatch,
-            location: item.location,
+            receivedQuantity: item.receivedQuantity || 0,
+            receivingQuantity: item.receivingQuantity || 0,
+            serialBatch: item.serialBatch || null,
             kcs: item.kcs ?? false,
           })),
         },
+        documents: {
+          create: documentsToCreate.map((doc) => ({
+            typeId: doc.typeId,
+            fileName: doc.fileName,
+            fileUrl: doc.fileUrl || null,
+          })),
+        },
       },
-      include: {
-        items: true,
-      },
+      include: includeRelations,
     });
 
     return NextResponse.json(newReceipt, { status: 201 });

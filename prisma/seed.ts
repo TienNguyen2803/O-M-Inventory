@@ -280,10 +280,27 @@ async function main() {
   console.log('  Seeding InboundStatus...')
   await prisma.inboundStatus.createMany({
     data: [
-      { code: "REQ", name: "Yêu cầu nhập", color: "bg-yellow-100 text-yellow-800", sortOrder: 1 },
-      { code: "KCS", name: "KCS & Hồ sơ", color: "bg-purple-100 text-purple-800", sortOrder: 2 },
-      { code: "PROC", name: "Đang nhập", color: "bg-sky-100 text-sky-800", sortOrder: 3 },
-      { code: "DONE", name: "Hoàn thành", color: "bg-green-100 text-green-800", sortOrder: 4 },
+      { code: "DRAFT", name: "Nháp", color: "bg-gray-100 text-gray-800", sortOrder: 1 },
+      { code: "REQUESTED", name: "Yêu cầu nhập", color: "bg-blue-100 text-blue-800", sortOrder: 2 },
+      { code: "KCS", name: "Đang KCS", color: "bg-yellow-100 text-yellow-800", sortOrder: 3 },
+      { code: "RECEIVING", name: "Đang nhập", color: "bg-orange-100 text-orange-800", sortOrder: 4 },
+      { code: "COMPLETED", name: "Hoàn thành", color: "bg-green-100 text-green-800", sortOrder: 5 },
+      { code: "CANCELLED", name: "Đã hủy", color: "bg-red-100 text-red-800", sortOrder: 6 },
+    ],
+    skipDuplicates: true
+  })
+
+  // 18b. Inbound Document Type
+  console.log('  Seeding InboundDocumentType...')
+  await prisma.inboundDocumentType.createMany({
+    data: [
+      { code: "INVOICE", name: "Hóa đơn", sortOrder: 1 },
+      { code: "DELIVERY_NOTE", name: "Phiếu giao hàng", sortOrder: 2 },
+      { code: "PACKING_LIST", name: "Packing List", sortOrder: 3 },
+      { code: "COO", name: "Chứng nhận xuất xứ (C/O)", sortOrder: 4 },
+      { code: "COA", name: "Chứng nhận chất lượng (COA)", sortOrder: 5 },
+      { code: "WARRANTY", name: "Giấy bảo hành", sortOrder: 6 },
+      { code: "OTHER", name: "Khác", sortOrder: 99 },
     ],
     skipDuplicates: true
   })

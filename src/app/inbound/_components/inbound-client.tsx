@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import type { InboundReceipt } from "@/lib/types";
+import type { InboundReceipt, MasterDataItem } from "@/lib/types";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import {
@@ -54,6 +54,8 @@ import { InboundForm, type InboundFormValues } from "./inbound-form";
 
 type InboundClientProps = {
   initialReceipts: InboundReceipt[];
+  inboundTypes: MasterDataItem[];
+  inboundStatuses: MasterDataItem[];
 };
 
 const Breadcrumbs = () => (
@@ -64,7 +66,11 @@ const Breadcrumbs = () => (
   </div>
 );
 
-export function InboundClient({ initialReceipts }: InboundClientProps) {
+export function InboundClient({
+  initialReceipts,
+  inboundTypes,
+  inboundStatuses
+}: InboundClientProps) {
   const [receipts, setReceipts] = useState<InboundReceipt[]>(initialReceipts);
   const { toast } = useToast();
 
@@ -83,14 +89,14 @@ export function InboundClient({ initialReceipts }: InboundClientProps) {
       const searchLower = searchQuery.toLowerCase();
       const matchesSearch =
         !searchQuery ||
-        receipt.id.toLowerCase().includes(searchLower) ||
-        receipt.reference.toLowerCase().includes(searchLower) ||
-        receipt.partner.toLowerCase().includes(searchLower);
+        receipt.receiptCode?.toLowerCase().includes(searchLower) ||
+        receipt.referenceCode?.toLowerCase().includes(searchLower) ||
+        receipt.supplier?.name?.toLowerCase().includes(searchLower);
 
       const matchesType =
-        typeFilter === "all" || receipt.inboundType === typeFilter;
+        typeFilter === "all" || receipt.typeId === typeFilter;
       const matchesStatus =
-        statusFilter === "all" || receipt.status === statusFilter;
+        statusFilter === "all" || receipt.statusId === statusFilter;
 
       return matchesSearch && matchesType && matchesStatus;
     });
@@ -115,16 +121,20 @@ export function InboundClient({ initialReceipts }: InboundClientProps) {
     filteredReceipts.length
   );
 
+  // Get default status (first one - DRAFT)
+  const defaultStatus = inboundStatuses.find(s => s.code === "DRAFT") || inboundStatuses[0];
+  const defaultType = inboundTypes[0];
+
   // Handlers
   const handleAdd = () => {
     const newReceiptTemplate: InboundReceipt = {
-      id: "", // Will be generated
-      receiptCode: "", // Will be generated
-      inboundType: "Theo PO",
-      reference: "",
+      id: "",
+      receiptCode: "",
+      typeId: defaultType?.id || "",
+      statusId: defaultStatus?.id || "",
+      supplierId: "",
+      createdById: "",
       inboundDate: new Date().toISOString(),
-      partner: "",
-      status: "Yêu cầu nhập",
       step: 1,
       items: [],
       documents: [],
@@ -146,83 +156,89 @@ export function InboundClient({ initialReceipts }: InboundClientProps) {
     setIsFormOpen(true);
   };
 
-  const handleDelete = (id: string) => {
-    setReceipts(receipts.filter((r) => r.id !== id));
-    toast({
-      title: "Thành công",
-      description: `Đã xóa phiếu nhập ${id}.`,
-      variant: "destructive",
-    });
+  const handleDelete = async (id: string) => {
+    try {
+      const res = await fetch(`/api/inbound/${id}`, { method: "DELETE" });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Failed to delete");
+      }
+      setReceipts(receipts.filter((r) => r.id !== id));
+      toast({
+        title: "Thành công",
+        description: `Đã xóa phiếu nhập.`,
+        variant: "destructive",
+      });
+    } catch (error) {
+      toast({
+        title: "Lỗi",
+        description: error instanceof Error ? error.message : "Không thể xóa phiếu nhập",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleFormSubmit = (values: InboundFormValues) => {
-    const submittedReceipt: InboundReceipt = {
-      // This needs to be spread from the original object to preserve non-form fields like step
-      ...selectedReceipt!,
-      ...values,
-      inboundDate: values.inboundDate.toISOString(),
-      inboundType: values.inboundType as any,
-      status: values.status as any,
-      // Ensure items have required properties
-      items: values.items?.map(item => ({
-        ...item,
-        id: item.id || crypto.randomUUID(), // Temp ID if missing
-        serialBatch: item.serialBatch || "",
-        location: item.location || "",
-      }))
-    };
-
+  const handleFormSubmit = async (values: InboundFormValues) => {
     if (viewMode) {
       setIsFormOpen(false);
       return;
     }
 
-    const isEditing = receipts.some((r) => r.id === submittedReceipt.id);
+    try {
+      const isEditing = selectedReceipt?.id && receipts.some((r) => r.id === selectedReceipt.id);
 
-    if (isEditing) {
-      setReceipts(
-        receipts.map((r) => (r.id === submittedReceipt.id ? submittedReceipt : r))
+      const res = await fetch(
+        isEditing ? `/api/inbound/${selectedReceipt.id}` : "/api/inbound",
+        {
+          method: isEditing ? "PUT" : "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(values),
+        }
       );
-    } else {
-      setReceipts([submittedReceipt, ...receipts]);
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Failed to save");
+      }
+
+      const savedReceipt = await res.json();
+
+      if (isEditing) {
+        setReceipts(receipts.map((r) => (r.id === savedReceipt.id ? savedReceipt : r)));
+      } else {
+        setReceipts([savedReceipt, ...receipts]);
+      }
+
+      setIsFormOpen(false);
+      toast({
+        title: "Thành công",
+        description: isEditing ? "Đã cập nhật phiếu nhập." : "Đã tạo phiếu nhập mới.",
+      });
+    } catch (error) {
+      toast({
+        title: "Lỗi",
+        description: error instanceof Error ? error.message : "Không thể lưu phiếu nhập",
+        variant: "destructive",
+      });
     }
-    setIsFormOpen(false);
-    toast({
-      title: "Thành công",
-      description: isEditing
-        ? "Đã cập nhật phiếu nhập."
-        : "Đã tạo phiếu nhập mới.",
-    });
   };
 
-  const getTypeBadgeClass = (type: InboundReceipt["inboundType"]) => {
-    switch (type) {
-      case "Theo PO":
-        return "bg-blue-100 text-blue-800 border-blue-200";
-      case "Sau Sửa chữa":
-        return "bg-yellow-100 text-yellow-800 border-yellow-200";
-      case "Hàng Mượn":
-        return "bg-purple-100 text-purple-800 border-purple-200";
-      case "Hoàn trả":
-        return "bg-orange-100 text-orange-800 border-orange-200";
-      default:
-        return "bg-gray-100 text-gray-800 border-gray-200";
-    }
+  const getTypeBadgeClass = (typeId: string) => {
+    const type = inboundTypes.find(t => t.id === typeId);
+    return type?.color || "bg-gray-100 text-gray-800 border-gray-200";
   };
 
-  const getStatusBadgeClass = (status: InboundReceipt["status"]) => {
-    switch (status) {
-      case "Hoàn thành":
-        return "bg-green-100 text-green-800";
-      case "Đang nhập":
-        return "bg-yellow-100 text-yellow-800";
-      case "KCS & Hồ sơ":
-        return "bg-cyan-100 text-cyan-800";
-      case "Yêu cầu nhập":
-         return "bg-blue-100 text-blue-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
+  const getStatusBadgeClass = (statusId: string) => {
+    const status = inboundStatuses.find(s => s.id === statusId);
+    return status?.color || "bg-gray-100 text-gray-800";
+  };
+
+  const getTypeName = (typeId: string) => {
+    return inboundTypes.find(t => t.id === typeId)?.name || typeId;
+  };
+
+  const getStatusName = (statusId: string) => {
+    return inboundStatuses.find(s => s.id === statusId)?.name || statusId;
   };
 
   return (
@@ -245,10 +261,11 @@ export function InboundClient({ initialReceipts }: InboundClientProps) {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">-- Tất cả --</SelectItem>
-                  <SelectItem value="Theo PO">Theo PO</SelectItem>
-                  <SelectItem value="Sau Sửa chữa">Sau Sửa chữa</SelectItem>
-                  <SelectItem value="Hàng Mượn">Hàng Mượn</SelectItem>
-                  <SelectItem value="Hoàn trả">Hoàn trả</SelectItem>
+                  {inboundTypes.map((type) => (
+                    <SelectItem key={type.id} value={type.id}>
+                      {type.name}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -268,10 +285,11 @@ export function InboundClient({ initialReceipts }: InboundClientProps) {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Tất cả</SelectItem>
-                  <SelectItem value="Hoàn thành">Hoàn thành</SelectItem>
-                  <SelectItem value="Đang nhập">Đang nhập</SelectItem>
-                  <SelectItem value="KCS & Hồ sơ">KCS & Hồ sơ</SelectItem>
-                  <SelectItem value="Yêu cầu nhập">Yêu cầu nhập</SelectItem>
+                  {inboundStatuses.map((status) => (
+                    <SelectItem key={status.id} value={status.id}>
+                      {status.name}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -292,7 +310,7 @@ export function InboundClient({ initialReceipts }: InboundClientProps) {
                 <TableHead>LOẠI NHẬP</TableHead>
                 <TableHead>THAM CHIẾU</TableHead>
                 <TableHead>NGÀY NHẬP</TableHead>
-                <TableHead>ĐỐI TÁC</TableHead>
+                <TableHead>NHÀ CUNG CẤP</TableHead>
                 <TableHead>TRẠNG THÁI</TableHead>
                 <TableHead className="w-[120px]">THAO TÁC</TableHead>
               </TableRow>
@@ -305,33 +323,33 @@ export function InboundClient({ initialReceipts }: InboundClientProps) {
                       className="font-medium text-primary hover:underline cursor-pointer"
                       onClick={() => handleView(receipt)}
                     >
-                      {receipt.id}
+                      {receipt.receiptCode}
                     </TableCell>
                     <TableCell>
                       <span
                         className={cn(
                           "rounded-md px-2.5 py-1 text-xs font-semibold border",
-                          getTypeBadgeClass(receipt.inboundType)
+                          getTypeBadgeClass(receipt.typeId)
                         )}
                       >
-                        {receipt.inboundType}
+                        {receipt.type?.name || getTypeName(receipt.typeId)}
                       </span>
                     </TableCell>
                     <TableCell className="text-muted-foreground">
-                      {receipt.reference}
+                      {receipt.purchaseRequest?.requestCode || receipt.referenceCode || "-"}
                     </TableCell>
                     <TableCell>
                       {format(new Date(receipt.inboundDate), "dd/MM/yyyy")}
                     </TableCell>
-                    <TableCell>{receipt.partner}</TableCell>
+                    <TableCell>{receipt.supplier?.name || "-"}</TableCell>
                     <TableCell>
                       <span
                         className={cn(
                           "rounded-md px-2.5 py-1 text-xs font-semibold",
-                          getStatusBadgeClass(receipt.status)
+                          getStatusBadgeClass(receipt.statusId)
                         )}
                       >
-                        {receipt.status}
+                        {receipt.status?.name || getStatusName(receipt.statusId)}
                       </span>
                     </TableCell>
                     <TableCell>
@@ -369,7 +387,7 @@ export function InboundClient({ initialReceipts }: InboundClientProps) {
                               </AlertDialogTitle>
                               <AlertDialogDescription>
                                 Hành động này không thể được hoàn tác. Phiếu
-                                nhập "{receipt.id}" sẽ bị xóa vĩnh viễn.
+                                nhập &quot;{receipt.receiptCode}&quot; sẽ bị xóa vĩnh viễn.
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
@@ -448,9 +466,9 @@ export function InboundClient({ initialReceipts }: InboundClientProps) {
           <DialogHeader>
             <DialogTitle>
               {viewMode
-                ? `Chi tiết Phiếu nhập: ${selectedReceipt?.id}`
+                ? `Chi tiết Phiếu nhập: ${selectedReceipt?.receiptCode}`
                 : selectedReceipt?.id && receipts.some((r) => r.id === selectedReceipt.id)
-                ? `Cập nhật Phiếu nhập: ${selectedReceipt?.id}`
+                ? `Cập nhật Phiếu nhập: ${selectedReceipt?.receiptCode}`
                 : "Tạo Phiếu nhập mới"}
             </DialogTitle>
           </DialogHeader>
@@ -459,6 +477,8 @@ export function InboundClient({ initialReceipts }: InboundClientProps) {
             onSubmit={handleFormSubmit}
             onCancel={() => setIsFormOpen(false)}
             viewMode={viewMode}
+            inboundTypes={inboundTypes}
+            inboundStatuses={inboundStatuses}
           />
         </DialogContent>
       </Dialog>

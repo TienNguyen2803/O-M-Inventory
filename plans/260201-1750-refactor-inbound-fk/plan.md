@@ -1,7 +1,7 @@
 ---
 title: "Refactor Inbound Management with FK Relationships"
 description: "Refactor InboundReceipt to use FK relationships with master data, suppliers, materials, and warehouse locations"
-status: pending
+status: completed
 priority: P0
 effort: 2d
 branch: main

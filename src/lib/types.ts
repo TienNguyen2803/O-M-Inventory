@@ -350,33 +350,68 @@ export interface OutboundVoucher {
 
 export interface InboundReceiptItem {
   id: string;
-  materialCode: string;
-  materialName: string;
+  receiptId?: string;
+  // FK IDs
+  materialId: string;
+  unitId: string;
+  locationId?: string | null;
+  // Nested relations (populated from API)
+  material?: {
+    id: string;
+    code: string;
+    name: string;
+    partNo?: string;
+    stock?: number;
+  };
+  unit?: MasterDataItem;
+  location?: {
+    id: string;
+    code: string;
+    name: string;
+  } | null;
+  // Quantities
   orderedQuantity: number;
   receivedQuantity: number;
   receivingQuantity: number;
-  serialBatch: string;
-  location: string;
+  serialBatch?: string | null;
   kcs: boolean;
 }
 
 export interface InboundReceiptDocument {
   id: string;
-  type: string;
+  receiptId?: string;
+  // FK ID
+  typeId: string;
+  // Nested relation
+  type?: MasterDataItem;
   fileName: string;
+  fileUrl?: string | null;
 }
 
 export interface InboundReceipt {
-  id: string; // UUID
-  receiptCode: string; // SỐ PHIẾU (Display ID)
-  inboundType: 'Theo PO' | 'Sau Sửa chữa' | 'Hàng Mượn' | 'Hoàn trả'; // LOẠI NHẬP
-  reference: string; // THAM CHIẾU
-  inboundDate: string; // NGÀY NHẬP
-  partner: string; // ĐỐI TÁC
-  status: 'Hoàn thành' | 'Đang nhập' | 'KCS & Hồ sơ' | 'Yêu cầu nhập'; // TRẠNG THÁI
+  id: string;
+  receiptCode: string;
+  // FK IDs
+  typeId: string;
+  statusId: string;
+  supplierId: string;
+  purchaseRequestId?: string | null;
+  createdById: string;
+  // Nested relations (populated from API)
+  type?: MasterDataItem;
+  status?: MasterDataItem;
+  supplier?: { id: string; code?: string; name: string };
+  purchaseRequest?: { id: string; requestCode?: string; description?: string } | null;
+  createdBy?: { id: string; name: string; employeeCode?: string };
+  // Other fields
+  referenceCode?: string | null;
+  inboundDate: string;
+  notes?: string | null;
   step: number;
   items?: InboundReceiptItem[];
   documents?: InboundReceiptDocument[];
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 

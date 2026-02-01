@@ -47,6 +47,7 @@ export const MASTER_DATA_TABLES: MasterDataTableConfig[] = [
   // === NHẬP KHO ===
   { id: 'inbound-type', name: 'Loại nhập kho', group: 'Nhập kho', modelName: 'inboundType' },
   { id: 'inbound-status', name: 'Trạng thái nhập kho', group: 'Nhập kho', modelName: 'inboundStatus' },
+  { id: 'inbound-document-type', name: 'Loại hồ sơ nhập kho', group: 'Nhập kho', modelName: 'inboundDocumentType' },
 
   // === XUẤT KHO ===
   { id: 'outbound-purpose', name: 'Mục đích xuất kho', group: 'Xuất kho', modelName: 'outboundPurpose' },
