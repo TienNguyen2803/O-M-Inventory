@@ -8,9 +8,9 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '10')
     const search = searchParams.get('search') || ''
-    const area = searchParams.get('area') || ''
-    const type = searchParams.get('type') || ''
-    const status = searchParams.get('status') || ''
+    const areaId = searchParams.get('areaId') || ''
+    const typeId = searchParams.get('typeId') || ''
+    const statusId = searchParams.get('statusId') || ''
 
     const skip = (page - 1) * limit
 
@@ -25,29 +25,36 @@ export async function GET(request: NextRequest) {
       ]
     }
 
-    if (area) {
-      where.area = area
+    if (areaId) {
+      where.areaId = areaId
     }
 
-    if (type) {
-      where.type = type
+    if (typeId) {
+      where.typeId = typeId
     }
 
-    if (status) {
-      where.status = status
+    if (statusId) {
+      where.statusId = statusId
     }
 
     // Get total count for pagination
     const total = await prisma.warehouseLocation.count({ where })
 
-    // Get locations with pagination
+    // Get locations with pagination and nested relations
     const locations = await prisma.warehouseLocation.findMany({
       where,
       skip,
       take: limit,
       orderBy: { code: 'asc' },
       include: {
-        items: true,
+        area: true,
+        type: true,
+        status: true,
+        items: {
+          include: {
+            unit: true,
+          },
+        },
       },
     })
 
@@ -73,12 +80,12 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { code, name, area, type, status, barcode, maxWeight, dimensions } = body
+    const { code, name, areaId, typeId, statusId, barcode, maxWeight, dimensions } = body
 
     // Validate required fields
-    if (!code || !name || !area || !type) {
+    if (!code || !name || !areaId || !typeId || !statusId) {
       return NextResponse.json(
-        { error: 'Các trường bắt buộc: code, name, area, type' },
+        { error: 'Các trường bắt buộc: code, name, areaId, typeId, statusId' },
         { status: 400 }
       )
     }
@@ -88,15 +95,22 @@ export async function POST(request: NextRequest) {
       data: {
         code,
         name,
-        area,
-        type,
-        status: status || 'Active',
+        areaId,
+        typeId,
+        statusId,
         barcode: barcode || null,
         maxWeight: maxWeight || null,
         dimensions: dimensions || null,
       },
       include: {
-        items: true,
+        area: true,
+        type: true,
+        status: true,
+        items: {
+          include: {
+            unit: true,
+          },
+        },
       },
     })
 

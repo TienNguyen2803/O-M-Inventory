@@ -88,21 +88,26 @@ export interface InventoryLog {
 }
 
 export interface WarehouseItem {
+  id?: string;
   materialId: string;
   materialCode: string;
   materialName: string;
   quantity: number;
-  unit: string;
-  batchSerial: string;
+  unitId: string;
+  unit?: MasterDataItem;
+  batchSerial?: string;
 }
 
 export interface WarehouseLocation {
   id: string;
   code: string; // Mã vị trí
   name: string; // Tên vị trí
-  area: string; // Khu vực
-  type: string; // Loại
-  status: "Active" | "Inactive"; // Trạng thái
+  areaId: string;
+  typeId: string;
+  statusId: string;
+  area: MasterDataItem; // Nested relation
+  type: MasterDataItem; // Nested relation
+  status: MasterDataItem; // Nested relation
   barcode?: string;
   maxWeight?: number;
   dimensions?: string;

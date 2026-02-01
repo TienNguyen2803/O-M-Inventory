@@ -13,7 +13,14 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     const location = await prisma.warehouseLocation.findUnique({
       where: { id },
       include: {
-        items: true,
+        area: true,
+        type: true,
+        status: true,
+        items: {
+          include: {
+            unit: true,
+          },
+        },
       },
     })
 
@@ -39,12 +46,12 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
   try {
     const { id } = await params
     const body = await request.json()
-    const { code, name, area, type, status, barcode, maxWeight, dimensions } = body
+    const { code, name, areaId, typeId, statusId, barcode, maxWeight, dimensions } = body
 
     // Validate required fields
-    if (!code || !name || !area || !type) {
+    if (!code || !name || !areaId || !typeId || !statusId) {
       return NextResponse.json(
-        { error: 'Các trường bắt buộc: code, name, area, type' },
+        { error: 'Các trường bắt buộc: code, name, areaId, typeId, statusId' },
         { status: 400 }
       )
     }
@@ -54,15 +61,22 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       data: {
         code,
         name,
-        area,
-        type,
-        status: status || 'Active',
+        areaId,
+        typeId,
+        statusId,
         barcode: barcode || null,
         maxWeight: maxWeight || null,
         dimensions: dimensions || null,
       },
       include: {
-        items: true,
+        area: true,
+        type: true,
+        status: true,
+        items: {
+          include: {
+            unit: true,
+          },
+        },
       },
     })
 

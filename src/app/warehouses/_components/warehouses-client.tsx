@@ -93,8 +93,8 @@ export function WarehousesClient() {
       });
 
       if (searchQuery) params.append("search", searchQuery);
-      if (areaFilter !== "all") params.append("area", areaFilter);
-      if (typeFilter !== "all") params.append("type", typeFilter);
+      if (areaFilter !== "all") params.append("areaId", areaFilter);
+      if (typeFilter !== "all") params.append("typeId", typeFilter);
 
       const response = await fetch(`/api/warehouse-locations?${params}`);
       if (response.ok) {
@@ -234,7 +234,7 @@ export function WarehousesClient() {
               <SelectContent>
                 <SelectItem value="all">-- Tất cả khu vực --</SelectItem>
                 {areas.map((area) => (
-                  <SelectItem key={area.id} value={area.name}>
+                  <SelectItem key={area.id} value={area.id}>
                     {area.name}
                   </SelectItem>
                 ))}
@@ -252,7 +252,7 @@ export function WarehousesClient() {
               <SelectContent>
                 <SelectItem value="all">-- Tất cả loại --</SelectItem>
                 {types.map((type) => (
-                  <SelectItem key={type.id} value={type.name}>
+                  <SelectItem key={type.id} value={type.id}>
                     {type.name}
                   </SelectItem>
                 ))}
@@ -296,23 +296,23 @@ export function WarehousesClient() {
                       </TableCell>
                       <TableCell>{location.name}</TableCell>
                       <TableCell className="text-muted-foreground">
-                        {location.area}
+                        {location.area?.name || '-'}
                       </TableCell>
                       <TableCell className="text-muted-foreground">
-                        {location.type}
+                        {location.type?.name || '-'}
                       </TableCell>
                       <TableCell>
                         <span
                           className={cn(
                             "rounded-md px-2.5 py-1 text-xs font-semibold",
-                            location.status === "Active"
-                              ? "bg-green-100 text-green-800"
-                              : "bg-red-100 text-red-800"
+                            location.status?.color || (
+                              location.status?.code === "ACT"
+                                ? "bg-green-100 text-green-800"
+                                : "bg-red-100 text-red-800"
+                            )
                           )}
                         >
-                          {location.status === "Active"
-                            ? "Hoạt động"
-                            : "Không hoạt động"}
+                          {location.status?.name || '-'}
                         </span>
                       </TableCell>
                       <TableCell>

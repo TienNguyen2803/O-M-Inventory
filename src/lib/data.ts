@@ -511,7 +511,8 @@ const warehouseItems1: WarehouseItem[] = [
     materialCode: "PM-ELEC-GT-001",
     materialName: "Card điều khiển Tuabin khí Siemens SGT5-4000F",
     quantity: 2,
-    unit: "Cái",
+    unitId: "unit-cai",
+    unit: { id: "unit-cai", code: "CAI", name: "Cái" },
     batchSerial: "SN-CARD-001A, SN-CARD-001B",
   },
   {
@@ -519,7 +520,8 @@ const warehouseItems1: WarehouseItem[] = [
     materialCode: "PM-INST-GT-002",
     materialName: "Cảm biến nhiệt độ ống khói (Thermocouple Type K)",
     quantity: 10,
-    unit: "Cái",
+    unitId: "unit-cai",
+    unit: { id: "unit-cai", code: "CAI", name: "Cái" },
     batchSerial: "BATCH-TC-202401",
   },
 ];
@@ -530,7 +532,8 @@ const warehouseItems2: WarehouseItem[] = [
     materialCode: "PM-CHEM-OIL-006",
     materialName: "Dầu bôi trơn tuabin (Turbine Lubricating Oil)",
     quantity: 200,
-    unit: "Lít",
+    unitId: "unit-lit",
+    unit: { id: "unit-lit", code: "LIT", name: "Lít" },
     batchSerial: "BATCH-OIL-202405",
   },
    {
@@ -538,38 +541,50 @@ const warehouseItems2: WarehouseItem[] = [
     materialCode: "PM-INST-SEN-009",
     materialName: "Cảm biến tốc độ tuabin (Turbine Speed Sensor)",
     quantity: 4,
-    unit: "Bộ",
+    unitId: "unit-bo",
+    unit: { id: "unit-bo", code: "BO", name: "Bộ" },
     batchSerial: "SN-SPEED-A01, SN-SPEED-A02, SN-SPEED-A03, SN-SPEED-A04",
   },
 ];
 
+// Mock master data for warehouse locations
+const areaA = { id: "area-a", code: "A", name: "Khu A" };
+const areaB = { id: "area-b", code: "B", name: "Khu B" };
+const areaC = { id: "area-c", code: "C", name: "Khu C" };
+const areaCold = { id: "area-cold", code: "COLD", name: "Kho Lạnh" };
+const areaChem = { id: "area-chem", code: "CHEM", name: "Kho Hóa chất" };
+const typePallet = { id: "type-pallet", code: "PALLET", name: "Kệ Pallet" };
+const typeMedium = { id: "type-medium", code: "MEDIUM", name: "Kệ Trung Tải" };
+const typeFloor = { id: "type-floor", code: "FLOOR", name: "Sàn" };
+const statusActive = { id: "status-act", code: "ACT", name: "Active", color: "bg-green-100 text-green-800" };
+const statusInactive = { id: "status-inact", code: "INACT", name: "Inactive", color: "bg-red-100 text-red-800" };
 
 export const warehouseLocations: WarehouseLocation[] = [
-  { id: 'wh-1', code: 'A1-01-01', name: 'Kệ 01 - Tầng 1 - Dãy A', area: 'Khu A', type: 'Kệ Pallet', status: 'Active', barcode: 'LOC-A10101', maxWeight: 2000, dimensions: '2.7m x 1.2m', items: warehouseItems1 },
-  { id: 'wh-2', code: 'A1-01-02', name: 'Kệ 01 - Tầng 2 - Dãy A', area: 'Khu A', type: 'Kệ Pallet', status: 'Active', items: warehouseItems2 },
-  { id: 'wh-3', code: 'A1-01-03', name: 'Kệ 01 - Tầng 3 - Dãy A', area: 'Khu A', type: 'Kệ Pallet', status: 'Active', items: [] },
-  { id: 'wh-4', code: 'A1-02-01', name: 'Kệ 02 - Tầng 1 - Dãy A', area: 'Khu A', type: 'Kệ Pallet', status: 'Inactive', items: [] },
-  { id: 'wh-5', code: 'A1-02-02', name: 'Kệ 02 - Tầng 2 - Dãy A', area: 'Khu A', type: 'Kệ Pallet', status: 'Active', items: [] },
-  { id: 'wh-6', code: 'B1-01-01', name: 'Kệ 01 - Tầng 1 - Dãy B', area: 'Khu B', type: 'Kệ Trung Tải', status: 'Active', items: [] },
-  { id: 'wh-7', code: 'B1-01-02', name: 'Kệ 01 - Tầng 2 - Dãy B', area: 'Khu B', type: 'Kệ Trung Tải', status: 'Active', items: [] },
-  { id: 'wh-8', code: 'B1-02-01', name: 'Kệ 02 - Tầng 1 - Dãy B', area: 'Khu B', type: 'Kệ Trung Tải', status: 'Active', items: [] },
-  { id: 'wh-9', code: 'B1-02-02', name: 'Kệ 02 - Tầng 2 - Dãy B', area: 'Khu B', type: 'Kệ Trung Tải', status: 'Inactive', items: [] },
-  { id: 'wh-10', code: 'CL-01-01', name: 'Kệ 01 - Kho Lạnh', area: 'Kho Lạnh', type: 'Kệ Pallet', status: 'Active', items: [] },
-  { id: 'wh-11', code: 'CL-01-02', name: 'Kệ 02 - Kho Lạnh', area: 'Kho Lạnh', type: 'Kệ Pallet', status: 'Active', items: [] },
-  { id: 'wh-12', code: 'CH-01', name: 'Sàn 01 - Kho Hóa chất', area: 'Kho Hóa chất', type: 'Sàn', status: 'Active', items: [] },
-  { id: 'wh-13', code: 'CH-02', name: 'Sàn 02 - Kho Hóa chất', area: 'Kho Hóa chất', type: 'Sàn', status: 'Active', items: [] },
-  { id: 'wh-14', code: 'A2-01-01', name: 'Kệ 01 - Tầng 1 - Dãy A2', area: 'Khu A', type: 'Kệ Pallet', status: 'Active', items: [] },
-  { id: 'wh-15', code: 'A2-01-02', name: 'Kệ 01 - Tầng 2 - Dãy A2', area: 'Khu A', type: 'Kệ Pallet', status: 'Active', items: [] },
-  { id: 'wh-16', code: 'A2-02-01', name: 'Kệ 02 - Tầng 1 - Dãy A2', area: 'Khu A', type: 'Kệ Pallet', status: 'Active', items: [] },
-  { id: 'wh-17', code: 'A2-02-02', name: 'Kệ 02 - Tầng 2 - Dãy A2', area: 'Khu A', type: 'Kệ Pallet', status: 'Active', items: [] },
-  { id: 'wh-18', code: 'B2-01-01', name: 'Kệ 01 - Tầng 1 - Dãy B2', area: 'Khu B', type: 'Kệ Trung Tải', status: 'Active', items: [] },
-  { id: 'wh-19', code: 'B2-01-02', name: 'Kệ 01 - Tầng 2 - Dãy B2', area: 'Khu B', type: 'Kệ Trung Tải', status: 'Active', items: [] },
-  { id: 'wh-20', code: 'B2-02-01', name: 'Kệ 02 - Tầng 1 - Dãy B2', area: 'Khu B', type: 'Kệ Trung Tải', status: 'Active', items: [] },
-  { id: 'wh-21', code: 'A3-01-01', name: 'Kệ 01 - Tầng 1 - Dãy A3', area: 'Khu A', type: 'Kệ Pallet', status: 'Active', items: [] },
-  { id: 'wh-22', code: 'A3-01-02', name: 'Kệ 01 - Tầng 2 - Dãy A3', area: 'Khu A', type: 'Kệ Pallet', status: 'Inactive', items: [] },
-  { id: 'wh-23', code: 'C1-01', name: 'Vị trí sàn C1', area: 'Khu C', type: 'Sàn', status: 'Active', items: [] },
-  { id: 'wh-24', code: 'C1-02', name: 'Vị trí sàn C2', area: 'Khu C', type: 'Sàn', status: 'Active', items: [] },
-  { id: 'wh-25', code: 'B3-01-01', name: 'Kệ 01 - Tầng 1 - Dãy B3', area: 'Khu B', type: 'Kệ Trung Tải', status: 'Active', items: [] },
+  { id: 'wh-1', code: 'A1-01-01', name: 'Kệ 01 - Tầng 1 - Dãy A', areaId: areaA.id, typeId: typePallet.id, statusId: statusActive.id, area: areaA, type: typePallet, status: statusActive, barcode: 'LOC-A10101', maxWeight: 2000, dimensions: '2.7m x 1.2m', items: warehouseItems1 },
+  { id: 'wh-2', code: 'A1-01-02', name: 'Kệ 01 - Tầng 2 - Dãy A', areaId: areaA.id, typeId: typePallet.id, statusId: statusActive.id, area: areaA, type: typePallet, status: statusActive, items: warehouseItems2 },
+  { id: 'wh-3', code: 'A1-01-03', name: 'Kệ 01 - Tầng 3 - Dãy A', areaId: areaA.id, typeId: typePallet.id, statusId: statusActive.id, area: areaA, type: typePallet, status: statusActive, items: [] },
+  { id: 'wh-4', code: 'A1-02-01', name: 'Kệ 02 - Tầng 1 - Dãy A', areaId: areaA.id, typeId: typePallet.id, statusId: statusInactive.id, area: areaA, type: typePallet, status: statusInactive, items: [] },
+  { id: 'wh-5', code: 'A1-02-02', name: 'Kệ 02 - Tầng 2 - Dãy A', areaId: areaA.id, typeId: typePallet.id, statusId: statusActive.id, area: areaA, type: typePallet, status: statusActive, items: [] },
+  { id: 'wh-6', code: 'B1-01-01', name: 'Kệ 01 - Tầng 1 - Dãy B', areaId: areaB.id, typeId: typeMedium.id, statusId: statusActive.id, area: areaB, type: typeMedium, status: statusActive, items: [] },
+  { id: 'wh-7', code: 'B1-01-02', name: 'Kệ 01 - Tầng 2 - Dãy B', areaId: areaB.id, typeId: typeMedium.id, statusId: statusActive.id, area: areaB, type: typeMedium, status: statusActive, items: [] },
+  { id: 'wh-8', code: 'B1-02-01', name: 'Kệ 02 - Tầng 1 - Dãy B', areaId: areaB.id, typeId: typeMedium.id, statusId: statusActive.id, area: areaB, type: typeMedium, status: statusActive, items: [] },
+  { id: 'wh-9', code: 'B1-02-02', name: 'Kệ 02 - Tầng 2 - Dãy B', areaId: areaB.id, typeId: typeMedium.id, statusId: statusInactive.id, area: areaB, type: typeMedium, status: statusInactive, items: [] },
+  { id: 'wh-10', code: 'CL-01-01', name: 'Kệ 01 - Kho Lạnh', areaId: areaCold.id, typeId: typePallet.id, statusId: statusActive.id, area: areaCold, type: typePallet, status: statusActive, items: [] },
+  { id: 'wh-11', code: 'CL-01-02', name: 'Kệ 02 - Kho Lạnh', areaId: areaCold.id, typeId: typePallet.id, statusId: statusActive.id, area: areaCold, type: typePallet, status: statusActive, items: [] },
+  { id: 'wh-12', code: 'CH-01', name: 'Sàn 01 - Kho Hóa chất', areaId: areaChem.id, typeId: typeFloor.id, statusId: statusActive.id, area: areaChem, type: typeFloor, status: statusActive, items: [] },
+  { id: 'wh-13', code: 'CH-02', name: 'Sàn 02 - Kho Hóa chất', areaId: areaChem.id, typeId: typeFloor.id, statusId: statusActive.id, area: areaChem, type: typeFloor, status: statusActive, items: [] },
+  { id: 'wh-14', code: 'A2-01-01', name: 'Kệ 01 - Tầng 1 - Dãy A2', areaId: areaA.id, typeId: typePallet.id, statusId: statusActive.id, area: areaA, type: typePallet, status: statusActive, items: [] },
+  { id: 'wh-15', code: 'A2-01-02', name: 'Kệ 01 - Tầng 2 - Dãy A2', areaId: areaA.id, typeId: typePallet.id, statusId: statusActive.id, area: areaA, type: typePallet, status: statusActive, items: [] },
+  { id: 'wh-16', code: 'A2-02-01', name: 'Kệ 02 - Tầng 1 - Dãy A2', areaId: areaA.id, typeId: typePallet.id, statusId: statusActive.id, area: areaA, type: typePallet, status: statusActive, items: [] },
+  { id: 'wh-17', code: 'A2-02-02', name: 'Kệ 02 - Tầng 2 - Dãy A2', areaId: areaA.id, typeId: typePallet.id, statusId: statusActive.id, area: areaA, type: typePallet, status: statusActive, items: [] },
+  { id: 'wh-18', code: 'B2-01-01', name: 'Kệ 01 - Tầng 1 - Dãy B2', areaId: areaB.id, typeId: typeMedium.id, statusId: statusActive.id, area: areaB, type: typeMedium, status: statusActive, items: [] },
+  { id: 'wh-19', code: 'B2-01-02', name: 'Kệ 01 - Tầng 2 - Dãy B2', areaId: areaB.id, typeId: typeMedium.id, statusId: statusActive.id, area: areaB, type: typeMedium, status: statusActive, items: [] },
+  { id: 'wh-20', code: 'B2-02-01', name: 'Kệ 02 - Tầng 1 - Dãy B2', areaId: areaB.id, typeId: typeMedium.id, statusId: statusActive.id, area: areaB, type: typeMedium, status: statusActive, items: [] },
+  { id: 'wh-21', code: 'A3-01-01', name: 'Kệ 01 - Tầng 1 - Dãy A3', areaId: areaA.id, typeId: typePallet.id, statusId: statusActive.id, area: areaA, type: typePallet, status: statusActive, items: [] },
+  { id: 'wh-22', code: 'A3-01-02', name: 'Kệ 01 - Tầng 2 - Dãy A3', areaId: areaA.id, typeId: typePallet.id, statusId: statusInactive.id, area: areaA, type: typePallet, status: statusInactive, items: [] },
+  { id: 'wh-23', code: 'C1-01', name: 'Vị trí sàn C1', areaId: areaC.id, typeId: typeFloor.id, statusId: statusActive.id, area: areaC, type: typeFloor, status: statusActive, items: [] },
+  { id: 'wh-24', code: 'C1-02', name: 'Vị trí sàn C2', areaId: areaC.id, typeId: typeFloor.id, statusId: statusActive.id, area: areaC, type: typeFloor, status: statusActive, items: [] },
+  { id: 'wh-25', code: 'B3-01-01', name: 'Kệ 01 - Tầng 1 - Dãy B3', areaId: areaB.id, typeId: typeMedium.id, statusId: statusActive.id, area: areaB, type: typeMedium, status: statusActive, items: [] },
 ];
 
 export const suppliers: Supplier[] = [

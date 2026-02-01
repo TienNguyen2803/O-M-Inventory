@@ -64,14 +64,8 @@ export async function PUT(
       existingReceipt.status !== "Hoàn thành" &&
       receiptData.status === "Hoàn thành";
 
-    // If already completed, prevent changes for now (simple logic)
-    // Or allow changes but warn/handle specific updates.
-    // For now, if completed, lock it.
+    // If already completed, prevent changes
     if (existingReceipt.status === "Hoàn thành" && !isCompleting) {
-        // Allow updates if user is explicitly re-saving as completed?
-        // Or block. Let's block modifications to Completed receipts to preserve data integrity for this prototype.
-        // Unless it's just metadata update?
-        // Let's keep it simple: if completed, can't update.
         return NextResponse.json(
             { error: "Cannot modify a completed receipt." },
             { status: 400 }
@@ -88,9 +82,7 @@ export async function PUT(
             ...receiptData,
             step: 4, // Completed step
             items: {
-                deleteMany: {}, // Simplest way to handle item changes: wipe and recreate.
-                // CAUTION: This loses item IDs if they are referenced elsewhere.
-                // But InboundReceiptItem is weak entity here.
+                deleteMany: {},
                 create: items?.map((item) => ({
                     materialCode: item.materialCode,
                     materialName: item.materialName,
@@ -125,12 +117,6 @@ export async function PUT(
                      });
 
                      // 2c. Create/Update Warehouse Item
-                     // We need a valid locationId. The UI sends `location` string.
-                     // We need to resolve it to an ID or assume it's the ID/Code.
-                     // The schema `InboundReceiptItem` has `location: String?`.
-                     // The `WarehouseItem` needs `locationId: String`.
-                     // This is a disconnect.
-                     // We try to find a location by Code = item.location.
                      if (item.location) {
                          const location = await tx.warehouseLocation.findUnique({
                              where: { code: item.location }
@@ -158,12 +144,7 @@ export async function PUT(
                                          materialCode: material.code,
                                          materialName: material.name,
                                          quantity: item.receivingQuantity,
-                                         unit: material.unitId || "Unit", // Fallback if unitId is relation ID not name.
-                                         // Wait, Material.unitId is string (UUID). MaterialUnit.name is the string.
-                                         // We need to fetch unit name.
-                                         // Let's just use "Unit" placeholder or fetch it if needed.
-                                         // Ideally we fetch material with include.
-                                         // KISS: Fetch material with include.
+                                         unitId: material.unitId, // Use FK relation to MaterialUnit
                                      }
                                  });
                              }
@@ -193,7 +174,6 @@ export async function PUT(
 
     } else {
       // Normal Update (Not completing)
-      // Just update the receipt and items
       const updatedReceipt = await prisma.inboundReceipt.update({
         where: { id },
         data: {

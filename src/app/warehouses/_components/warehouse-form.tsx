@@ -3,7 +3,14 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { QrCode, Save } from "lucide-react";
+import {
+  QrCode,
+  Save,
+  MapPin,
+  Boxes,
+  X,
+  Ruler
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -33,14 +40,15 @@ import {
 import type { WarehouseLocation } from "@/lib/types";
 import { DialogFooter } from "@/components/ui/dialog";
 import { useMasterDataItems } from "@/hooks/use-master-data";
+import { cn } from "@/lib/utils";
 
 const formSchema = z.object({
   code: z.string().min(1, "Mã vị trí là bắt buộc."),
   name: z.string().min(1, "Tên/Mô tả là bắt buộc."),
   barcode: z.string().optional(),
-  area: z.string().min(1, "Vui lòng chọn khu vực."),
-  type: z.string().min(1, "Vui lòng chọn loại lưu trữ."),
-  status: z.string().optional(),
+  areaId: z.string().min(1, "Vui lòng chọn khu vực."),
+  typeId: z.string().min(1, "Vui lòng chọn loại lưu trữ."),
+  statusId: z.string().min(1, "Vui lòng chọn trạng thái."),
   maxWeight: z.coerce.number().optional().nullable(),
   dimensions: z.string().optional(),
 });
@@ -54,9 +62,19 @@ type WarehouseFormProps = {
   viewMode: boolean;
 };
 
-const FormSectionHeader = ({ title }: { title: string }) => (
-  <div className="bg-muted/70 px-4 py-2 rounded-t-md border-b">
-    <h3 className="text-sm font-semibold text-foreground">{title}</h3>
+type FormSectionHeaderProps = {
+  title: string;
+  icon?: React.ReactNode;
+  className?: string;
+};
+
+const FormSectionHeader = ({ title, icon, className }: FormSectionHeaderProps) => (
+  <div className={cn(
+    "flex items-center gap-2.5 bg-gradient-to-r from-primary/10 to-primary/5 px-4 py-2.5 rounded-lg border border-primary/20",
+    className
+  )}>
+    {icon && <span className="text-primary">{icon}</span>}
+    <h3 className="text-sm font-semibold text-foreground tracking-wide uppercase">{title}</h3>
   </div>
 );
 
@@ -69,6 +87,7 @@ export function WarehouseForm({
   // Master data for dropdowns
   const { items: areas, isLoading: areasLoading } = useMasterDataItems("warehouse-area");
   const { items: types, isLoading: typesLoading } = useMasterDataItems("warehouse-type");
+  const { items: statuses, isLoading: statusesLoading } = useMasterDataItems("warehouse-status");
 
   const form = useForm<WarehouseFormValues>({
     resolver: zodResolver(formSchema),
@@ -78,9 +97,9 @@ export function WarehouseForm({
           code: location.code,
           name: location.name,
           barcode: location.barcode || "",
-          area: location.area,
-          type: location.type,
-          status: location.status,
+          areaId: location.areaId,
+          typeId: location.typeId,
+          statusId: location.statusId,
           maxWeight: location.maxWeight ?? undefined,
           dimensions: location.dimensions || "",
         }
@@ -88,9 +107,9 @@ export function WarehouseForm({
           code: "",
           name: "",
           barcode: "",
-          area: "",
-          type: "",
-          status: "Active",
+          areaId: "",
+          typeId: "",
+          statusId: "",
           dimensions: "",
         },
   });
@@ -103,8 +122,11 @@ export function WarehouseForm({
       >
         {/* THÔNG TIN VỊ TRÍ */}
         <div className="space-y-4">
-          <FormSectionHeader title="THÔNG TIN VỊ TRÍ" />
-          <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+          <FormSectionHeader
+            title="THÔNG TIN VỊ TRÍ"
+            icon={<MapPin className="h-4 w-4" />}
+          />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 p-1">
             <FormField
               control={form.control}
               name="code"
@@ -151,7 +173,7 @@ export function WarehouseForm({
             </div>
             <FormField
               control={form.control}
-              name="area"
+              name="areaId"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Khu vực *</FormLabel>
@@ -171,7 +193,7 @@ export function WarehouseForm({
                         <SelectItem value="loading" disabled>Đang tải...</SelectItem>
                       ) : areas.length > 0 ? (
                         areas.map((area) => (
-                          <SelectItem key={area.id} value={area.name}>
+                          <SelectItem key={area.id} value={area.id}>
                             {area.name}
                           </SelectItem>
                         ))
@@ -186,7 +208,7 @@ export function WarehouseForm({
             />
             <FormField
               control={form.control}
-              name="type"
+              name="typeId"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Loại lưu trữ *</FormLabel>
@@ -206,8 +228,43 @@ export function WarehouseForm({
                         <SelectItem value="loading" disabled>Đang tải...</SelectItem>
                       ) : types.length > 0 ? (
                         types.map((type) => (
-                          <SelectItem key={type.id} value={type.name}>
+                          <SelectItem key={type.id} value={type.id}>
                             {type.name}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value="empty" disabled>Không có dữ liệu</SelectItem>
+                      )}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="statusId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Trạng thái *</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    value={field.value}
+                    disabled={viewMode}
+                    onOpenChange={(open) => { if (!open) field.onBlur(); }}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Chọn trạng thái" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {statusesLoading ? (
+                        <SelectItem value="loading" disabled>Đang tải...</SelectItem>
+                      ) : statuses.length > 0 ? (
+                        statuses.map((status) => (
+                          <SelectItem key={status.id} value={status.id}>
+                            {status.name}
                           </SelectItem>
                         ))
                       ) : (
@@ -224,8 +281,11 @@ export function WarehouseForm({
 
         {/* SỨC CHỨA & ĐIỀU KIỆN */}
         <div className="space-y-4">
-          <FormSectionHeader title="SỨC CHỨA & ĐIỀU KIỆN" />
-          <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+          <FormSectionHeader
+            title="SỨC CHỨA & ĐIỀU KIỆN"
+            icon={<Ruler className="h-4 w-4" />}
+          />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 p-1">
             <FormField
               control={form.control}
               name="maxWeight"
@@ -264,7 +324,11 @@ export function WarehouseForm({
         {/* TỒN KHO HIỆN TẠI - Only show in view mode when editing */}
         {location && (
           <div className="space-y-4">
-            <FormSectionHeader title="TỒN KHO HIỆN TẠI" />
+            <FormSectionHeader
+              title="TỒN KHO HIỆN TẠI"
+              icon={<Boxes className="h-4 w-4" />}
+            />
+            <div className="rounded-lg border overflow-hidden">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -283,8 +347,8 @@ export function WarehouseForm({
                     </TableCell>
                     <TableCell>{item.materialName}</TableCell>
                     <TableCell className="text-right">{item.quantity}</TableCell>
-                    <TableCell>{item.unit}</TableCell>
-                    <TableCell>{item.batchSerial}</TableCell>
+                    <TableCell>{item.unit?.name || '-'}</TableCell>
+                    <TableCell>{item.batchSerial || '-'}</TableCell>
                   </TableRow>
                 ))}
                 {(!location.items || location.items.length === 0) && (
@@ -296,16 +360,27 @@ export function WarehouseForm({
                 )}
               </TableBody>
             </Table>
+            </div>
           </div>
         )}
 
-        <DialogFooter className="!justify-end items-center pt-6 sticky bottom-0 bg-background py-4">
-          <Button type="button" variant="outline" onClick={onCancel}>
+        <DialogFooter className="!justify-end items-center pt-6 sticky bottom-0 bg-background/95 backdrop-blur-sm py-4 border-t mt-6">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onCancel}
+            className="min-w-[100px] transition-colors"
+          >
+            <X className="mr-2 h-4 w-4" />
             Đóng
           </Button>
           {!viewMode && (
-            <Button type="submit">
-              <Save className="mr-2 h-4 w-4" /> Lưu dữ liệu
+            <Button
+              type="submit"
+              className="min-w-[140px] bg-primary hover:bg-primary/90 transition-all shadow-md hover:shadow-lg"
+            >
+              <Save className="mr-2 h-4 w-4" />
+              Lưu dữ liệu
             </Button>
           )}
         </DialogFooter>
