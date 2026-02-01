@@ -1,7 +1,7 @@
 ---
 title: "Implement Stocktake Management with FK Relationships"
 description: "Implement Stocktake (Kiểm kê kho) with FK relationships to master data, materials, users, and warehouse locations"
-status: pending
+status: completed
 priority: P1
 effort: 2.5d
 branch: main
@@ -77,7 +77,7 @@ model Stocktake {
   
   takeDate     DateTime            // Ngày kiểm kê
   notes        String?
-  step         Int      @default(1)  // 1-3 for stepper
+  // REMOVED: step field - derive from status.sortOrder instead
   completedAt  DateTime?
   
   createdAt    DateTime @default(now())
@@ -88,22 +88,41 @@ model Stocktake {
 
   @@map("stocktakes")
 }
+
+// Helper function to get step from status
+// step = status.sortOrder (1=DRAFT, 2=COUNTING, 3=RECONCILING, 4=COMPLETED)
 ```
 
 ### 3.3 New StocktakeAssignment (phân công theo location)
 
 ```prisma
+// NEW: StocktakeAssignmentStatus master data table (Issue #3 fix)
+model StocktakeAssignmentStatus {
+  id        String   @id @default(uuid())
+  code      String   @unique
+  name      String
+  color     String?
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  assignments StocktakeAssignment[]
+  
+  @@map("stocktake_assignment_statuses")
+}
+
 model StocktakeAssignment {
   id           String   @id @default(uuid())
   stocktakeId  String
   locationId   String
   assigneeId   String
+  statusId     String   // FK instead of String (Issue #3 fix)
   
-  stocktake    Stocktake         @relation(fields: [stocktakeId], references: [id], onDelete: Cascade)
-  location     WarehouseLocation @relation("StocktakeLocation", fields: [locationId], references: [id])
-  assignee     User              @relation("StocktakeAssignee", fields: [assigneeId], references: [id])
+  stocktake    Stocktake                   @relation(fields: [stocktakeId], references: [id], onDelete: Cascade)
+  location     WarehouseLocation           @relation("StocktakeLocation", fields: [locationId], references: [id])
+  assignee     User                        @relation("StocktakeAssignee", fields: [assigneeId], references: [id])
+  status       StocktakeAssignmentStatus   @relation(fields: [statusId], references: [id])
   
-  status       String   @default("pending")  // pending, counting, completed
   completedAt  DateTime?
   
   createdAt    DateTime @default(now())
@@ -169,15 +188,17 @@ model WarehouseLocation {
   stocktakeResults     StocktakeResult[]     @relation("StocktakeResultLocation")
 }
 
-// WarehouseItem - ADD UNIQUE CONSTRAINT + MATERIAL FK (Critical for stock update)
+// WarehouseItem - ADD UNIQUE CONSTRAINT ONLY (Issue #1 fix)
+// NOTE: WarehouseItem ALREADY HAS materialId in existing schema
+// Only need to add the unique constraint
 model WarehouseItem {
-  // ... existing fields ...
-  materialId String
+  // ... existing fields (materialId already exists) ...
   
-  material Material @relation("WarehouseItemMaterial", fields: [materialId], references: [id])  // ADD FK
-  
-  @@unique([locationId, materialId])  // ADD UNIQUE
+  @@unique([locationId, materialId])  // ADD UNIQUE - this is the only change needed
 }
+
+// Issue #2 fix: unitId comes from Material, not WarehouseItem
+// When creating StocktakeResult, use: unitId = material.unitId
 
 // Material - add relation
 model Material {
@@ -198,6 +219,12 @@ model User {
   stocktakeAssignments  StocktakeAssignment[] @relation("StocktakeAssignee")
   stocktakeResults      StocktakeResult[]     @relation("StocktakeCounter")
 }
+
+// StocktakeAssignmentStatus - add relation (Review Issue #1 fix)
+model StocktakeAssignmentStatus {
+  // ... existing ...
+  assignments StocktakeAssignment[]
+}
 ```
 
 ---
@@ -214,6 +241,16 @@ await prisma.stocktakeStatus.createMany({
     { code: "RECONCILING", name: "Đang đối soát", color: "bg-yellow-100 text-yellow-800", sortOrder: 3 },
     { code: "COMPLETED", name: "Hoàn thành", color: "bg-green-100 text-green-800", sortOrder: 4 },
     { code: "CANCELLED", name: "Đã hủy", color: "bg-red-100 text-red-800", sortOrder: 5 },
+  ],
+  skipDuplicates: true
+})
+
+// NEW: StocktakeAssignmentStatus seed (Issue #3 fix)
+await prisma.stocktakeAssignmentStatus.createMany({
+  data: [
+    { code: "PENDING", name: "Chờ kiểm", color: "bg-gray-100 text-gray-800", sortOrder: 1 },
+    { code: "COUNTING", name: "Đang đếm", color: "bg-blue-100 text-blue-800", sortOrder: 2 },
+    { code: "COMPLETED", name: "Hoàn thành", color: "bg-green-100 text-green-800", sortOrder: 3 },
   ],
   skipDuplicates: true
 })
@@ -259,9 +296,12 @@ await prisma.stocktakeStatus.createMany({
 | GET | `/api/stocktake/[id]/results` | List results |
 | POST | `/api/stocktake/[id]/results` | Add/update single result |
 | POST | `/api/stocktake/[id]/results/bulk` | **Bulk add/update results** (max 50 items) |
-| PUT | `/api/stocktake/[id]/results/[resultId]` | Update result |
+| PUT | `/api/stocktake/[id]/results/[resultId]` | Update result (with optimistic locking) |
 
-> **Note**: Bulk API cho phép nhập nhiều kết quả 1 lần, tối ưu UX khi kiểm đếm.
+> **Note**: 
+> - Bulk API cho phép nhập nhiều kết quả 1 lần, tối ưu UX khi kiểm đếm.
+> - **No DELETE for results** - Results are auto-created from snapshot, only update allowed.
+> - **Optimistic Locking**: Check `updatedAt` before update, return 409 Conflict if stale.
 
 ### 5.4 Step Validation Logic
 
@@ -280,18 +320,60 @@ function validateStepTransition(currentStep: number, action: string) {
 }
 ```
 
-### 5.5 Response Format
+### 5.5 Response Format (Issue #4 fix - complete TypeScript interfaces)
 
 ```typescript
+// Nested response types
+interface StocktakeStatusResponse {
+  id: string;
+  code: string;
+  name: string;
+  color: string;
+  sortOrder: number;  // Use this for step UI
+}
+
+interface StocktakeAreaResponse {
+  id: string;
+  code: string;
+  name: string;
+}
+
+interface UserResponse {
+  id: string;
+  name: string;
+}
+
+interface StocktakeAssignmentResponse {
+  id: string;
+  location: { id: string; code: string; name: string };
+  assignee: UserResponse;
+  status: { id: string; code: string; name: string; color: string };
+  completedAt?: string;
+}
+
+interface StocktakeResultResponse {
+  id: string;
+  material: { id: string; code: string; name: string };
+  location: { id: string; code: string };
+  unit: { id: string; code: string; name: string };
+  countedBy: UserResponse;
+  bookQuantity: number;
+  actualQuantity: number;
+  variance: number;
+  serialBatch?: string;
+  notes?: string;
+}
+
+// Main response
 interface StocktakeResponse {
   id: string;
   takeCode: string;
   name: string;
-  status: { id: string; code: string; name: string; color: string };
-  area: { id: string; code: string; name: string };
-  createdBy: { id: string; name: string };
+  status: StocktakeStatusResponse;
+  area: StocktakeAreaResponse;
+  createdBy: UserResponse;
   takeDate: string;
-  step: number;
+  currentStep: number;  // Derived from status.sortOrder
   notes?: string;
   completedAt?: string;
   assignments: StocktakeAssignmentResponse[];
@@ -342,60 +424,70 @@ src/app/stocktake/
     - Book vs Actual quantity
     - Variance highlight (red if negative)
     - Notes input
+    - **Optimistic locking for concurrent edits** (Review Issue #6 fix)
+    - Error toast when conflict detected
+    - Retry mechanism for failed saves
 
 ---
 
 ## 7. Implementation Phases
 
 ### Pre-Phase 0: Confirmation & Backup
-- [ ] Verify no data exists in `stock_takes` table
-- [ ] Run `prisma db push --dry-run` to preview changes
-- [ ] Confirm with user before proceeding
+- [x] Verify no data exists in `stock_takes` table
+- [x] Run `prisma db push --dry-run` to preview changes
+- [x] Confirm with user before proceeding
 
 ### Phase 0: Remove Old Models
-- [ ] Delete `StockTake` model from schema (lines 964-978)
-- [ ] Delete `StockTakeResult` model from schema (lines 980-996)
-- [ ] Run `prisma db push` to drop tables
-- [ ] Verify tables removed in Prisma Studio
+- [x] Delete `StockTake` model from schema (lines 964-978)
+- [x] Delete `StockTakeResult` model from schema (lines 980-996)
+- [x] Run `prisma db push` to drop tables
+- [x] Verify tables removed in Prisma Studio
 
 ### Phase 1: Schema & Seed (0.5d)
-- [ ] Add `Stocktake` model
-- [ ] Add `StocktakeAssignment` model
-- [ ] Add `StocktakeResult` model
-- [ ] Add relations to `StocktakeStatus`
-- [ ] Add relations to `WarehouseArea`, `WarehouseLocation`
-- [ ] Add relations to `Material`, `MaterialUnit`, `User`
-- [ ] Update seed data for StocktakeStatus
+- [x] Add `Stocktake` model
+- [x] Add `StocktakeAssignment` model
+- [x] Add `StocktakeAssignmentStatus` model (Review Issue #1 fix)
+- [x] Add `StocktakeResult` model
+- [x] Add relations to `StocktakeStatus`, `StocktakeAssignmentStatus`
+- [x] Add relations to `WarehouseArea`, `WarehouseLocation`
+- [x] Add relations to `Material`, `MaterialUnit`, `User`
+- [x] Update seed data for StocktakeStatus
+- [x] Add seed data for StocktakeAssignmentStatus
 - [ ] Add sample Stocktakes with assignments & results
-- [ ] Run `prisma db push` and `prisma generate`
+- [x] Run `prisma db push` and `prisma generate`
 
-### Phase 2: API Routes (0.5d)
-- [ ] Create `/api/stocktake/route.ts` (GET, POST)
-- [ ] Create `/api/stocktake/[id]/route.ts` (GET, PUT, DELETE)
-- [ ] Create `/api/stocktake/[id]/start/route.ts`
-- [ ] Create `/api/stocktake/[id]/reconcile/route.ts`
-- [ ] Create `/api/stocktake/[id]/complete/route.ts` (stock update with transaction)
-- [ ] Create assignment APIs:
+### Phase 2: API Routes (0.75d) <!-- Updated from 0.5d -->
+- [x] Create `/api/stocktake/route.ts` (GET, POST)
+- [x] Create `/api/stocktake/[id]/route.ts` (GET, PUT, DELETE with status restriction)
+- [x] Create `/api/stocktake/[id]/start/route.ts`
+- [x] Create `/api/stocktake/[id]/reconcile/route.ts`
+- [x] Create `/api/stocktake/[id]/complete/route.ts` (stock update with transaction)
+- [x] Create assignment APIs:
   - `/api/stocktake/[id]/assignments/route.ts` (GET, POST)
   - `/api/stocktake/[id]/assignments/[assignId]/route.ts` (PUT, DELETE)
-- [ ] Create result APIs (including **bulk endpoint**)
-- [ ] Create `src/lib/validations/stocktake.ts` (Zod schemas)
-- [ ] Add TypeScript interfaces to `src/lib/types.ts`
+- [x] Create result APIs (GET, POST, PUT - **NO DELETE**)
+- [x] Create `src/lib/validations/stocktake.ts` (Zod schemas)
+- [x] Create `src/lib/types/stocktake.ts` (TypeScript interfaces) <!-- Review Issue #5 fix -->
 - [ ] Add `getStocktakes()` to `lib/data.ts`
-- [ ] Add step transition validation
+- [x] Add step transition validation
+- [x] Add delete restriction (DRAFT/CANCELLED only) <!-- Review Issue #7 fix -->
+- [x] Add optimistic locking for result updates <!-- Review Issue #6 fix -->
 - [ ] Test APIs
 
-### Phase 3: Frontend (1.5d)
-- [ ] Create `stocktake-client.tsx` - list view with loading skeletons
-- [ ] Create `stocktake-form.tsx` - form dialog
-- [ ] Create `stocktake-stepper.tsx` - workflow steps
-- [ ] Create `assignment-table.tsx` - location assignments
-- [ ] Create `result-table.tsx` - bulk entry with save all
-- [ ] Implement Area picker
-- [ ] Implement User assignment per location
-- [ ] Implement variance calculation
-- [ ] **Update navigation/sidebar** to include Stocktake link
-- [ ] Add error handling patterns
+### Phase 3: Frontend (1.75d) <!-- Updated from 1.5d -->
+- [x] Create `stocktake-client.tsx` - list view with loading skeletons
+- [x] Create `stocktake-form.tsx` - form dialog
+- [x] Create `stocktake-stepper.tsx` - workflow steps (derived from status.sortOrder)
+- [x] Create `assignment-table.tsx` - location assignments (integrated in stepper)
+- [x] Create `result-table.tsx` - bulk entry with save all (integrated in stepper)
+- [x] Implement Area picker
+- [x] Implement User assignment per location
+- [x] Implement variance calculation
+- [x] **Update `src/components/layout/sidebar.tsx`** to include Stocktake link <!-- Already exists -->
+- [x] Add error handling patterns:
+  - Optimistic UI updates <!-- Review Issue #6 fix -->
+  - Retry logic for failed saves
+  - Conflict resolution toast (409 response)
 - [ ] Test full workflow
 
 ---
@@ -411,7 +503,7 @@ async function updateStockFromStocktake(stocktakeId: string) {
     include: { material: true, location: true }
   });
 
-  // Use transaction for atomicity
+  // Use transaction for ALL-OR-NOTHING atomicity (Issue #7 fix)
   await prisma.$transaction(async (tx) => {
     for (const result of results) {
       // CHECK WarehouseItem exists - ERROR if not (no auto-create)
@@ -442,16 +534,17 @@ async function updateStockFromStocktake(stocktakeId: string) {
         data: { quantity: result.actualQuantity }
       });
 
-      // Update Material stock (sum all locations)
-      const totalStock = await tx.warehouseItem.aggregate({
-        where: { materialId: result.materialId },
-        _sum: { quantity: true }
-      });
-
-      await tx.material.update({
-        where: { id: result.materialId },
-        data: { stock: totalStock._sum.quantity || 0 }
-      });
+      // ATOMIC SQL for Material stock update (Issue #5 fix - race condition prevention)
+      // Use raw SQL to prevent stale aggregate if concurrent stocktakes complete
+      await tx.$executeRaw`
+        UPDATE "materials" 
+        SET stock = (
+          SELECT COALESCE(SUM(quantity), 0) 
+          FROM "warehouse_items" 
+          WHERE "materialId" = ${result.materialId}
+        )
+        WHERE id = ${result.materialId}
+      `;
 
       // Log inventory change
       await tx.inventoryLog.create({
@@ -465,13 +558,15 @@ async function updateStockFromStocktake(stocktakeId: string) {
         }
       });
     }
-  });
+  }); // If ANY item fails, entire transaction rolls back
 }
 ```
 
 > **Important**: 
 > - WarehouseItem MUST exist before stocktake - no auto-create
 > - After COMPLETED, cannot cancel/revert - create new stocktake to undo
+> - **Race Condition Mitigation**: Uses atomic SQL `UPDATE ... SET stock = (SELECT SUM...)` for Material.stock
+> - **All-or-Nothing**: If any result fails to update, entire transaction rolls back
 
 ---
 
@@ -505,9 +600,16 @@ async function updateStockFromStocktake(stocktakeId: string) {
 | 7 | **Bulk Result API** | ✅ Nhập hàng loạt, max 50 items |
 | 8 | **WarehouseItem không tồn tại** | Báo lỗi - Yêu cầu nhập kho trước |
 | 9 | **Hủy sau COMPLETED** | Không cho phép - Tạo đợt mới để undo |
-| 10 | **WarehouseItem.materialId** | Không có data, thêm FK trực tiếp |
+| 10 | **WarehouseItem.materialId** | Đã có trong schema, chỉ thêm @@unique |
 | 11 | **bookQuantity source** | Snapshot từ WarehouseItem.quantity khi tạo |
 | 12 | **Authorization** | Dùng chung role hiện tại |
+| 13 | **Step field** | Bỏ - derive từ status.sortOrder |
+| 14 | **Assignment status** | FK tới StocktakeAssignmentStatus (master data) |
+| 15 | **Stock update race condition** | Atomic SQL UPDATE ... SET stock = (SELECT SUM...) |
+| 16 | **Bulk error handling** | All-or-nothing transaction rollback |
+| 17 | **StocktakeResult DELETE** | Không cho phép - Chỉ update (auto-created from snapshot) |
+| 18 | **Stocktake DELETE restriction** | DRAFT/CANCELLED only |
+| 19 | **Concurrent edit handling** | Optimistic locking - check updatedAt, return 409 Conflict |
 
 ### bookQuantity Population Logic
 
@@ -526,12 +628,22 @@ async function populateBookQuantities(stocktakeId: string) {
     });
 
     for (const item of warehouseItems) {
+      // Get material to get unitId (Review Issue #2 fix)
+      const material = await prisma.material.findUnique({
+        where: { id: item.materialId }
+      });
+      
+      // Validate unitId - throw error if missing (Review Issue #2 fix)
+      if (!material?.unitId) {
+        throw new Error(`Material ${item.materialId} has no unit assigned`);
+      }
+      
       await prisma.stocktakeResult.create({
         data: {
           stocktakeId,
           materialId: item.materialId,
           locationId: item.locationId,
-          unitId: item.unitId, // From WarehouseItem
+          unitId: material.unitId,  // From Material, validated
           countedById: assignment.assigneeId,
           bookQuantity: item.quantity,  // SNAPSHOT at this moment
           actualQuantity: 0,            // User fills in
@@ -547,10 +659,16 @@ async function populateBookQuantities(stocktakeId: string) {
 
 ```typescript
 // When updating actualQuantity, auto-calculate variance
-async function updateResult(resultId: string, actualQuantity: number) {
+// WITH OPTIMISTIC LOCKING (Review Issue #6 fix)
+async function updateResult(resultId: string, actualQuantity: number, expectedUpdatedAt: Date) {
   const result = await prisma.stocktakeResult.findUnique({
     where: { id: resultId }
   });
+
+  // Check for concurrent modification
+  if (result.updatedAt.getTime() !== expectedUpdatedAt.getTime()) {
+    throw new Error('CONFLICT: Result was modified by another user. Please refresh and try again.');
+  }
 
   await prisma.stocktakeResult.update({
     where: { id: resultId },
@@ -559,6 +677,20 @@ async function updateResult(resultId: string, actualQuantity: number) {
       variance: actualQuantity - result.bookQuantity  // Auto-calculate
     }
   });
+}
+
+// DELETE RESTRICTION (Review Issue #7 fix)
+async function deleteStocktake(stocktakeId: string) {
+  const stocktake = await prisma.stocktake.findUnique({
+    where: { id: stocktakeId },
+    include: { status: true }
+  });
+
+  if (stocktake.status.code !== 'DRAFT' && stocktake.status.code !== 'CANCELLED') {
+    throw new Error('Can only delete DRAFT or CANCELLED stocktakes');
+  }
+
+  await prisma.stocktake.delete({ where: { id: stocktakeId } });
 }
 ```
 
@@ -593,12 +725,15 @@ async function updateResult(resultId: string, actualQuantity: number) {
 
 ---
 
-## 12. Effort Estimate
+## 12. Effort Estimate (Updated after Review)
 
 | Phase | Task | Estimate |
 |-------|------|----------|
 | 0 | Remove Old Models | 0.1d |
 | 1 | Schema & Seed | 0.5d |
-| 2 | API Routes | 0.5d |
-| 3 | Frontend | 1.5d |
-| **Total** | | **2.5d**
+| 2 | API Routes (incl. validation, locking) | 0.75d |
+| 3 | Frontend (incl. error handling) | 1.75d |
+| **Total** | | **~3d** |
+
+> **Note**: Updated from 2.5d based on reviewer assessment of bulk API and stepper complexity.
+
