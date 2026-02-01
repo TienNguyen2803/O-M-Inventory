@@ -63,8 +63,10 @@ model [TableName] {
 | | ActivityAction | `activity_actions` | 6 |
 | **TỔ CHỨC** | | | |
 | | Department | `departments` | 8 |
+| **XUẤT XỨ** | | | |
+| | Country | `countries` | - |
 
-**Tổng: 101 master data records**
+**Tổng: 25 Master Data Tables**
 
 ---
 
@@ -114,6 +116,25 @@ model Material {
 > - `countryId` → FK to `Country` (xuất xứ)
 > - Removed: `managementType`, `category`, `unit`, `status`, `origin` string columns
 
+### Country (Xuất xứ)
+
+```prisma
+model Country {
+  id        String   @id @default(uuid())
+  code      String   @unique
+  name      String
+  color     String?
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  materials Material[]
+
+  @@map("countries")
+}
+```
+
 ### Supplier (Nhà cung cấp)
 
 ```prisma
@@ -139,15 +160,28 @@ model WarehouseLocation {
   id         String   @id @default(uuid())
   code       String   @unique
   name       String
-  area       String
-  type       String
-  status     String   @default("Active")
+
+  // FK Relations to Master Data
+  areaId     String
+  typeId     String
+  statusId   String
+
+  warehouseArea   WarehouseArea   @relation(fields: [areaId], references: [id])
+  warehouseType   WarehouseType   @relation(fields: [typeId], references: [id])
+  warehouseStatus WarehouseStatus @relation(fields: [statusId], references: [id])
+
   barcode    String?
   maxWeight  Float?
   dimensions String?
   items      WarehouseItem[]
 }
 ```
+
+> **Note**: WarehouseLocation model has been refactored to use FK relations:
+> - `areaId` -> FK to `WarehouseArea`
+> - `typeId` -> FK to `WarehouseType`
+> - `statusId` -> FK to `WarehouseStatus`
+> - Removed: `area`, `type`, `status` string columns
 
 ### Material Request (Yêu cầu vật tư)
 

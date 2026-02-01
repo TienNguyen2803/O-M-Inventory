@@ -16,10 +16,11 @@ The application uses the App Router structure with distinct modules:
 
 | Directory | Module | Status | Description |
 |-----------|--------|--------|-------------|
-| `api/` | **API Routes** | ✅ **Real** | REST endpoints for Auth, Users, Roles, Materials, Requests. Connected to Prisma. |
+| `api/` | **API Routes** | ✅ **Real** | REST endpoints for Auth, Users, Roles, Materials, Requests, Warehouse Locations. Connected to Prisma. |
 | `materials/` | **Materials** | ✅ **Real** | Full CRUD for materials. Fetches data from API. |
 | `material-requests/` | **Requests** | ✅ **Real** | Request creation and approval workflow. Connected to DB. |
-| `inbound/` | **Inbound** | 🚧 **Mock** | UI prototype for inbound shipments. No API backend yet. |
+| `warehouses/` | **Warehouse Locations** | ✅ **Real** | Full CRUD with FK relations. Uses Zod validation. |
+| `inbound/` | **Inbound** | 🚧 **Mock** | UI prototype for inbound shipments. Partial API. |
 | `outbound/` | **Outbound** | 🚧 **Mock** | UI prototype for outbound vouchers. No API backend yet. |
 | `lifecycle/` | **Lifecycle** | 🚧 **Mock** | Timeline view of material history. Uses mock data. |
 | `reports/` | **Reports** | ⚠️ **Hybrid** | UI exists, but calculation logic is client-side heavy. |
@@ -27,9 +28,13 @@ The application uses the App Router structure with distinct modules:
 
 ### `src/lib` (Utilities)
 
-- **`data.ts`**: ⚠️ **Legacy/Mock Data**. A large file containing static data used by the prototype modules (Inbound, Outbound, Dashboard). This needs to be phased out as backend services are implemented.
+- **`data.ts`**: ⚠️ **Legacy/Mock Data** (1435 LOC). Large file containing static data used by prototype modules (Inbound, Outbound, Dashboard). Needs refactoring and deprecation as backend services are implemented.
 - **`prisma.ts`**: Database client instance.
 - **`utils.ts`**: Common utility functions (CN for Tailwind, formatters).
+- **`types.ts`**: TypeScript type definitions.
+- **`validations/`**: Zod validation schemas for API endpoints.
+  - `inbound.ts`: Inbound receipt validation.
+  - `warehouse-location.ts`: Warehouse location CRUD validation.
 
 ### `prisma/` (Database)
 
@@ -54,9 +59,12 @@ The application uses the App Router structure with distinct modules:
 
 ## Critical Technical Debt
 
-1.  **`src/lib/data.ts` dependency**: The prototype modules rely heavily on this file. It must be maintained until the backend APIs for Inbound/Outbound are ready.
-2.  **Client-side Reports**: Reporting logic happens in the browser, which will not scale with real data volume. Needs migration to Server-side aggregation (Prisma `groupBy` / Raw SQL).
-3.  **Missing API Routes**: `inbound`, `outbound`, and `stock-take` modules have UI but no backend logic.
+1.  **`src/lib/data.ts` dependency** (1435 LOC): Large legacy file. Prototype modules rely on this. Must be maintained until backend APIs for Inbound/Outbound are ready. Consider splitting by domain.
+2.  **`src/hooks/use-permissions.ts`** (535 LOC): Contains 6 hooks in 1 file. Needs splitting into separate files.
+3.  **Client-side Reports**: Reporting logic happens in browser. Will not scale with real data. Needs migration to server-side aggregation (Prisma `groupBy` / Raw SQL).
+4.  **Missing API Routes**: `outbound` and `stock-take` modules have UI but no backend logic.
+5.  **Inconsistent API Validation**: Only `inbound` and `warehouse-locations` use Zod validation. Others need migration.
+6.  **No Auth Middleware**: API routes lack authentication middleware. Security hardening needed.
 
 ## Module Detail: Materials (Reference Implementation)
 The `src/app/materials` module serves as the **gold standard** for the rest of the app:

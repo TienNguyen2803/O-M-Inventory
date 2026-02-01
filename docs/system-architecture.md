@@ -35,7 +35,7 @@ PowerTrack Logistics là hệ thống quản lý vật tư O&M (Operation & Main
 │  ┌──────────────────────────────────────────────────────┐   │
 │  │           PostgreSQL (Docker Container)               │   │
 │  │  ┌──────────────────┐  ┌───────────────────────────┐ │   │
-│  │  │ 24 Master Tables │  │  Business Data Tables     │ │   │
+│  │  │ 25 Master Tables │  │  Business Data Tables     │ │   │
 │  │  └──────────────────┘  └───────────────────────────┘ │   │
 │  └──────────────────────────────────────────────────────┘   │
 └─────────────────────────────────────────────────────────────┘
@@ -129,7 +129,7 @@ The system is currently transitioning from a prototype to a fully connected appl
 
 ### Master Data API
 
-Generic API cho quản lý 24 bảng master data:
+Generic API cho quản lý 25 bảng master data:
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
@@ -139,7 +139,7 @@ Generic API cho quản lý 24 bảng master data:
 | PUT | `/api/master-data/{tableId}/{id}` | Cập nhật item |
 | DELETE | `/api/master-data/{tableId}/{id}` | Xóa item (soft delete) |
 
-**tableId** là một trong 24 giá trị:
+**tableId** là một trong 25 giá trị:
 - Vật tư: `material-status`, `material-category`, `material-unit`, `management-type`
 - Kho: `warehouse-area`, `warehouse-type`, `warehouse-status`
 - Nhà cung cấp: `supplier-type`, `payment-term`, `currency`
@@ -151,6 +151,7 @@ Generic API cho quản lý 24 bảng master data:
 - Kiểm kê: `stocktake-status`, `stocktake-area`
 - Người dùng & Nhật ký: `user-status`, `activity-action`
 - Tổ chức: `department`
+- Xuất xứ: `country`
 
 ---
 
@@ -165,6 +166,56 @@ Generic API cho quản lý 24 bảng master data:
 | `useDepartments()` | Fetch departments cho dropdowns |
 | `useMaterialRequests()` | CRUD operations cho Material Request với pagination, search, filter |
 | `useRoleUsers(roleId)` | CRUD operations cho gán User vào Role |
+
+---
+
+## Warehouse Location API
+
+API cho quản lý vị trí kho với FK relations đến master data:
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/warehouse-locations` | Danh sách vị trí kho (pagination, search, filter) |
+| POST | `/api/warehouse-locations` | Tạo vị trí kho mới |
+| GET | `/api/warehouse-locations/{id}` | Chi tiết 1 vị trí kho |
+| PUT | `/api/warehouse-locations/{id}` | Cập nhật vị trí kho |
+| DELETE | `/api/warehouse-locations/{id}` | Xóa vị trí kho |
+
+### Request Body (POST/PUT)
+
+```json
+{
+  "code": "A1-01",
+  "name": "Kệ A1 Tầng 1",
+  "areaId": "uuid",
+  "typeId": "uuid",
+  "statusId": "uuid",
+  "barcode": "WH-A1-01",
+  "maxWeight": 500.0,
+  "dimensions": "2x1x3m"
+}
+```
+
+### Response Format (GET list)
+
+```json
+{
+  "data": [{
+    "id": "uuid",
+    "code": "A1-01",
+    "name": "Kệ A1 Tầng 1",
+    "areaId": "area-uuid",
+    "typeId": "type-uuid",
+    "statusId": "status-uuid",
+    "warehouseArea": { "id": "...", "name": "Khu vực A" },
+    "warehouseType": { "id": "...", "name": "Kệ thường" },
+    "warehouseStatus": { "id": "...", "name": "Đang sử dụng" }
+  }],
+  "pagination": { "page": 1, "limit": 10, "total": 20, "totalPages": 2 }
+}
+```
+
+> **Note**: Warehouse Location API uses FK relations. Client sends IDs, API returns nested objects.
 
 ---
 

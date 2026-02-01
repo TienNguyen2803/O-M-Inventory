@@ -61,7 +61,8 @@ The application is currently in a **Hybrid State**:
 | **Materials** | ✅ Live | Connected to DB. Full CRUD. |
 | **Requests** | ✅ Live | Connected to DB. Approval workflow. |
 | **Users/Roles**| ✅ Live | RBAC System fully functional. |
-| **Inbound** | 🚧 Prototype | UI only. Mock data. |
+| **Warehouse Locations** | ✅ Live | Full CRUD with FK relations. |
+| **Inbound** | 🚧 Prototype | UI + partial API. Mock data. |
 | **Outbound** | 🚧 Prototype | UI only. Mock data. |
 | **Reports** | ⚠️ Hybrid | UI exists, calculations are client-side. |
 
@@ -73,11 +74,13 @@ src/
 │   ├── api/                # Backend API Routes (Real)
 │   ├── materials/          # Materials Module (Real)
 │   ├── material-requests/  # Request Module (Real)
+│   ├── warehouses/         # Warehouse Locations (Real)
 │   ├── inbound/            # Inbound Module (Prototype)
 │   └── ...
 ├── components/             # Shadcn UI & Shared Components
 ├── lib/
 │   ├── prisma.ts           # DB Client
+│   ├── validations/        # Zod validation schemas
 │   └── data.ts             # ⚠️ Legacy/Mock Data (to be deprecated)
 └── ...
 ```

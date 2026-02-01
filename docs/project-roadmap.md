@@ -19,6 +19,10 @@
     - [x] Request Creation.
     - [x] Approval Workflow.
     - [x] Status Tracking.
+- [x] **Warehouse Locations**:
+    - [x] CRUD Operations with FK relations.
+    - [x] Zod validation schema.
+    - [x] Master Data Integration (Area, Type, Status).
 - [ ] **Inbound Logistics (Goods Receipt)**:
     - [x] UI Prototypes (Mock Data).
     - [ ] **Backend API**: Implement `/api/inbound`.
@@ -54,7 +58,8 @@
 | Materials | ✅ Ready | ✅ Ready | - |
 | Users/Roles | ✅ Ready | ✅ Ready | - |
 | Requests | ✅ Ready | ✅ Ready | - |
-| Inbound | 🚧 Prototype | ❌ Missing | High |
+| Warehouse Locations | ✅ Ready | ✅ Ready | - |
+| Inbound | 🚧 Prototype | ⚠️ Partial | High |
 | Outbound | 🚧 Prototype | ❌ Missing | High |
 | Reports | ⚠️ Hybrid | ❌ Mock Data | Medium |
 | Dashboard | 🚧 Prototype | ❌ Mock Data | Medium |

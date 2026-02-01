@@ -26,7 +26,15 @@ To provide a comprehensive, real-time inventory management solution for power pl
     - Status tracking (Pending, Approved, Rejected).
 - **Current State:** Functional API and UI.
 
-### 2.3 Inbound Logistics (🚧 Prototype)
+### 2.3 Warehouse Locations (✅ Live)
+**Goal:** Manage warehouse storage locations and zones.
+- **Features:**
+    - CRUD operations for warehouse locations.
+    - FK relations to master data (Area, Type, Status).
+    - Barcode/QR support, weight/dimension tracking.
+- **Current State:** Full CRUD with API backend. Uses Zod validation.
+
+### 2.4 Inbound Logistics (🚧 Prototype)
 **Goal:** Manage the receipt of goods into warehouses.
 - **Requirements:**
     - Create Goods Receipt Notes (GRN).
@@ -35,7 +43,7 @@ To provide a comprehensive, real-time inventory management solution for power pl
     - Batch/Serial number recording.
 - **Current State:** UI Mockups available. No backend logic.
 
-### 2.4 Outbound Logistics (🚧 Prototype)
+### 2.5 Outbound Logistics (🚧 Prototype)
 **Goal:** Control the issuance of materials to plant subsystems.
 - **Requirements:**
     - Create Goods Issue Vouchers (GIV).
@@ -43,7 +51,7 @@ To provide a comprehensive, real-time inventory management solution for power pl
     - Cost center allocation.
 - **Current State:** UI Mockups available. No backend logic.
 
-### 2.5 Reports & Analytics (⚠️ Hybrid)
+### 2.6 Reports & Analytics (⚠️ Hybrid)
 **Goal:** Operational insights and inventory valuation.
 - **Requirements:**
     - Stock Level Reports.

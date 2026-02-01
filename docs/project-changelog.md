@@ -8,9 +8,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Planned
-- Inbound Logistics API implementation.
+- Inbound Logistics API completion.
 - Outbound Logistics API implementation.
 - Server-side reporting engine.
+
+## [1.1.0] - 2026-02-01
+
+### Added
+- **Warehouse Locations Module**: Full CRUD with FK relations to master data (Area, Type, Status).
+- **Zod Validation Schemas**: `src/lib/validations/` directory with validation for warehouse-location and inbound.
+- **Warehouse Locations API**: GET/POST `/api/warehouse-locations`, GET/PUT/DELETE `/api/warehouse-locations/[id]`.
+- **Country Master Data**: Added Country table for material origin tracking.
+
+### Changed
+- **WarehouseLocation Schema**: Refactored from string columns (`area`, `type`, `status`) to FK relations (`areaId`, `typeId`, `statusId`).
+- **Master Data Count**: Updated from 24 to 25 tables (added Country).
+
+### Fixed
+- Minor calendar and client component fixes.
 
 ## [1.0.0] - 2026-02-01
 
