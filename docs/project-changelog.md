@@ -7,114 +7,101 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Planned
+- Inbound stock increase logic on receipt
+- Server-side reporting engine with Prisma `groupBy`
+- Lifecycle tracking API integration
+
+---
+
+## [1.4.0] - 2026-02-01
+
 ### Added
-- **Outbound Management Module**: Full goods issue workflow implementation:
-  - `OutboundReceipt` model with FK relations to OutboundPurpose, OutboundStatus, User, Department.
-  - `OutboundReceiptItem` model with FK to Material, MaterialUnit, WarehouseLocation.
-  - CRUD API endpoints at `/api/outbound`.
-  - Approve endpoint `/api/outbound/{id}/approve`.
-  - Issue endpoint `/api/outbound/{id}/issue` with stock decrement logic.
-  - Frontend list and form components.
-  - 12 seed records for testing.
-- **Inbound FK Refactoring**: Complete migration from string columns to FK relations:
-  - `typeId` -> FK to `InboundType`
-  - `supplierId` -> FK to `Supplier`
-  - `statusId` -> FK to `InboundStatus`
-  - Removed: `inboundType`, `partner`, `status` string columns.
-- **Bidding Scope Items Editor**: New component for managing scope items in bidding packages.
+- **Stocktake Management Module**: Full physical inventory counting implementation:
+  - `Stocktake` model with FK relations to StocktakeStatus, StocktakeArea, User
+  - `StocktakeAssignment` for location-based counting assignments
+  - `StocktakeResult` for counting results with variance tracking
+  - CRUD API endpoints at `/api/stocktake`
+  - Workflow endpoints: `/start`, `/reconcile`, `/complete`
+  - Assignment management: GET/POST/PUT/DELETE
+  - Results management: GET/POST/PUT with bulk update support
+  - Zod validation schemas in `src/lib/validations/stocktake.ts`
+  - Auto-generated codes: `KK-YYYY-XXX`
+  - 10 seed records for testing
+- **Lifecycle Tracking Plan**: Added lifecycle management plan for material tracing
 
 ### Changed
-- **InboundReceipt Schema**: Refactored to use normalized FK relations.
-- **Inbound API**: Updated to accept FK IDs instead of string values.
-- **Master Data Count**: Updated from 25 to 27 tables (added FundingSource, MaterialOrigin).
-- **Outbound Module Status**: Migrated from Mock/Prototype to fully connected.
+- **Outbound Module**: Improved form component structure and organization
+- **Documentation**: Updated system-architecture.md, trimmed from 866 to 334 lines
 
-### Planned
-- Inbound stock increase logic on receipt.
-- Stock Take API implementation (still uses string columns).
-- Server-side reporting engine.
+---
+
+## [1.3.1] - 2026-02-01
+
+### Added
+- **Outbound Management Module**: Full goods issue workflow:
+  - `OutboundReceipt` model with FK relations
+  - `OutboundReceiptItem` with FK to Material, Unit, Location
+  - CRUD API at `/api/outbound`
+  - Approve/Issue endpoints with stock decrement logic
+  - 12 seed records
+
+### Changed
+- **Inbound FK Refactoring**: Migrated from string columns to FK relations
+- **Master Data Count**: Updated to 24 tables (added StocktakeStatus, StocktakeArea)
 
 ---
 
 ## [1.3.0] - 2026-02-01
 
 ### Added
-- **Bidding Management Module**: Full bidding package workflow implementation:
-  - `BiddingPackage` model with FK relations to BiddingMethod, BiddingStatus, User (creator), Supplier (winner).
-  - `BiddingPurchaseRequest` N:M junction for linking Purchase Requests.
-  - `BiddingScopeItem` for managing bid scope items from PRs.
-  - `BiddingParticipant` for supplier participation with scoring (technical, price, total).
-  - `BidQuotation` for per-item quotations from participants.
-- **Bidding Packages API**: Full CRUD endpoints at `/api/bidding-packages`.
-  - Participants sub-API for managing invited suppliers.
-  - Winner selection endpoint `/api/bidding-packages/{id}/select-winner`.
-- **Bidding UI Components**: `bidding-form.tsx`, `bidding-participants-section.tsx`, `bidding-quotation-dialog.tsx`, `bidding-workflow-step-actions.tsx`, `bidding-scope-items-editor.tsx`.
-- **PurchaseRequest FK Relations**: Refactored from string columns to FK relations:
-  - `requesterId` → FK to User
-  - `departmentId` → FK to Department
-  - `statusId` → FK to RequestStatus
-  - `sourceId` → FK to MaterialOrigin
-  - `fundingSourceId` → FK to FundingSource
-- **PurchaseRequestItem Model**: Items with FK relations to Material, MaterialUnit, Supplier.
-- **Purchase Requests API**: Full CRUD endpoints at `/api/purchase-requests`.
-- **MaterialRequestItem Model**: Items list with FK relations to Material, MaterialUnit.
-- **Inbound API**: CRUD endpoints at `/api/inbound` with FK relations to InboundType, Supplier, InboundStatus.
+- **Bidding Management Module**: Full bidding package workflow:
+  - `BiddingPackage` with FK to BiddingMethod, BiddingStatus, User, Supplier
+  - `BiddingPurchaseRequest` N:M junction
+  - `BiddingScopeItem`, `BiddingParticipant`, `BidQuotation`
+  - Full CRUD API with participants and winner selection
+  - UI: form, participants, quotation dialog, stepper, scope items editor
+- **PurchaseRequest FK Relations**: Refactored to use FK
+- **Inbound API**: CRUD at `/api/inbound`
 
 ### Changed
-- **MaterialRequest Schema**: Refactored from string columns to FK relations:
-  - `requesterId` → FK to User (người yêu cầu)
-  - `departmentId` → FK to Department
-  - `priorityId` → FK to RequestPriority
-  - `statusId` → FK to RequestStatus
-  - `approverId` → FK to User (người duyệt)
-- **MaterialRequest API**: Updated filters to use FK IDs (`departmentId`, `priorityId`, `statusId`) instead of string values.
-- **MaterialRequest Items**: Cascade delete on request deletion.
+- **MaterialRequest Schema**: Refactored to FK relations
+- **MaterialRequest API**: Updated filters to use FK IDs
 
-### Planned
-- Outbound Logistics API implementation.
-- Stock Take API implementation.
-- Server-side reporting engine.
+---
 
 ## [1.2.0] - 2026-02-01
 
 ### Added
-- **Suppliers Management Module**: Full CRUD with FK relations to master data (Country, Type, PaymentTerm, Currency).
-- **SupplierContact Model**: Nested contacts management with cascade delete.
-- **Suppliers API**: GET/POST `/api/suppliers`, GET/PUT/DELETE `/api/suppliers/[id]`.
-- **Transactional Updates**: PUT supplier uses database transaction to atomically replace contacts.
+- **Suppliers Management**: Full CRUD with FK relations and contacts
+- **Transactional Updates**: PUT supplier uses transaction
 
 ### Changed
-- **Supplier Schema**: Refactored from string columns (`country`, `type`, `paymentTerm`, `currency`) to FK relations (`countryId`, `typeId`, `paymentTermId`, `currencyId`).
-- **Documentation**: Updated all docs to reflect Suppliers module completion.
+- **Supplier Schema**: Refactored from string columns to FK
+
+---
 
 ## [1.1.0] - 2026-02-01
 
 ### Added
-- **Warehouse Locations Module**: Full CRUD with FK relations to master data (Area, Type, Status).
-- **Zod Validation Schemas**: `src/lib/validations/` directory with validation for warehouse-location and inbound.
-- **Warehouse Locations API**: GET/POST `/api/warehouse-locations`, GET/PUT/DELETE `/api/warehouse-locations/[id]`.
-- **Country Master Data**: Added Country table for material origin tracking.
+- **Warehouse Locations Module**: Full CRUD with FK relations
+- **Zod Validation**: `src/lib/validations/` directory
+- **Country Master Data**: Added for origin tracking
 
 ### Changed
-- **WarehouseLocation Schema**: Refactored from string columns (`area`, `type`, `status`) to FK relations (`areaId`, `typeId`, `statusId`).
-- **Master Data Count**: Updated from 24 to 25 tables (added Country).
+- **WarehouseLocation Schema**: Refactored to FK relations
 
-### Fixed
-- Minor calendar and client component fixes.
+---
 
 ## [1.0.0] - 2026-02-01
 
 ### Added
-- **Materials Management**: Full CRUD, search, filtering, and master data integration.
-- **Material Requests**: Request creation and approval workflow.
-- **User Management**: Users, Roles, Permissions (RBAC) with normalized database schema.
-- **Documentation**: Comprehensive documentation suite including PDR, Architecture, and Guides.
-- **UI Prototypes**: Inbound, Outbound, Stock Take, and Dashboard (Mock data).
+- **Materials Management**: Full CRUD with master data
+- **Material Requests**: Request creation and approval
+- **User Management**: Users, Roles, Permissions (RBAC)
+- **Documentation**: PDR, Architecture, Guides
+- **UI Prototypes**: Inbound, Outbound, Stock Take, Dashboard
 
 ### Changed
-- **Database Schema**: Refactored `User`, `Role`, and `Material` tables to use Foreign Key relations instead of loose string columns.
-- **Permissions**: Migrated from JSON-based permissions to normalized `RoleFeatureAction` many-to-many relationship.
-- **Project Structure**: Established `src/app` router structure with distinct feature modules.
-
-### Fixed
-- N/A (Initial release versioning).
+- **Database Schema**: Refactored to FK relations
+- **Permissions**: Migrated to normalized `RoleFeatureAction`

@@ -2,7 +2,7 @@
 
 ## Overview
 
-PowerTrack Logistics là hệ thống quản lý vật tư O&M (Operation & Maintenance) cho nhà máy điện, xây dựng trên kiến trúc modern full-stack.
+PowerTrack Logistics is an O&M (Operation & Maintenance) inventory management system for power plants, built on a modern full-stack architecture.
 
 ## Architecture Diagram
 
@@ -13,7 +13,7 @@ PowerTrack Logistics là hệ thống quản lý vật tư O&M (Operation & Main
 │  │              Next.js 15.5 App Router                  │   │
 │  │  ┌────────────┐  ┌────────────┐  ┌────────────────┐  │   │
 │  │  │   Pages    │  │ Components │  │   API Routes   │  │   │
-│  │  │ (21 routes)│  │    (36+)   │  │  (32+ routes)  │  │   │
+│  │  │ (21 routes)│  │    (36+)   │  │  (44+ routes)  │  │   │
 │  │  └────────────┘  └────────────┘  └────────────────┘  │   │
 │  └──────────────────────────────────────────────────────┘   │
 └─────────────────────────────────────────────────────────────┘
@@ -35,7 +35,7 @@ PowerTrack Logistics là hệ thống quản lý vật tư O&M (Operation & Main
 │  ┌──────────────────────────────────────────────────────┐   │
 │  │           PostgreSQL (Docker Container)               │   │
 │  │  ┌──────────────────┐  ┌───────────────────────────┐ │   │
-│  │  │ 27 Master Tables │  │  Business Data Tables     │ │   │
+│  │  │ 24 Master Tables │  │  Business Data Tables     │ │   │
 │  │  └──────────────────┘  └───────────────────────────┘ │   │
 │  └──────────────────────────────────────────────────────┘   │
 └─────────────────────────────────────────────────────────────┘
@@ -52,41 +52,32 @@ PowerTrack Logistics là hệ thống quản lý vật tư O&M (Operation & Main
 | UI Library | Radix UI + shadcn/ui | Latest |
 | ORM | Prisma | 7.3.0 |
 | Database | PostgreSQL | 15+ |
-| Database Adapter | @prisma/adapter-pg | 7.3.0 |
+| AI | Firebase Genkit + Gemini 2.5 Flash | Latest |
 
-## Key Components
-
-### Frontend Pages (21 routes)
+## Frontend Pages (21 routes)
 
 | Route | Description |
 |-------|-------------|
 | `/` | Dashboard |
-| `/login` | Đăng nhập |
-| `/profile` | Hồ sơ người dùng |
-| `/materials` | Quản lý vật tư |
-| `/suppliers` | Quản lý nhà cung cấp |
-| `/warehouses` | Quản lý vị trí kho |
-| `/material-requests` | Yêu cầu vật tư |
-| `/purchase-requests` | Yêu cầu mua sắm |
-| `/biddings` | Quản lý đấu thầu |
-| `/inbound` | Nhập kho |
-| `/outbound` | Xuất kho |
-| `/stock-take` | Kiểm kê |
-| `/reports/inventory` | Báo cáo tồn kho |
-| `/reports/safety-stock` | Cảnh báo tồn kho an toàn |
-| `/reports/slow-moving` | Báo cáo hàng chậm luân chuyển |
-| `/users` | Quản lý người dùng |
-| `/roles` | Quản lý vai trò |
-| `/settings` | Cài đặt hệ thống |
-| `/activity-log` | Nhật ký hoạt động |
-| `/lifecycle` | Vòng đời vật tư |
-| `/goods-history` | Lịch sử hàng hóa |
-
-### Database Layer
-
-- **27 Master Data Tables**: Các bảng lookup data riêng biệt, dễ mở rộng
-- **Business Tables**: Materials, Suppliers, Warehouses, Requests, etc.
-- **Prisma 7 với PostgreSQL Adapter**: Sử dụng `@prisma/adapter-pg` cho connection pooling
+| `/login` | Authentication |
+| `/profile` | User profile |
+| `/materials` | Material catalog management |
+| `/suppliers` | Supplier management |
+| `/warehouses` | Warehouse location management |
+| `/material-requests` | Material requisition workflow |
+| `/purchase-requests` | Procurement workflow |
+| `/biddings` | Bidding package management |
+| `/inbound` | Goods receipt (GRN) |
+| `/outbound` | Goods issue (GIV) |
+| `/stock-take` | Physical inventory counting |
+| `/reports/inventory` | Inventory report |
+| `/reports/safety-stock` | Safety stock alerts |
+| `/reports/slow-moving` | Slow-moving items |
+| `/users` | User management |
+| `/roles` | Role management |
+| `/settings` | Master data configuration |
+| `/activity-log` | Audit log |
+| `/lifecycle` | Material lifecycle tracking |
 
 ## Data Flow
 
@@ -98,30 +89,21 @@ User Action → React Component → API Route → Prisma Client → PostgreSQL
 
 ## Architectural Patterns
 
-### Hybrid Implementation Strategy
-The system is currently transitioning from a prototype to a fully connected application.
-
-1.  **Fully Connected Modules** (Materials, Requests, Biddings, Suppliers, Warehouses, Inbound, Outbound, Auth):
-    - Follow standard **Next.js App Router** patterns.
-    - **Server Components** for initial data fetch (where possible) or Skeleton loaders.
-    - **Client Components** for interactivity (Forms, Tables) fetching data via `fetch` or `SWR` from `/api/*` endpoints.
-    - **API Routes** handle business logic and DB interaction via Prisma.
-
-2.  **Prototype Modules** (Stock Take, Dashboard):
-    - UI Components are built but feed on **Mock Data** (`src/lib/data.ts`).
-    - No backend integration yet.
-    - *Architecture Goal*: Migrate these to the Connected pattern.
+### Component Architecture
+- **Server Components**: Data fetching, layout structure
+- **Client Components**: Interactivity, forms, tables (with `"use client"`)
+- **API Routes**: Business logic, database operations via Prisma
 
 ### State Management
-- **Server State**: Managed via `React Query` / `SWR` (recommended) or simple `useEffect` fetchers in Client Components.
-- **Form State**: `react-hook-form` + `zod` validation.
-- **Global State**: Minimal. URL Search Params are used for sharing state (filters, pagination).
+- **Server State**: SWR / useEffect fetchers from `/api/*`
+- **Form State**: react-hook-form + Zod validation
+- **Global State**: URL search params for filters/pagination
 
 ## Configuration Files
 
 | File | Purpose |
 |------|---------|
-| `prisma.config.ts` | Prisma 7 config (datasource, seed command) |
+| `prisma.config.ts` | Prisma 7 config (datasource, seed) |
 | `prisma/schema.prisma` | Database schema definition |
 | `docker-compose.yml` | PostgreSQL container |
 | `tailwind.config.ts` | Tailwind CSS configuration |
@@ -129,33 +111,179 @@ The system is currently transitioning from a prototype to a fully connected appl
 
 ---
 
-## API Endpoints
+## API Endpoints Summary
 
 ### Master Data API
 
-Generic API cho quản lý 27 bảng master data:
+Generic API for 24 master data tables:
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/master-data/{tableId}` | Lấy danh sách items |
-| POST | `/api/master-data/{tableId}` | Tạo item mới |
-| GET | `/api/master-data/{tableId}/{id}` | Lấy 1 item |
-| PUT | `/api/master-data/{tableId}/{id}` | Cập nhật item |
-| DELETE | `/api/master-data/{tableId}/{id}` | Xóa item (soft delete) |
+| GET | `/api/master-data/{tableId}` | List items |
+| POST | `/api/master-data/{tableId}` | Create item |
+| GET | `/api/master-data/{tableId}/{id}` | Get item |
+| PUT | `/api/master-data/{tableId}/{id}` | Update item |
+| DELETE | `/api/master-data/{tableId}/{id}` | Soft delete |
 
-**tableId** là một trong 27 giá trị:
-- Vật tư: `material-status`, `material-category`, `material-unit`, `management-type`
-- Kho: `warehouse-area`, `warehouse-type`, `warehouse-status`
-- Nhà cung cấp: `supplier-type`, `payment-term`, `currency`
-- Yêu cầu vật tư: `request-priority`, `request-status`
-- Mua sắm: `purchase-source`, `purchase-status`
-- Đấu thầu: `bidding-method`, `bidding-status`
-- Nhập kho: `inbound-type`, `inbound-status`
-- Xuất kho: `outbound-purpose`, `outbound-status`
-- Kiểm kê: `stocktake-status`, `stocktake-area`
-- Người dùng & Nhật ký: `user-status`, `activity-action`
-- Tổ chức: `department`
-- Xuất xứ: `country`
+**tableId values**: `material-status`, `material-category`, `material-unit`, `management-type`, `warehouse-area`, `warehouse-type`, `warehouse-status`, `supplier-type`, `payment-term`, `currency`, `request-priority`, `request-status`, `purchase-source`, `purchase-status`, `bidding-method`, `bidding-status`, `inbound-type`, `inbound-status`, `outbound-purpose`, `outbound-status`, `stocktake-status`, `stocktake-area`, `user-status`, `activity-action`, `department`, `country`
+
+---
+
+### Materials API
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/materials` | List (pagination, search, filter by categoryId/statusId) |
+| POST | `/api/materials` | Create material |
+| GET | `/api/materials/{id}` | Get material |
+| PUT | `/api/materials/{id}` | Update material |
+| DELETE | `/api/materials/{id}` | Delete material |
+
+---
+
+### Warehouse Locations API
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/warehouse-locations` | List with FK relations |
+| POST | `/api/warehouse-locations` | Create location |
+| GET | `/api/warehouse-locations/{id}` | Get location |
+| PUT | `/api/warehouse-locations/{id}` | Update location |
+| DELETE | `/api/warehouse-locations/{id}` | Delete location |
+
+**FK Relations**: areaId → WarehouseArea, typeId → WarehouseType, statusId → WarehouseStatus
+
+---
+
+### Suppliers API
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/suppliers` | List with contacts |
+| POST | `/api/suppliers` | Create with contacts |
+| GET | `/api/suppliers/{id}` | Get with contacts |
+| PUT | `/api/suppliers/{id}` | Update (transactional) |
+| DELETE | `/api/suppliers/{id}` | Cascade delete contacts |
+
+**FK Relations**: countryId, typeId, paymentTermId, currencyId
+
+---
+
+### Users & Permissions API
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET/POST | `/api/users` | List/Create users |
+| GET/PUT/DELETE | `/api/users/{id}` | User CRUD |
+| GET/POST | `/api/roles` | List/Create roles |
+| GET/PUT/DELETE | `/api/roles/{id}` | Role CRUD |
+| GET/POST | `/api/roles/{id}/users` | Manage role members |
+| GET/POST | `/api/actions` | CRUD actions |
+| GET/POST | `/api/features` | CRUD features (grouped) |
+| GET/POST/DELETE | `/api/feature-actions` | Manage mappings |
+
+**Permission Model**: Role ↔ RoleFeatureAction ↔ FeatureAction ↔ Feature + Action
+
+---
+
+### Material Requests API
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/material-requests` | List with filters |
+| POST | `/api/material-requests` | Create with items |
+| GET | `/api/material-requests/{id}` | Get with items |
+| PUT | `/api/material-requests/{id}` | Update |
+| DELETE | `/api/material-requests/{id}` | Cascade delete items |
+| POST | `/api/material-requests/{id}/approve` | Approve/Reject |
+
+**FK Relations**: requesterId, departmentId, priorityId, statusId, approverId
+
+---
+
+### Purchase Requests API
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/purchase-requests` | List with filters |
+| POST | `/api/purchase-requests` | Create with items |
+| GET | `/api/purchase-requests/{id}` | Get with items |
+| PUT | `/api/purchase-requests/{id}` | Update |
+| DELETE | `/api/purchase-requests/{id}` | Cascade delete items |
+
+**FK Relations**: requesterId, departmentId, statusId, sourceId, fundingSourceId
+
+---
+
+### Bidding Packages API
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/bidding-packages` | List packages |
+| POST | `/api/bidding-packages` | Create with PRs, scope items |
+| GET | `/api/bidding-packages/{id}` | Get package (id=packageCode) |
+| PUT | `/api/bidding-packages/{id}` | Update package |
+| DELETE | `/api/bidding-packages/{id}` | Cascade delete |
+| GET/POST | `/api/bidding-packages/{id}/participants` | Manage participants |
+| PATCH | `/api/bidding-packages/{id}/participants` | Update scores/quotations |
+| DELETE | `/api/bidding-packages/{id}/participants?participantId=...` | Remove participant |
+| POST | `/api/bidding-packages/{id}/select-winner` | Select winner |
+
+**Workflow**: Invite → Receive → Evaluate → Done
+
+---
+
+### Inbound API
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/inbound` | List receipts |
+| POST | `/api/inbound` | Create receipt |
+| GET | `/api/inbound/{id}` | Get receipt |
+| PUT | `/api/inbound/{id}` | Update receipt |
+| DELETE | `/api/inbound/{id}` | Delete receipt |
+
+**FK Relations**: typeId → InboundType, supplierId → Supplier, statusId → InboundStatus
+
+---
+
+### Outbound API
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/outbound` | List vouchers |
+| POST | `/api/outbound` | Create voucher |
+| GET | `/api/outbound/{id}` | Get voucher |
+| PUT | `/api/outbound/{id}` | Update voucher |
+| DELETE | `/api/outbound/{id}` | Delete voucher |
+| POST | `/api/outbound/{id}/approve` | Approve issue |
+| POST | `/api/outbound/{id}/issue` | Execute issue (decrement stock) |
+
+**Workflow**: Draft → Approved → Issued
+**FK Relations**: purposeId, statusId, requesterId, departmentId
+
+---
+
+### Stocktake API
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/stocktake` | List stocktakes |
+| POST | `/api/stocktake` | Create stocktake with assignments |
+| GET | `/api/stocktake/{id}` | Get stocktake details |
+| PUT | `/api/stocktake/{id}` | Update stocktake |
+| DELETE | `/api/stocktake/{id}` | Delete stocktake |
+| POST | `/api/stocktake/{id}/start` | Start counting |
+| POST | `/api/stocktake/{id}/reconcile` | Reconcile variances |
+| POST | `/api/stocktake/{id}/complete` | Complete stocktake |
+| GET/POST | `/api/stocktake/{id}/assignments` | Manage location assignments |
+| PUT/DELETE | `/api/stocktake/{id}/assignments/{assignId}` | Update/remove assignment |
+| GET/POST/PUT | `/api/stocktake/{id}/results` | Manage counting results |
+
+**Workflow**: Draft → In Progress → Reconciling → Completed
+**FK Relations**: statusId → StocktakeStatus, areaId → StocktakeArea, createdById → User
+
+**Code Pattern**: `KK-YYYY-XXX` (auto-generated)
 
 ---
 
@@ -163,704 +291,43 @@ Generic API cho quản lý 27 bảng master data:
 
 | Hook | Usage |
 |------|-------|
-| `useMasterData(tableId)` | CRUD operations cho master data tables |
-| `useUsers()` | CRUD cho users, roles, departments |
-| `usePermissions()` | Actions, features, feature-actions, roles management |
-| `useMaterialRequests()` | CRUD cho Material Request với FK relations |
+| `useMasterData(tableId)` | CRUD for master data tables |
+| `useUsers()` | CRUD for users, roles, departments |
+| `usePermissions()` | Actions, features, roles management |
+| `useMaterialRequests()` | Material request CRUD |
 | `useToast()` | Toast notifications |
 | `useMobile()` | Mobile breakpoint detection |
 
 ---
 
-## Warehouse Location API
+## Auto-Generated Codes
 
-API cho quản lý vị trí kho với FK relations đến master data:
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/warehouse-locations` | Danh sách vị trí kho (pagination, search, filter) |
-| POST | `/api/warehouse-locations` | Tạo vị trí kho mới |
-| GET | `/api/warehouse-locations/{id}` | Chi tiết 1 vị trí kho |
-| PUT | `/api/warehouse-locations/{id}` | Cập nhật vị trí kho |
-| DELETE | `/api/warehouse-locations/{id}` | Xóa vị trí kho |
-
-### Request Body (POST/PUT)
-
-```json
-{
-  "code": "A1-01",
-  "name": "Kệ A1 Tầng 1",
-  "areaId": "uuid",
-  "typeId": "uuid",
-  "statusId": "uuid",
-  "barcode": "WH-A1-01",
-  "maxWeight": 500.0,
-  "dimensions": "2x1x3m"
-}
-```
-
-### Response Format (GET list)
-
-```json
-{
-  "data": [{
-    "id": "uuid",
-    "code": "A1-01",
-    "name": "Kệ A1 Tầng 1",
-    "areaId": "area-uuid",
-    "typeId": "type-uuid",
-    "statusId": "status-uuid",
-    "warehouseArea": { "id": "...", "name": "Khu vực A" },
-    "warehouseType": { "id": "...", "name": "Kệ thường" },
-    "warehouseStatus": { "id": "...", "name": "Đang sử dụng" }
-  }],
-  "pagination": { "page": 1, "limit": 10, "total": 20, "totalPages": 2 }
-}
-```
-
-> **Note**: Warehouse Location API uses FK relations. Client sends IDs, API returns nested objects.
+| Entity | Pattern | Example |
+|--------|---------|---------|
+| Bidding Package | `TB-YYYY-XX` | TB-2026-01 |
+| Purchase Request | `PR-YYYY-XXX` | PR-2026-001 |
+| Material Request | `MR-YYYY-XXX` | MR-2026-001 |
+| Inbound Receipt | `NK-YYYY-XXX` | NK-2026-001 |
+| Outbound Voucher | `XK-YYYY-XXX` | XK-2026-001 |
+| Stocktake | `KK-YYYY-XXX` | KK-2026-001 |
 
 ---
 
-## Suppliers Management API
-
-API cho quản lý nhà cung cấp với FK relations và contacts management:
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/suppliers` | Danh sách nhà cung cấp (với relations) |
-| POST | `/api/suppliers` | Tạo nhà cung cấp mới (với contacts) |
-| GET | `/api/suppliers/{id}` | Chi tiết 1 nhà cung cấp |
-| PUT | `/api/suppliers/{id}` | Cập nhật nhà cung cấp (transactional) |
-| DELETE | `/api/suppliers/{id}` | Xóa nhà cung cấp (cascade delete contacts) |
-
-### Request Body (POST/PUT)
-
-```json
-{
-  "code": "SUP-001",
-  "taxCode": "0123456789",
-  "name": "ABC Company Ltd",
-  "address": "123 Main Street",
-  "countryId": "uuid",
-  "typeId": "uuid",
-  "paymentTermId": "uuid",
-  "currencyId": "uuid",
-  "status": "Active",
-  "contacts": [
-    {
-      "name": "John Doe",
-      "position": "Sales Manager",
-      "email": "john@abc.com",
-      "phone": "+84 123 456 789"
-    }
-  ]
-}
-```
-
-### Response Format (GET list/detail)
-
-```json
-{
-  "id": "uuid",
-  "code": "SUP-001",
-  "taxCode": "0123456789",
-  "name": "ABC Company Ltd",
-  "address": "123 Main Street",
-  "countryId": "country-uuid",
-  "typeId": "type-uuid",
-  "paymentTermId": "term-uuid",
-  "currencyId": "currency-uuid",
-  "status": "Active",
-  "country": { "id": "...", "name": "Vietnam" },
-  "supplierType": { "id": "...", "name": "Manufacturer" },
-  "paymentTerm": { "id": "...", "name": "Net 30" },
-  "currency": { "id": "...", "name": "VND" },
-  "contacts": [
-    {
-      "id": "contact-uuid",
-      "name": "John Doe",
-      "position": "Sales Manager",
-      "email": "john@abc.com",
-      "phone": "+84 123 456 789"
-    }
-  ]
-}
-```
-
-> **Note**: Suppliers API sử dụng FK relations và nested contacts. PUT operation sử dụng transaction để replace contacts.
-
----
-
-## Materials Management API
-
-API cho quản lý vật tư với FK relations đến master data:
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/materials` | Danh sách vật tư (pagination, search, filter) |
-| POST | `/api/materials` | Tạo vật tư mới |
-| GET | `/api/materials/{id}` | Chi tiết 1 vật tư |
-| PUT | `/api/materials/{id}` | Cập nhật vật tư |
-| DELETE | `/api/materials/{id}` | Xóa vật tư |
-
-### Query Parameters cho GET `/api/materials`
-
-| Param | Type | Description |
-|-------|------|-------------|
-| `page` | number | Số trang (mặc định: 1) |
-| `limit` | number | Số lượng mỗi trang (mặc định: 10) |
-| `search` | string | Tìm theo mã, tên, part number |
-| `categoryId` | string | Filter theo ID danh mục (FK) |
-| `statusId` | string | Filter theo ID trạng thái (FK) |
-| `managementTypeId` | string | Filter theo ID loại quản lý (FK) |
-
-### Response Format (GET list)
-
-```json
-{
-  "data": [{
-    "id": "uuid",
-    "code": "PM-TDH-001",
-    "name": "Cảm biến áp suất",
-    "categoryId": "cat-uuid",
-    "statusId": "status-uuid",
-    "unitId": "unit-uuid",
-    "managementTypeId": "mgmt-uuid",
-    "countryId": "country-uuid",
-    "materialCategory": { "id": "...", "name": "Phụ tùng TĐH" },
-    "materialStatus": { "id": "...", "name": "Mới" },
-    "materialUnit": { "id": "...", "name": "Cái" },
-    "managementType": { "id": "...", "name": "Serial" },
-    "country": { "id": "...", "name": "Nhật Bản" }
-  }],
-  "pagination": { "page": 1, "limit": 10, "total": 20, "totalPages": 2 }
-}
-```
-
-> **Note**: Materials API sử dụng FK relations thay vì string values. Client gửi IDs, API trả về nested objects.
-
----
-
-## User Management API
-
-API cho quản lý người dùng:
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/users` | Danh sách users (pagination, search, filter) |
-| POST | `/api/users` | Tạo user mới |
-| GET | `/api/users/{id}` | Chi tiết 1 user |
-| PUT | `/api/users/{id}` | Cập nhật user |
-| DELETE | `/api/users/{id}` | Xóa user |
-| GET | `/api/roles` | Danh sách vai trò |
-| GET | `/api/departments` | Danh sách phòng ban |
-
-### Query Parameters cho GET `/api/users`
-
-| Param | Type | Description |
-|-------|------|-------------|
-| `page` | number | Số trang (mặc định: 1) |
-| `limit` | number | Số lượng mỗi trang (mặc định: 10) |
-| `search` | string | Tìm theo mã NV, tên, email |
-| `departmentId` | string | Filter theo ID phòng ban (FK) |
-| `statusId` | string | Filter theo ID trạng thái (FK) |
-
-> **Note**: API đã được refactor để sử dụng FK IDs thay vì string values.
-
-## Permission Management API
-
-Hệ thống quản lý phân quyền chi tiết với 3 thực thể chính: **Actions**, **Features**, **Roles**.
-
-### Actions API
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/actions` | Danh sách actions |
-| POST | `/api/actions` | Tạo action mới |
-| PUT | `/api/actions/{id}` | Cập nhật action |
-| DELETE | `/api/actions/{id}` | Xóa action |
-
-**Actions mặc định**: Xem, Tạo, Sửa, Xóa, Duyệt
-
-### Features API
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/features` | Danh sách features |
-| GET | `/api/features?grouped=true` | Features theo nhóm |
-| POST | `/api/features` | Tạo feature mới |
-| PUT | `/api/features/{id}` | Cập nhật feature |
-| DELETE | `/api/features/{id}` | Xóa feature |
-
-**Feature Groups**: BÁO CÁO & PHÂN TÍCH, KẾ HOẠCH & MUA SẮM, NHẬP XUẤT KHO, DANH MỤC, HỆ THỐNG
-
-### Feature-Actions API
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/feature-actions` | Danh sách mappings |
-| POST | `/api/feature-actions` | Gán action cho feature |
-| DELETE | `/api/feature-actions?featureId=...&actionId=...` | Gỡ action khỏi feature |
-
-### Roles API
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/roles` | Danh sách vai trò |
-| POST | `/api/roles` | Tạo vai trò mới |
-| PUT | `/api/roles/{id}` | Cập nhật vai trò (bao gồm permissions) |
-| DELETE | `/api/roles/{id}` | Xóa vai trò |
-| GET | `/api/roles/{id}/users` | Danh sách users của vai trò |
-| POST | `/api/roles/{id}/users` | Gán users vào vai trò (body: `{userIds: string[]}`) |
-| DELETE | `/api/roles/{id}/users/{userId}` | Gỡ user khỏi vai trò |
-
-**Roles mặc định**: Quản trị hệ thống, Quản lý kho, Nhân viên kho, Kế toán, Người xem
-
-### Permission Structure (Normalized)
-
-Permissions được lưu trong bảng `RoleFeatureAction` (many-to-many relationship):
-
-```
-Role ↔ RoleFeatureAction ↔ FeatureAction ↔ Feature + Action
-```
-
-**API Response format** (khi GET Role):
-
-```json
-{
-  "id": "role-uuid",
-  "name": "Kế toán",
-  "roleFeatureActions": [
-    {
-      "id": "rfa-uuid",
-      "featureAction": {
-        "id": "fa-uuid",
-        "feature": { "code": "dashboard", "name": "Dashboard" },
-        "action": { "code": "view", "name": "Xem" }
-      }
-    }
-  ]
-}
-```
-
-> **Note**: Hệ thống đã được refactor từ JSON `permissions` field sang normalized `RoleFeatureAction` table.
-
----
-
-## Custom Hooks (Permission Management)
-
-| Hook | Usage |
-|------|-------|
-| `useActions()` | CRUD operations cho Actions |
-| `useFeatures(grouped?)` | CRUD operations cho Features |
-| `useFeatureActions()` | Manage feature-action mappings |
-| `useRolesManagement()` | CRUD operations cho Roles với permissions |
-| `useRoleUsers(roleId)` | Gán/gỡ users vào/khỏi Role |
-
----
-
-## Material Request API
-
-API cho quản lý yêu cầu vật tư với FK relations:
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/material-requests` | Danh sách yêu cầu (pagination, search, filter) |
-| POST | `/api/material-requests` | Tạo yêu cầu mới (transactional với items) |
-| GET | `/api/material-requests/{id}` | Chi tiết 1 yêu cầu |
-| PUT | `/api/material-requests/{id}` | Cập nhật yêu cầu |
-| DELETE | `/api/material-requests/{id}` | Xóa yêu cầu (cascade delete items) |
-| POST | `/api/material-requests/{id}/approve` | Duyệt/từ chối yêu cầu (body: `{approved, approverId}`) |
-
-### Query Parameters cho GET `/api/material-requests`
-
-| Param | Type | Description |
-|-------|------|-------------|
-| `page` | number | Số trang (mặc định: 1) |
-| `limit` | number | Số lượng mỗi trang (mặc định: 10) |
-| `search` | string | Tìm theo mã yêu cầu, tên người yêu cầu |
-| `departmentId` | string | Filter theo ID phòng ban (FK) |
-| `statusId` | string | Filter theo ID trạng thái (FK) |
-| `priorityId` | string | Filter theo ID độ ưu tiên (FK) |
-
-### Request Body (POST/PUT)
-
-```json
-{
-  "requesterId": "user-uuid",
-  "departmentId": "dept-uuid",
-  "priorityId": "priority-uuid",
-  "statusId": "status-uuid",
-  "reason": "Thay thế bơm hỏng",
-  "requestDate": "2026-02-01T00:00:00Z",
-  "workOrder": "WO-2026-001",
-  "items": [
-    {
-      "materialId": "material-uuid",
-      "unitId": "unit-uuid",
-      "requestedQuantity": 2,
-      "stock": 5,
-      "notes": "Cần gấp"
-    }
-  ]
-}
-```
-
-### Response Format (GET list)
-
-```json
-{
-  "data": [{
-    "id": "uuid",
-    "requestCode": "MR-2026-001",
-    "requesterId": "user-uuid",
-    "departmentId": "dept-uuid",
-    "priorityId": "priority-uuid",
-    "statusId": "status-uuid",
-    "requester": { "id": "...", "name": "Nguyễn Văn A", "employeeCode": "NV001" },
-    "department": { "id": "...", "name": "Vận hành" },
-    "priority": { "id": "...", "name": "Cao", "color": "#FF0000" },
-    "status": { "id": "...", "name": "Chờ duyệt", "color": "#FFA500" },
-    "reason": "Thay thế bơm hỏng",
-    "requestDate": "2026-02-01T00:00:00Z",
-    "items": [
-      {
-        "id": "item-uuid",
-        "materialId": "material-uuid",
-        "material": { "id": "...", "code": "PM-001", "name": "Bơm thủy lực" },
-        "unitId": "unit-uuid",
-        "unit": { "id": "...", "name": "Cái" },
-        "requestedQuantity": 2,
-        "stock": 5
-      }
-    ]
-  }],
-  "pagination": { "page": 1, "limit": 10, "total": 20, "totalPages": 2 }
-}
-```
-
-> **Note**: Material Request API sử dụng FK relations. Client gửi IDs, API trả về nested objects. Items được tạo/cập nhật trong transaction.
-
----
-
-## Purchase Request API
-
-API cho quản lý yêu cầu mua sắm với FK relations:
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/purchase-requests` | Danh sách yêu cầu (pagination, search, filter) |
-| POST | `/api/purchase-requests` | Tạo yêu cầu mới (transactional với items) |
-| GET | `/api/purchase-requests/{id}` | Chi tiết 1 yêu cầu |
-| PUT | `/api/purchase-requests/{id}` | Cập nhật yêu cầu |
-| DELETE | `/api/purchase-requests/{id}` | Xóa yêu cầu (cascade delete items) |
-
-### Query Parameters cho GET `/api/purchase-requests`
-
-| Param | Type | Description |
-|-------|------|-------------|
-| `page` | number | Số trang (mặc định: 1) |
-| `limit` | number | Số lượng mỗi trang (mặc định: 10) |
-| `search` | string | Tìm theo mã yêu cầu, tên người yêu cầu, mô tả |
-| `sourceId` | string | Filter theo ID nguồn vật tư (FK) |
-| `statusId` | string | Filter theo ID trạng thái (FK) |
-
-### Request Body (POST/PUT)
-
-```json
-{
-  "requesterId": "user-uuid",
-  "departmentId": "dept-uuid",
-  "sourceId": "source-uuid",
-  "fundingSourceId": "funding-uuid",
-  "description": "Mua thiết bị thay thế",
-  "items": [
-    {
-      "materialId": "material-uuid",
-      "name": "Bơm thủy lực ABC",
-      "unitId": "unit-uuid",
-      "quantity": 2,
-      "estimatedPrice": 50000000,
-      "suggestedSupplierId": "supplier-uuid"
-    }
-  ]
-}
-```
-
-### Response Format (GET list)
-
-```json
-{
-  "data": [{
-    "id": "PR-2026-001",
-    "requestCode": "PR-2026-001",
-    "requesterId": "user-uuid",
-    "departmentId": "dept-uuid",
-    "statusId": "status-uuid",
-    "sourceId": "source-uuid",
-    "fundingSourceId": "funding-uuid",
-    "requester": { "id": "...", "name": "Nguyễn Văn A", "employeeCode": "NV001" },
-    "department": { "id": "...", "code": "VH", "name": "Vận hành" },
-    "status": { "id": "...", "code": "PEND", "name": "Chờ duyệt", "color": "#FFA500" },
-    "source": { "id": "...", "code": "NB", "name": "Trong nước" },
-    "fundingSource": { "id": "...", "code": "OPEX", "name": "Chi phí vận hành" },
-    "description": "Mua thiết bị thay thế",
-    "totalAmount": 100000000,
-    "step": 2,
-    "items": [
-      {
-        "id": "item-uuid",
-        "materialId": "material-uuid",
-        "material": { "id": "...", "code": "PM-001", "name": "Bơm thủy lực" },
-        "name": "Bơm thủy lực ABC",
-        "unitId": "unit-uuid",
-        "unit": { "id": "...", "code": "CAI", "name": "Cái" },
-        "suggestedSupplierId": "supplier-uuid",
-        "suggestedSupplier": { "id": "...", "name": "ABC Company" },
-        "quantity": 2,
-        "estimatedPrice": 50000000
-      }
-    ]
-  }],
-  "pagination": { "page": 1, "limit": 10, "total": 20, "totalPages": 2 }
-}
-```
-
-> **Note**: Purchase Request API sử dụng FK relations. Client gửi IDs, API trả về nested objects. Items cascade delete khi xóa request.
-
----
-
-## Bidding Packages API
-
-API cho quản lý gói thầu với full workflow:
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/bidding-packages` | Danh sách gói thầu (pagination, search, filter) |
-| POST | `/api/bidding-packages` | Tạo gói thầu mới (với PRs, scope items) |
-| GET | `/api/bidding-packages/{id}` | Chi tiết gói thầu (id = packageCode) |
-| PUT | `/api/bidding-packages/{id}` | Cập nhật gói thầu |
-| DELETE | `/api/bidding-packages/{id}` | Xóa gói thầu (cascade) |
-
-### Participants Sub-API
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/bidding-packages/{id}/participants` | Danh sách nhà thầu tham gia |
-| POST | `/api/bidding-packages/{id}/participants` | Thêm nhà thầu (body: `{supplierIds: string[]}`) |
-| DELETE | `/api/bidding-packages/{id}/participants?participantId=...` | Xóa nhà thầu |
-| PATCH | `/api/bidding-packages/{id}/participants` | Cập nhật điểm, quotations |
-
-### Winner Selection
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/bidding-packages/{id}/select-winner` | Chọn nhà thầu trúng thầu (body: `{winnerId}`) |
-
-### Query Parameters cho GET `/api/bidding-packages`
-
-| Param | Type | Description |
-|-------|------|-------------|
-| `page` | number | Số trang (mặc định: 1) |
-| `limit` | number | Số lượng mỗi trang (mặc định: 10) |
-| `search` | string | Tìm theo mã gói thầu, tên |
-| `methodId` | string | Filter theo ID phương thức đấu thầu (FK) |
-| `statusId` | string | Filter theo ID trạng thái (FK) |
-
-### Request Body (POST)
-
-```json
-{
-  "name": "Mua thiết bị đo lường 2026",
-  "methodId": "method-uuid",
-  "createdById": "user-uuid",
-  "estimatedBudget": 500000000,
-  "openDate": "2026-02-15T00:00:00Z",
-  "closeDate": "2026-03-15T00:00:00Z",
-  "notes": "Gói thầu thiết bị đo lường",
-  "purchaseRequestIds": ["pr-uuid-1", "pr-uuid-2"],
-  "scopeItems": [
-    {
-      "materialId": "material-uuid",
-      "name": "Cảm biến áp suất",
-      "unitId": "unit-uuid",
-      "quantity": 10,
-      "estimatedAmount": 50000000
-    }
-  ]
-}
-```
-
-### Response Format (GET detail)
-
-```json
-{
-  "data": {
-    "id": "TB-2026-01",
-    "packageCode": "TB-2026-01",
-    "name": "Mua thiết bị đo lường 2026",
-    "methodId": "method-uuid",
-    "statusId": "status-uuid",
-    "method": { "id": "...", "code": "OPEN", "name": "Đấu thầu rộng rãi" },
-    "status": { "id": "...", "code": "INVITE", "name": "Đang mời thầu", "color": "#FFA500" },
-    "createdBy": { "id": "...", "name": "Nguyễn Văn A", "employeeCode": "NV001" },
-    "winner": null,
-    "estimatedBudget": 500000000,
-    "openDate": "2026-02-15T00:00:00Z",
-    "closeDate": "2026-03-15T00:00:00Z",
-    "step": 1,
-    "purchaseRequests": [
-      { "id": "...", "requestCode": "PR-2026-001", "description": "...", "totalAmount": 100000000 }
-    ],
-    "participants": [
-      {
-        "id": "participant-uuid",
-        "supplier": { "id": "...", "code": "SUP-001", "name": "ABC Company" },
-        "invitedAt": "2026-02-01T00:00:00Z",
-        "isSubmitted": true,
-        "technicalScore": 85,
-        "priceScore": 90,
-        "totalScore": 87,
-        "rank": 1,
-        "quotations": [...]
-      }
-    ],
-    "scopeItems": [
-      {
-        "id": "scope-uuid",
-        "materialId": "material-uuid",
-        "material": { "id": "...", "code": "PM-001", "name": "Cảm biến áp suất" },
-        "name": "Cảm biến áp suất",
-        "unitId": "unit-uuid",
-        "unit": { "id": "...", "code": "CAI", "name": "Cái" },
-        "quantity": 10,
-        "estimatedAmount": 50000000
-      }
-    ]
-  }
-}
-```
-
-> **Note**: Bidding Packages API sử dụng `packageCode` làm ID trong URL. Workflow: Invite → Receive → Evaluate → Done.
-
----
-
-## Inbound API
-
-API cho quản lý phiếu nhập kho với FK relations:
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/inbound` | Danh sách phiếu nhập (pagination, search, filter) |
-| POST | `/api/inbound` | Tạo phiếu nhập mới |
-| GET | `/api/inbound/{id}` | Chi tiết 1 phiếu nhập |
-| PUT | `/api/inbound/{id}` | Cập nhật phiếu nhập |
-| DELETE | `/api/inbound/{id}` | Xóa phiếu nhập |
-
-### Request Body (POST/PUT)
-
-```json
-{
-  "typeId": "inbound-type-uuid",
-  "reference": "PO-2026-001",
-  "inboundDate": "2026-02-01T00:00:00Z",
-  "supplierId": "supplier-uuid",
-  "statusId": "inbound-status-uuid",
-  "items": [
-    {
-      "materialId": "uuid",
-      "quantity": 10,
-      "unitPrice": 500000
-    }
-  ]
-}
-```
-
-> **Note**: Inbound API has been refactored to use FK relations (typeId, statusId, supplierId) instead of string columns.
-
----
-
-## Outbound API
-
-API cho quản lý phiếu xuất kho với FK relations:
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/outbound` | Danh sách phiếu xuất (pagination, search, filter) |
-| POST | `/api/outbound` | Tạo phiếu xuất mới |
-| GET | `/api/outbound/{id}` | Chi tiết 1 phiếu xuất |
-| PUT | `/api/outbound/{id}` | Cập nhật phiếu xuất |
-| DELETE | `/api/outbound/{id}` | Xóa phiếu xuất |
-| POST | `/api/outbound/{id}/approve` | Duyệt phiếu xuất |
-| POST | `/api/outbound/{id}/issue` | Xuất kho (giảm tồn kho) |
-
-### Request Body (POST/PUT)
-
-```json
-{
-  "purposeId": "outbound-purpose-uuid",
-  "reference": "WO-2026-001",
-  "outboundDate": "2026-02-01T00:00:00Z",
-  "requesterId": "user-uuid",
-  "departmentId": "department-uuid",
-  "statusId": "outbound-status-uuid",
-  "notes": "Xuất cho bảo trì thiết bị",
-  "items": [
-    {
-      "materialId": "material-uuid",
-      "quantity": 5,
-      "unitId": "unit-uuid",
-      "locationId": "warehouse-location-uuid"
-    }
-  ]
-}
-```
-
-### Response Format (GET list)
-
-```json
-{
-  "data": [{
-    "id": "uuid",
-    "voucherCode": "XK-2026-001",
-    "purposeId": "purpose-uuid",
-    "statusId": "status-uuid",
-    "requesterId": "user-uuid",
-    "departmentId": "dept-uuid",
-    "purpose": { "id": "...", "name": "Bảo trì" },
-    "status": { "id": "...", "name": "Chờ duyệt", "color": "#FFA500" },
-    "requester": { "id": "...", "name": "Nguyễn Văn A", "employeeCode": "NV001" },
-    "department": { "id": "...", "name": "Vận hành" },
-    "outboundDate": "2026-02-01T00:00:00Z",
-    "items": [
-      {
-        "id": "item-uuid",
-        "materialId": "material-uuid",
-        "material": { "id": "...", "code": "PM-001", "name": "Bơm thủy lực" },
-        "quantity": 5,
-        "unitId": "unit-uuid",
-        "unit": { "id": "...", "name": "Cái" },
-        "locationId": "location-uuid",
-        "location": { "id": "...", "code": "A1-01", "name": "Kệ A1" }
-      }
-    ]
-  }],
-  "pagination": { "page": 1, "limit": 10, "total": 20, "totalPages": 2 }
-}
-```
-
-### Workflow Endpoints
-
-**Approve** (`POST /api/outbound/{id}/approve`):
-- Body: `{ "approverId": "user-uuid" }`
-- Updates status to "Đã duyệt"
-
-**Issue** (`POST /api/outbound/{id}/issue`):
-- Body: `{ "issuerId": "user-uuid" }`
-- Updates status to "Đã xuất"
-- Decrements stock quantities for all items
-
-> **Note**: Outbound API uses FK relations (purposeId, statusId, requesterId, departmentId). Stock is decremented atomically on issue.
-
-
+## Security Considerations
+
+### Current State
+- Email-based authentication (no password)
+- RBAC via Role → FeatureAction mappings
+- Activity logging for audit trail
+
+### Known Gaps
+- No authentication middleware on API routes
+- Default user fallback in some routes
+- No rate limiting
+- No API versioning
+
+### Recommended Improvements
+- Add NextAuth.js or Clerk for auth
+- Implement API middleware for auth checks
+- Add rate limiting for public endpoints
+- Version APIs (e.g., `/api/v1/...`)

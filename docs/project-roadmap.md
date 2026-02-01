@@ -1,77 +1,56 @@
 # Project Roadmap
 
 **Status:** Active Development
-**Current Phase:** Phase 2 - Core Workflows
+**Current Phase:** Phase 2 - Core Workflows (Nearly Complete)
 **Last Updated:** 2026-02-01
 
-## 📌 Phase 1: Foundation (Completed)
-- [x] **Project Setup**: Next.js 14, TypeScript, Tailwind, Shadcn UI.
-- [x] **Database Design**: PostgreSQL schema with 27 Master Data tables.
-- [x] **Authentication**: Basic email login (v1).
-- [x] **User Management**: Users, Roles, Permissions (RBAC) with API.
+## Phase 1: Foundation (Completed)
+- [x] **Project Setup**: Next.js 15, TypeScript, Tailwind, Shadcn UI
+- [x] **Database Design**: PostgreSQL schema with 24 Master Data tables
+- [x] **Authentication**: Basic email login (v1)
+- [x] **User Management**: Users, Roles, Permissions (RBAC) with API
 
-## 📌 Phase 2: Core Inventory Management (Current)
-- [x] **Materials Module**:
-    - [x] CRUD Operations.
-    - [x] Filtering & Search.
-    - [x] Master Data Integration.
-- [x] **Material Requests**:
-    - [x] Request Creation.
-    - [x] Approval Workflow.
-    - [x] Status Tracking.
-- [x] **Warehouse Locations**:
-    - [x] CRUD Operations with FK relations.
-    - [x] Zod validation schema.
-    - [x] Master Data Integration (Area, Type, Status).
-- [x] **Suppliers Management**:
-    - [x] CRUD Operations with FK relations.
-    - [x] Contacts management (nested create/update/delete).
-    - [x] Master Data Integration (Country, Type, PaymentTerm, Currency).
-- [x] **Purchase Requests**:
-    - [x] CRUD Operations with FK relations.
-    - [x] Items management (nested create/update/delete).
-    - [x] Master Data Integration (Status, Source, FundingSource, Department).
-- [x] **Bidding Management**:
-    - [x] CRUD Operations with FK relations.
-    - [x] Participants/suppliers invitation and scoring.
-    - [x] Quotations management per scope item.
-    - [x] Winner selection workflow.
-    - [x] UI Components (form, participants, quotation dialog, stepper).
-    - [x] Scope Items Editor component.
-- [x] **Inbound Logistics (Goods Receipt)**:
-    - [x] UI Implementation.
-    - [x] **Backend API**: Endpoints at `/api/inbound`.
-    - [x] **FK Relations**: Refactored to use FK (typeId, supplierId, statusId).
-    - [ ] **Inventory Update**: Logic to increase stock on receipt.
-- [x] **Outbound Logistics (Goods Issue)**:
-    - [x] UI Implementation (List & Form components).
-    - [x] **Backend API**: Endpoints at `/api/outbound`.
-    - [x] **FK Relations**: OutboundReceipt/Item models with FK relations.
-    - [x] **Workflow**: Approve and Issue endpoints.
-    - [x] **Inventory Update**: Stock decrement on issue.
-    - [x] **Seed Data**: 12 sample records.
+## Phase 2: Core Inventory Management (Current - 95% Complete)
+- [x] **Materials Module**: CRUD, filtering, search, master data integration
+- [x] **Material Requests**: Request creation, approval workflow, status tracking
+- [x] **Warehouse Locations**: CRUD with FK relations, Zod validation
+- [x] **Suppliers Management**: CRUD with contacts, transactional updates
+- [x] **Purchase Requests**: CRUD with items, FK relations
+- [x] **Bidding Management**: Full workflow with participants, quotations, winner selection
+- [x] **Inbound Logistics**: Full CRUD with FK relations
+- [x] **Outbound Logistics**: Full CRUD with approve/issue workflow, stock decrement
+- [x] **Stocktake Management**:
+    - [x] Full CRUD API at `/api/stocktake`
+    - [x] Location assignments and assignee tracking
+    - [x] Counting results with variance calculation
+    - [x] Workflow: Draft -> In Progress -> Reconciling -> Completed
+    - [x] Zod validation schemas
+    - [x] Seed data (10 sample records)
+- [ ] **Inbound Stock Update**: Logic to increase stock on receipt (pending)
 
-## 📌 Phase 3: Advanced Operations (Planned)
-- [ ] **Stock Take (Physical Inventory)**:
-    - [x] UI Prototypes.
-    - [ ] API & Reconciliation Logic.
+## Phase 3: Advanced Operations (Planned)
 - [ ] **Reporting Engine**:
-    - [x] Client-side Charts (Mock).
-    - [ ] Server-side Aggregation (Prisma `groupBy`).
-    - [ ] Export to Excel/PDF.
+    - [x] Client-side Charts (Mock)
+    - [ ] Server-side Aggregation (Prisma `groupBy`)
+    - [ ] Export to Excel/PDF
 - [ ] **Dashboard**:
-    - [ ] Real-time widgets connected to live data.
+    - [x] UI with KPIs and charts
+    - [ ] Real-time widgets connected to live data
+- [ ] **Lifecycle Tracking**:
+    - [x] UI Prototype
+    - [ ] Backend API integration
 
-## 📌 Phase 4: Optimization & Production Ready (Future)
-- [ ] **Auth Hardening**: Integrate NextAuth.js or Clerk.
-- [ ] **Performance**: Redis caching for Master Data.
-- [ ] **CI/CD**: Automated testing pipeline.
-- [ ] **Mobile Support**: Responsive design optimization for tablets/phones.
+## Phase 4: Optimization & Production Ready (Future)
+- [ ] **Auth Hardening**: Integrate NextAuth.js or Clerk
+- [ ] **API Middleware**: Authentication checks on all routes
+- [ ] **Performance**: Redis caching for Master Data
+- [ ] **CI/CD**: Automated testing pipeline
+- [ ] **Mobile Support**: Responsive design optimization
 
-## 🚦 Feature Status Matrix
+## Feature Status Matrix
 
-| Module | UI Status | Backend Status | Priority |
-|--------|-----------|----------------|----------|
+| Module | UI | Backend | Priority |
+|--------|-----|---------|----------|
 | Materials | Ready | Ready | - |
 | Users/Roles | Ready | Ready | - |
 | Material Requests | Ready | Ready | - |
@@ -81,5 +60,7 @@
 | Suppliers | Ready | Ready | - |
 | Inbound | Ready | Ready | - |
 | Outbound | Ready | Ready | - |
+| Stocktake | Ready | Ready | - |
 | Reports | Hybrid | Mock Data | Medium |
-| Dashboard | Prototype | Mock Data | Medium |
+| Dashboard | Hybrid | Partial | Medium |
+| Lifecycle | Prototype | Pending | Low |
