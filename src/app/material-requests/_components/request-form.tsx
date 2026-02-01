@@ -2,10 +2,9 @@
 
 import * as React from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, useFieldArray } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { format } from "date-fns";
-import { vi } from "date-fns/locale";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -41,37 +40,43 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { DialogFooter } from "@/components/ui/dialog";
-import { CalendarIcon, Plus, Save, Check } from "lucide-react";
-import type { Material, MaterialRequest } from "@/lib/types";
+import { CalendarIcon, Plus, Save, Check, Trash2 } from "lucide-react";
+import type { Material, MaterialRequest, MasterDataItem } from "@/lib/types";
+import { MaterialPickerDialog } from "./material-picker-dialog";
 
 const formSchema = z.object({
   id: z.string(),
   requestDate: z.date(),
-  priority: z.string(),
-  requesterDept: z.string().min(1, "Đơn vị sử dụng là bắt buộc."),
+  requesterId: z.string().min(1, "Vui lòng chọn người yêu cầu."),
+  departmentId: z.string().min(1, "Vui lòng chọn đơn vị."),
+  priorityId: z.string().min(1, "Vui lòng chọn độ ưu tiên."),
+  statusId: z.string().optional(),
+  approverId: z.string().optional(),
   workOrder: z.string().optional(),
   reason: z.string().min(1, "Lý do là bắt buộc."),
   items: z.array(
     z.object({
       materialId: z.string(),
-      materialCode: z.string(),
-      materialName: z.string(),
-      partNumber: z.string(),
-      unit: z.string(),
+      unitId: z.string(),
+      materialCode: z.string().optional(),
+      materialName: z.string().optional(),
+      partNumber: z.string().optional(),
       requestedQuantity: z.coerce.number().min(1, "SL phải > 0"),
       stock: z.number(),
       notes: z.string().optional(),
     })
   ),
-  approver: z.string().optional(),
-  status: z.string(),
 });
 
 export type RequestFormValues = z.infer<typeof formSchema>;
 
 type RequestFormProps = {
   request: MaterialRequest | null;
-  materials: Material[]; // To select new materials
+  materials: Material[];
+  users?: Array<{ id: string; name: string; employeeCode: string }>;
+  departments?: MasterDataItem[];
+  priorities?: MasterDataItem[];
+  statuses?: MasterDataItem[];
   onSubmit: (values: RequestFormValues) => void;
   onCancel: () => void;
   viewMode: boolean;
@@ -136,6 +141,9 @@ const FormSectionHeader = ({ title }: { title: string }) => (
 export function RequestForm({
   request,
   materials,
+  users = [],
+  departments = [],
+  priorities = [],
   onSubmit,
   onCancel,
   viewMode,
@@ -144,27 +152,174 @@ export function RequestForm({
     resolver: zodResolver(formSchema),
     defaultValues: request
       ? {
-          ...request,
+          id: request.id,
           requestDate: new Date(request.requestDate),
+          requesterId: request.requesterId || "",
+          departmentId: request.departmentId || "",
+          priorityId: request.priorityId || "",
+          statusId: request.statusId || "",
+          approverId: request.approverId || "",
+          workOrder: request.workOrder || "",
+          reason: request.reason,
+          items: request.items.map((item) => ({
+            materialId: item.materialId,
+            unitId: item.unitId || "",
+            materialCode: item.materialCode || item.material?.code || "",
+            materialName: item.materialName || item.material?.name || "",
+            partNumber: item.partNumber || item.material?.partNo || "",
+            requestedQuantity: item.requestedQuantity,
+            stock: item.stock,
+            notes: item.notes || "",
+          })),
         }
       : {
           id: "",
           requestDate: new Date(),
-          priority: "Bình thường",
-          requesterDept: "",
+          requesterId: "",
+          departmentId: "",
+          priorityId: priorities[0]?.id || "",
+          statusId: "",
+          approverId: "",
           workOrder: "",
           reason: "",
           items: [],
-          status: "Chờ duyệt",
         },
   });
 
-  const { fields, append, remove } = useFieldArray({
-    control: form.control,
-    name: "items",
-  });
+  // Reset form when request prop changes (important for edit mode)
+  React.useEffect(() => {
+    if (request) {
+      form.reset({
+        id: request.id,
+        requestDate: new Date(request.requestDate),
+        requesterId: request.requesterId || "",
+        departmentId: request.departmentId || "",
+        priorityId: request.priorityId || "",
+        statusId: request.statusId || "",
+        approverId: request.approverId || "",
+        workOrder: request.workOrder || "",
+        reason: request.reason,
+        items: request.items.map((item) => ({
+          materialId: item.materialId,
+          unitId: item.unitId || "",
+          materialCode: item.materialCode || item.material?.code || "",
+          materialName: item.materialName || item.material?.name || "",
+          partNumber: item.partNumber || item.material?.partNo || "",
+          requestedQuantity: item.requestedQuantity,
+          stock: item.stock,
+          notes: item.notes || "",
+        })),
+      });
+    } else {
+      form.reset({
+        id: "",
+        requestDate: new Date(),
+        requesterId: "",
+        departmentId: "",
+        priorityId: priorities[0]?.id || "",
+        statusId: "",
+        approverId: "",
+        workOrder: "",
+        reason: "",
+        items: [],
+      });
+    }
+  }, [request, form, priorities]);
+
+  // State for material picker dialog
+  const [isPickerOpen, setIsPickerOpen] = React.useState(false);
+
+  // Watch items to trigger re-render when items change
+  const watchedItems = form.watch("items");
+
+  // Get unit info for a material
+  const getUnitInfo = (material: Material) => {
+    if (material.materialUnit && typeof material.materialUnit === 'object') {
+      return material.materialUnit as MasterDataItem;
+    }
+    return null;
+  };
+
+  // Add material item to form
+  const handleAddMaterial = (material: Material, quantity: number) => {
+    const currentItems = form.getValues("items");
+    const unitInfo = getUnitInfo(material);
+    
+    const newItem = {
+      materialId: material.id,
+      unitId: unitInfo?.id || material.unitId || "",
+      materialCode: material.code,
+      materialName: material.name,
+      partNumber: material.partNo || "",
+      requestedQuantity: quantity,
+      stock: material.stock || 0,
+      notes: "",
+    };
+
+    form.setValue("items", [...currentItems, newItem], { shouldValidate: true });
+    setIsPickerOpen(false);
+  };
+
+  // Remove item from form
+  const handleRemoveItem = (index: number) => {
+    const currentItems = form.getValues("items");
+    form.setValue(
+      "items",
+      currentItems.filter((_, i) => i !== index),
+      { shouldValidate: true }
+    );
+  };
+
+  // Update item field
+  const handleUpdateItem = (index: number, field: 'requestedQuantity' | 'notes', value: string | number) => {
+    const currentItems = form.getValues("items");
+    const updatedItems = [...currentItems];
+    if (field === 'requestedQuantity') {
+      updatedItems[index].requestedQuantity = typeof value === 'number' ? value : parseInt(value) || 0;
+    } else {
+      updatedItems[index].notes = String(value);
+    }
+    form.setValue("items", updatedItems, { shouldValidate: true });
+  };
+
+  // Get selected material IDs
+  const getSelectedMaterialIds = () => {
+    return watchedItems.map(item => item.materialId);
+  };
+
+  // Get display values for readonly fields
+  const getRequesterName = () => {
+    if (request?.requester?.name) return request.requester.name;
+    const user = users.find((u) => u.id === form.getValues("requesterId"));
+    return user?.name || "";
+  };
+
+  const getDepartmentName = () => {
+    if (request?.department?.name) return request.department.name;
+    const dept = departments.find(
+      (d) => d.id === form.getValues("departmentId")
+    );
+    return dept?.name || "";
+  };
+
+  const getPriorityName = () => {
+    if (request?.priority?.name) return request.priority.name;
+    const priority = priorities.find(
+      (p) => p.id === form.getValues("priorityId")
+    );
+    return priority?.name || "";
+  };
+
+  const getStatusName = () => {
+    return request?.status?.name || "";
+  };
+
+  const getApproverName = () => {
+    return request?.approver?.name || "";
+  };
 
   return (
+    <>
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmit)}
@@ -228,25 +383,32 @@ export function RequestForm({
 
           <FormField
             control={form.control}
-            name="priority"
+            name="priorityId"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Độ ưu tiên</FormLabel>
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                  disabled={viewMode}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Chọn độ ưu tiên" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="Bình thường">Bình thường</SelectItem>
-                    <SelectItem value="Khẩn cấp">Khẩn cấp</SelectItem>
-                  </SelectContent>
-                </Select>
+                {viewMode ? (
+                  <Input value={getPriorityName()} disabled />
+                ) : (
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                    disabled={viewMode}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Chọn độ ưu tiên" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {priorities.map((p) => (
+                        <SelectItem key={p.id} value={p.id}>
+                          {p.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
                 <FormMessage />
               </FormItem>
             )}
@@ -254,13 +416,65 @@ export function RequestForm({
 
           <FormField
             control={form.control}
-            name="requesterDept"
+            name="requesterId"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Người yêu cầu</FormLabel>
+                {viewMode ? (
+                  <Input value={getRequesterName()} disabled />
+                ) : (
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                    disabled={viewMode}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Chọn người yêu cầu" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {users.map((user) => (
+                        <SelectItem key={user.id} value={user.id}>
+                          {user.name} ({user.employeeCode})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="departmentId"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Đơn vị sử dụng</FormLabel>
-                <FormControl>
-                  <Input {...field} disabled={viewMode} />
-                </FormControl>
+                {viewMode ? (
+                  <Input value={getDepartmentName()} disabled />
+                ) : (
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                    disabled={viewMode}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Chọn đơn vị" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {departments.map((dept) => (
+                        <SelectItem key={dept.id} value={dept.id}>
+                          {dept.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
                 <FormMessage />
               </FormItem>
             )}
@@ -302,31 +516,91 @@ export function RequestForm({
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Mã VT</TableHead>
+                  <TableHead className="w-[120px]">Mã VT</TableHead>
                   <TableHead>Tên Vật Tư</TableHead>
-                  <TableHead>Part Number</TableHead>
-                  <TableHead>ĐVT</TableHead>
-                  <TableHead className="text-right">SL YC</TableHead>
-                  <TableHead className="text-right">Tồn Kho</TableHead>
-                  <TableHead>Ghi Chú</TableHead>
+                  <TableHead className="w-[120px]">Part Number</TableHead>
+                  <TableHead className="w-[80px]">ĐVT</TableHead>
+                  <TableHead className="w-[100px] text-center">SL YC</TableHead>
+                  <TableHead className="w-[80px] text-right">Tồn Kho</TableHead>
+                  <TableHead className="w-[150px]">Ghi Chú</TableHead>
+                  {!viewMode && <TableHead className="w-[50px]"></TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {form.getValues("items").map((item, index) => (
-                  <TableRow key={index}>
-                    <TableCell className="font-medium">
-                      {item.materialCode}
+                {watchedItems.length === 0 ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={viewMode ? 7 : 8}
+                      className="h-16 text-center text-muted-foreground"
+                    >
+                      Chưa có vật tư nào. Click &quot;+ Thêm dòng&quot; để thêm.
                     </TableCell>
-                    <TableCell>{item.materialName}</TableCell>
-                    <TableCell>{item.partNumber}</TableCell>
-                    <TableCell>{item.unit}</TableCell>
-                    <TableCell className="text-right">
-                      {item.requestedQuantity}
-                    </TableCell>
-                    <TableCell className="text-right">{item.stock}</TableCell>
-                    <TableCell>{item.notes}</TableCell>
                   </TableRow>
-                ))}
+                ) : (
+                  watchedItems.map((item, index) => (
+                    <TableRow key={index}>
+                      <TableCell className="font-medium">
+                        {item.materialCode}
+                      </TableCell>
+                      <TableCell>{item.materialName}</TableCell>
+                      <TableCell>{item.partNumber}</TableCell>
+                      <TableCell>
+                        {materials.find((m) => m.id === item.materialId)
+                          ?.materialUnit &&
+                        typeof materials.find((m) => m.id === item.materialId)
+                          ?.materialUnit === "object"
+                          ? (
+                              materials.find((m) => m.id === item.materialId)
+                                ?.materialUnit as MasterDataItem
+                            ).name
+                          : "-"}
+                      </TableCell>
+                      <TableCell>
+                        {viewMode ? (
+                          <span className="text-center block">{item.requestedQuantity}</span>
+                        ) : (
+                          <Input
+                            type="number"
+                            min={1}
+                            value={item.requestedQuantity}
+                            onChange={(e) =>
+                              handleUpdateItem(index, "requestedQuantity", e.target.value)
+                            }
+                            className="h-8 text-center w-20"
+                          />
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right">{item.stock}</TableCell>
+                      <TableCell>
+                        {viewMode ? (
+                          item.notes || "-"
+                        ) : (
+                          <Input
+                            value={item.notes || ""}
+                            onChange={(e) =>
+                              handleUpdateItem(index, "notes", e.target.value)
+                            }
+                            className="h-8"
+                            placeholder="Ghi chú..."
+                          />
+                        )}
+                      </TableCell>
+                      {!viewMode && (
+                        <TableCell>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                            onClick={() => handleRemoveItem(index)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
+                      )}
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </div>
@@ -336,6 +610,7 @@ export function RequestForm({
               variant="link"
               size="sm"
               className="p-0 h-auto"
+              onClick={() => setIsPickerOpen(true)}
             >
               <Plus className="mr-2 h-4 w-4" />
               Thêm dòng
@@ -345,25 +620,32 @@ export function RequestForm({
 
         <DialogFooter className="!justify-between items-center pt-4 sticky bottom-0 bg-background py-4 -mx-4 px-4 border-t">
           <div className="text-sm text-muted-foreground">
-            {request?.approver && (
+            {getApproverName() && (
               <span>
                 Người duyệt:{" "}
-                <span className="font-semibold">{request.approver}</span>
+                <span className="font-semibold">{getApproverName()}</span>
               </span>
             )}
           </div>
           <div className="flex items-center gap-4">
-             <div className="text-sm text-muted-foreground">
-              {request?.status && (
+            <div className="text-sm text-muted-foreground">
+              {getStatusName() && (
                 <span>
                   Tình trạng:{" "}
                   <span
                     className={cn("font-semibold", {
-                      "text-green-600": request.status === "Đã duyệt",
-                      "text-yellow-600": request.status === "Chờ duyệt",
+                      "text-green-600":
+                        request?.status?.code === "APPR" ||
+                        request?.status?.name === "Đã duyệt",
+                      "text-yellow-600":
+                        request?.status?.code === "PEND" ||
+                        request?.status?.name === "Chờ duyệt",
+                      "text-blue-600":
+                        request?.status?.code === "DONE" ||
+                        request?.status?.name === "Hoàn thành",
                     })}
                   >
-                    {request.status}
+                    {getStatusName()}
                   </span>
                 </span>
               )}
@@ -380,5 +662,15 @@ export function RequestForm({
         </DialogFooter>
       </form>
     </Form>
+
+      {/* Material Picker Dialog */}
+      <MaterialPickerDialog
+        open={isPickerOpen}
+        onOpenChange={setIsPickerOpen}
+        materials={materials}
+        onSelect={handleAddMaterial}
+        selectedMaterialIds={getSelectedMaterialIds()}
+      />
+    </>
   );
 }

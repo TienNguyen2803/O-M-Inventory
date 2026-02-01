@@ -146,26 +146,51 @@ export interface Supplier {
 }
 
 export interface MaterialRequestItem {
+  id?: string;
   materialId: string;
-  materialCode: string;
-  materialName: string;
-  partNumber: string;
-  unit: string;
+  unitId: string;
+  // Nested relations (populated from API)
+  material?: {
+    id: string;
+    code: string;
+    name: string;
+    partNo: string;
+    stock: number;
+  };
+  unit?: MasterDataItem;
+  // Legacy fields for backward compatibility
+  materialCode?: string;
+  materialName?: string;
+  partNumber?: string;
   requestedQuantity: number;
   stock: number;
   notes?: string;
 }
 
 export interface MaterialRequest {
-  id: string; // Mã Phiếu
-  requesterName: string;
-  requesterDept: string; // Đơn vị sử dụng
+  id: string; // Mã Phiếu (requestCode)
+
+  // FK IDs
+  requesterId?: string;
+  departmentId?: string;
+  priorityId?: string;
+  statusId?: string;
+  approverId?: string;
+
+  // Nested relations (populated from API)
+  requester?: { id: string; name: string; employeeCode?: string };
+  department?: MasterDataItem;
+  priority?: MasterDataItem;
+  status?: MasterDataItem;
+  approver?: { id: string; name: string; employeeCode?: string } | null;
+
+  // Legacy fields for backward compatibility
+  requesterName?: string;
+  requesterDept?: string; // Đơn vị sử dụng
+
   reason: string; // Lý do / Mục đích
   requestDate: string; // Ngày yêu cầu (ISO 8601 string)
   workOrder?: string; // Mã WO/Công trình
-  priority: "Khẩn cấp" | "Bình thường";
-  status: "Đã duyệt" | "Chờ duyệt" | "Hoàn thành";
-  approver?: string; // Người duyệt kỹ thuật
   items: MaterialRequestItem[];
   step: number;
 }

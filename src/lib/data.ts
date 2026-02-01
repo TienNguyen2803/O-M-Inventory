@@ -1135,10 +1135,57 @@ const goodsHistoryData: GoodsHistoryEvent[] = [
 ];
 
 export const getMaterials = async (): Promise<Material[]> => {
-  // Simulate API delay
-  await new Promise((resolve) => setTimeout(resolve, 100));
-  // sort by code
-  return [...materials].sort((a, b) => a.code.localeCompare(b.code));
+  // Fetch from database using Prisma
+  const prisma = (await import('@/lib/db')).default;
+  
+  const dbMaterials = await prisma.material.findMany({
+    orderBy: { code: 'asc' },
+    include: {
+      managementType: true,
+      materialCategory: true,
+      materialUnit: true,
+      materialStatus: true,
+      country: true,
+    }
+  });
+
+  // Map database records to Material type
+  return dbMaterials.map(m => ({
+    id: m.id,
+    name: m.name,
+    nameEn: m.nameEn || undefined,
+    code: m.code,
+    evnCode: m.evnCode || undefined,
+    partNo: m.partNo,
+    serialNumber: m.serialNumber || undefined,
+    managementTypeId: m.managementTypeId || undefined,
+    categoryId: m.categoryId || undefined,
+    unitId: m.unitId || undefined,
+    statusId: m.statusId || undefined,
+    countryId: m.countryId || undefined,
+    managementType: m.managementType ? { id: m.managementType.id, code: m.managementType.code, name: m.managementType.name } : undefined,
+    materialCategory: m.materialCategory ? { id: m.materialCategory.id, code: m.materialCategory.code, name: m.materialCategory.name } : undefined,
+    materialUnit: m.materialUnit ? { id: m.materialUnit.id, code: m.materialUnit.code, name: m.materialUnit.name } : undefined,
+    materialStatus: m.materialStatus ? { id: m.materialStatus.id, code: m.materialStatus.code, name: m.materialStatus.name } : undefined,
+    country: m.country ? { id: m.country.id, code: m.country.code, name: m.country.name } : undefined,
+    description: m.description || undefined,
+    stock: m.stock,
+    manufacturer: m.manufacturer || undefined,
+    minStock: m.minStock || undefined,
+    maxStock: m.maxStock || undefined,
+    location: m.location || undefined,
+    stockAge: m.stockAge || undefined,
+    supplierWarranty: m.supplierWarranty || undefined,
+    serviceWarranty: m.serviceWarranty || undefined,
+    chassisPn: m.chassisPn || undefined,
+    chassisSn: m.chassisSn || undefined,
+    originAsPerCustomer: m.originAsPerCustomer || undefined,
+    originOnDocs: m.originOnDocs || undefined,
+    warrantyCount: m.warrantyCount || undefined,
+    lifespan: m.lifespan || undefined,
+    createdAt: m.createdAt?.toISOString(),
+    updatedAt: m.updatedAt?.toISOString(),
+  }));
 };
 
 export const getInventoryLogs = async (): Promise<InventoryLog[]> => {

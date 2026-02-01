@@ -18,6 +18,29 @@ interface UseMaterialRequestsFilters {
   department?: string
   status?: string
   priority?: string
+  // FK ID filters
+  departmentId?: string
+  statusId?: string
+  priorityId?: string
+}
+
+// Request data for create/update operations
+interface MaterialRequestData {
+  requesterId?: string
+  departmentId?: string
+  priorityId?: string
+  statusId?: string
+  approverId?: string
+  reason?: string
+  workOrder?: string
+  requestDate?: string
+  items?: Array<{
+    materialId: string
+    unitId: string
+    requestedQuantity: number
+    stock: number
+    notes?: string
+  }>
 }
 
 interface UseMaterialRequestsResult {
@@ -32,10 +55,10 @@ interface UseMaterialRequestsResult {
   }
   // Actions
   fetchRequests: (page?: number) => Promise<void>
-  createRequest: (data: Omit<MaterialRequest, 'id' | 'step'>) => Promise<MaterialRequest | null>
-  updateRequest: (id: string, data: Partial<MaterialRequest>) => Promise<MaterialRequest | null>
+  createRequest: (data: MaterialRequestData) => Promise<MaterialRequest | null>
+  updateRequest: (id: string, data: MaterialRequestData) => Promise<MaterialRequest | null>
   deleteRequest: (id: string) => Promise<boolean>
-  approveRequest: (id: string, approver: string) => Promise<MaterialRequest | null>
+  approveRequest: (id: string, approverId: string) => Promise<MaterialRequest | null>
   // Search & Filter
   setSearch: (keyword: string) => void
   setFilters: (filters: UseMaterialRequestsFilters) => void
@@ -67,9 +90,14 @@ export function useMaterialRequests(initialLimit: number = 10): UseMaterialReque
       })
 
       if (filters.search) params.set('search', filters.search)
+      // Legacy string filters
       if (filters.department) params.set('department', filters.department)
       if (filters.status) params.set('status', filters.status)
       if (filters.priority) params.set('priority', filters.priority)
+      // FK ID filters
+      if (filters.departmentId) params.set('departmentId', filters.departmentId)
+      if (filters.statusId) params.set('statusId', filters.statusId)
+      if (filters.priorityId) params.set('priorityId', filters.priorityId)
 
       const response = await fetch(`/api/material-requests?${params.toString()}`)
 
@@ -94,18 +122,19 @@ export function useMaterialRequests(initialLimit: number = 10): UseMaterialReque
   }, [fetchRequests])
 
   const createRequest = useCallback(async (
-    data: Omit<MaterialRequest, 'id' | 'step'>
+    data: MaterialRequestData
   ): Promise<MaterialRequest | null> => {
     try {
       const response = await fetch('/api/material-requests', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          requesterDept: data.requesterDept,
+          requesterId: data.requesterId,
+          departmentId: data.departmentId,
+          priorityId: data.priorityId,
           reason: data.reason,
           requestDate: data.requestDate,
           workOrder: data.workOrder,
-          priority: data.priority,
           items: data.items,
         }),
       })
@@ -127,7 +156,7 @@ export function useMaterialRequests(initialLimit: number = 10): UseMaterialReque
 
   const updateRequest = useCallback(async (
     id: string,
-    data: Partial<MaterialRequest>
+    data: MaterialRequestData
   ): Promise<MaterialRequest | null> => {
     try {
       const response = await fetch(`/api/material-requests/${id}`, {
@@ -172,13 +201,13 @@ export function useMaterialRequests(initialLimit: number = 10): UseMaterialReque
 
   const approveRequest = useCallback(async (
     id: string,
-    approver: string
+    approverId: string
   ): Promise<MaterialRequest | null> => {
     try {
       const response = await fetch(`/api/material-requests/${id}/approve`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ approver }),
+        body: JSON.stringify({ approverId }),
       })
 
       if (!response.ok) {

@@ -5,7 +5,7 @@ import prisma from '@/lib/db'
 async function generateRequestCode(): Promise<string> {
   const year = new Date().getFullYear()
   const prefix = `YCVT-${year}-`
-  
+
   // Find the latest request code for this year
   const latestRequest = await prisma.materialRequest.findFirst({
     where: {
@@ -13,14 +13,23 @@ async function generateRequestCode(): Promise<string> {
     },
     orderBy: { requestCode: 'desc' }
   })
-  
+
   let nextNumber = 1
   if (latestRequest) {
     const lastNumber = parseInt(latestRequest.requestCode.replace(prefix, ''))
     nextNumber = lastNumber + 1
   }
-  
+
   return `${prefix}${String(nextNumber).padStart(3, '0')}`
+}
+
+// Helper to get default status ID (PEND = Chờ duyệt)
+async function getDefaultStatusId(): Promise<string> {
+  const status = await prisma.requestStatus.findFirst({
+    where: { code: 'PEND' }
+  })
+  if (!status) throw new Error('Default status PEND not found')
+  return status.id
 }
 
 // GET /api/material-requests - Get all requests with pagination, search, and filters
@@ -30,6 +39,10 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '10')
     const search = searchParams.get('search') || ''
+    const departmentId = searchParams.get('departmentId') || ''
+    const statusId = searchParams.get('statusId') || ''
+    const priorityId = searchParams.get('priorityId') || ''
+    // Legacy string filters for backward compatibility
     const department = searchParams.get('department') || ''
     const status = searchParams.get('status') || ''
     const priority = searchParams.get('priority') || ''
@@ -43,21 +56,31 @@ export async function GET(request: NextRequest) {
     if (search) {
       where.OR = [
         { requestCode: { contains: search, mode: 'insensitive' } },
-        { requesterName: { contains: search, mode: 'insensitive' } },
+        { requester: { name: { contains: search, mode: 'insensitive' } } },
         { reason: { contains: search, mode: 'insensitive' } },
       ]
     }
 
-    if (department) {
-      where.requesterDept = department
+    // FK ID filters
+    if (departmentId) {
+      where.departmentId = departmentId
+    }
+    if (statusId) {
+      where.statusId = statusId
+    }
+    if (priorityId) {
+      where.priorityId = priorityId
     }
 
-    if (status) {
-      where.status = status
+    // Legacy string filters (search by name)
+    if (department && !departmentId) {
+      where.department = { name: department }
     }
-
-    if (priority) {
-      where.priority = priority
+    if (status && !statusId) {
+      where.status = { name: status }
+    }
+    if (priority && !priorityId) {
+      where.priority = { name: priority }
     }
 
     // Get total count for pagination
@@ -70,28 +93,50 @@ export async function GET(request: NextRequest) {
       take: limit,
       orderBy: { createdAt: 'desc' },
       include: {
-        items: true
+        requester: { select: { id: true, name: true, employeeCode: true } },
+        department: { select: { id: true, code: true, name: true } },
+        priority: { select: { id: true, code: true, name: true, color: true } },
+        status: { select: { id: true, code: true, name: true, color: true } },
+        approver: { select: { id: true, name: true, employeeCode: true } },
+        items: {
+          include: {
+            material: { select: { id: true, code: true, name: true, partNo: true, stock: true } },
+            unit: { select: { id: true, code: true, name: true } },
+          },
+        },
       }
     })
 
     // Map to frontend format
     const data = requests.map(req => ({
       id: req.requestCode,
-      requesterName: req.requesterName,
-      requesterDept: req.requesterDept,
-      reason: req.reason,
-      requestDate: req.requestDate.toISOString(),
-      workOrder: req.workOrder,
+      requesterId: req.requesterId,
+      departmentId: req.departmentId,
+      priorityId: req.priorityId,
+      statusId: req.statusId,
+      approverId: req.approverId,
+      requester: req.requester,
+      department: req.department,
       priority: req.priority,
       status: req.status,
       approver: req.approver,
+      // Legacy fields for backward compatibility
+      requesterName: req.requester.name,
+      requesterDept: req.department.name,
+      reason: req.reason,
+      requestDate: req.requestDate.toISOString(),
+      workOrder: req.workOrder,
       step: req.step,
       items: req.items.map(item => ({
+        id: item.id,
         materialId: item.materialId,
-        materialCode: item.materialCode,
-        materialName: item.materialName,
-        partNumber: item.partNumber,
+        unitId: item.unitId,
+        material: item.material,
         unit: item.unit,
+        // Legacy fields for backward compatibility
+        materialCode: item.material.code,
+        materialName: item.material.name,
+        partNumber: item.material.partNo,
         requestedQuantity: item.requestedQuantity,
         stock: item.stock,
         notes: item.notes,
@@ -120,20 +165,20 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { 
-      requesterName = 'Nguyễn Văn A', // Default placeholder, will be from session
-      requesterDept, 
-      reason, 
-      requestDate, 
-      workOrder, 
-      priority = 'Bình thường',
+    const {
+      requesterId,
+      departmentId,
+      priorityId,
+      reason,
+      requestDate,
+      workOrder,
       items = []
     } = body
 
     // Validate required fields
-    if (!requesterDept || !reason) {
+    if (!requesterId || !departmentId || !priorityId || !reason) {
       return NextResponse.json(
-        { error: 'Missing required fields: requesterDept, reason' },
+        { error: 'Missing required fields: requesterId, departmentId, priorityId, reason' },
         { status: 400 }
       )
     }
@@ -141,61 +186,80 @@ export async function POST(request: NextRequest) {
     // Generate request code
     const requestCode = await generateRequestCode()
 
+    // Get default status (Pending)
+    const defaultStatusId = await getDefaultStatusId()
+
     // Create request with items
     const materialRequest = await prisma.materialRequest.create({
       data: {
         requestCode,
-        requesterName,
-        requesterDept,
+        requesterId,
+        departmentId,
+        priorityId,
+        statusId: defaultStatusId,
         reason,
         requestDate: requestDate ? new Date(requestDate) : new Date(),
         workOrder: workOrder || null,
-        priority,
-        status: 'Chờ duyệt',
         step: 2, // After creation, move to pending
         items: {
           create: items.map((item: {
             materialId: string
-            materialCode: string
-            materialName: string
-            partNumber: string
-            unit: string
+            unitId: string
             requestedQuantity: number
             stock: number
             notes?: string
           }) => ({
             materialId: item.materialId,
-            materialCode: item.materialCode,
-            materialName: item.materialName,
-            partNumber: item.partNumber,
-            unit: item.unit,
+            unitId: item.unitId,
             requestedQuantity: item.requestedQuantity,
             stock: item.stock,
             notes: item.notes || null,
           }))
         }
       },
-      include: { items: true }
+      include: {
+        requester: { select: { id: true, name: true, employeeCode: true } },
+        department: { select: { id: true, code: true, name: true } },
+        priority: { select: { id: true, code: true, name: true, color: true } },
+        status: { select: { id: true, code: true, name: true, color: true } },
+        approver: { select: { id: true, name: true, employeeCode: true } },
+        items: {
+          include: {
+            material: { select: { id: true, code: true, name: true, partNo: true, stock: true } },
+            unit: { select: { id: true, code: true, name: true } },
+          },
+        },
+      }
     })
 
     // Map to frontend format
     const data = {
       id: materialRequest.requestCode,
-      requesterName: materialRequest.requesterName,
-      requesterDept: materialRequest.requesterDept,
-      reason: materialRequest.reason,
-      requestDate: materialRequest.requestDate.toISOString(),
-      workOrder: materialRequest.workOrder,
+      requesterId: materialRequest.requesterId,
+      departmentId: materialRequest.departmentId,
+      priorityId: materialRequest.priorityId,
+      statusId: materialRequest.statusId,
+      approverId: materialRequest.approverId,
+      requester: materialRequest.requester,
+      department: materialRequest.department,
       priority: materialRequest.priority,
       status: materialRequest.status,
       approver: materialRequest.approver,
+      requesterName: materialRequest.requester.name,
+      requesterDept: materialRequest.department.name,
+      reason: materialRequest.reason,
+      requestDate: materialRequest.requestDate.toISOString(),
+      workOrder: materialRequest.workOrder,
       step: materialRequest.step,
       items: materialRequest.items.map(item => ({
+        id: item.id,
         materialId: item.materialId,
-        materialCode: item.materialCode,
-        materialName: item.materialName,
-        partNumber: item.partNumber,
+        unitId: item.unitId,
+        material: item.material,
         unit: item.unit,
+        materialCode: item.material.code,
+        materialName: item.material.name,
+        partNumber: item.material.partNo,
         requestedQuantity: item.requestedQuantity,
         stock: item.stock,
         notes: item.notes,

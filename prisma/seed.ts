@@ -579,9 +579,9 @@ async function main() {
   const currencies = await prisma.currency.findMany()
   const currencyMap = Object.fromEntries(currencies.map(c => [c.code, c.id]))
 
-  // Create suppliers with FK relations
-  await prisma.supplier.create({
-    data: {
+  // Supplier seed data
+  const suppliersData = [
+    {
       code: 'NCC-001',
       taxCode: '0101234567',
       name: 'Siemens Energy Vietnam',
@@ -591,17 +591,12 @@ async function main() {
       paymentTermId: paymentTermMap['NET30'],
       currencyId: currencyMap['USD'],
       status: 'Active',
-      contacts: {
-        create: [
-          { name: 'Mr. John Schmidt', position: 'Sales Manager', email: 'john.schmidt@siemens.com', phone: '+84 909 123 456' },
-          { name: 'Ms. Anna Weber', position: 'Technical Support', email: 'anna.weber@siemens.com', phone: '+84 918 654 321' },
-        ]
-      }
-    }
-  })
-
-  await prisma.supplier.create({
-    data: {
+      contacts: [
+        { name: 'Mr. John Schmidt', position: 'Sales Manager', email: 'john.schmidt@siemens.com', phone: '+84 909 123 456' },
+        { name: 'Ms. Anna Weber', position: 'Technical Support', email: 'anna.weber@siemens.com', phone: '+84 918 654 321' },
+      ]
+    },
+    {
       code: 'NCC-002',
       taxCode: '0309876543',
       name: 'Yokogawa Vietnam',
@@ -611,16 +606,11 @@ async function main() {
       paymentTermId: paymentTermMap['NET45'],
       currencyId: currencyMap['JPY'],
       status: 'Active',
-      contacts: {
-        create: [
-          { name: 'Mr. Tanaka Hiroshi', position: 'Country Manager', email: 'tanaka@yokogawa.com', phone: '+84 903 111 222' },
-        ]
-      }
-    }
-  })
-
-  await prisma.supplier.create({
-    data: {
+      contacts: [
+        { name: 'Mr. Tanaka Hiroshi', position: 'Country Manager', email: 'tanaka@yokogawa.com', phone: '+84 903 111 222' },
+      ]
+    },
+    {
       code: 'NCC-003',
       taxCode: '0105551234',
       name: 'ABB Vietnam',
@@ -630,17 +620,12 @@ async function main() {
       paymentTermId: paymentTermMap['NET60'],
       currencyId: currencyMap['EUR'],
       status: 'Active',
-      contacts: {
-        create: [
-          { name: 'Ms. Nguyen Thi Mai', position: 'Sales Representative', email: 'mai.nguyen@abb.com', phone: '+84 907 333 444' },
-          { name: 'Mr. Tran Van Duc', position: 'Service Engineer', email: 'duc.tran@abb.com', phone: '+84 912 555 666' },
-        ]
-      }
-    }
-  })
-
-  await prisma.supplier.create({
-    data: {
+      contacts: [
+        { name: 'Ms. Nguyen Thi Mai', position: 'Sales Representative', email: 'mai.nguyen@abb.com', phone: '+84 907 333 444' },
+        { name: 'Mr. Tran Van Duc', position: 'Service Engineer', email: 'duc.tran@abb.com', phone: '+84 912 555 666' },
+      ]
+    },
+    {
       code: 'NCC-004',
       taxCode: '0100112233',
       name: 'Emerson Vietnam',
@@ -650,16 +635,11 @@ async function main() {
       paymentTermId: paymentTermMap['NET30'],
       currencyId: currencyMap['USD'],
       status: 'Active',
-      contacts: {
-        create: [
-          { name: 'Mr. David Brown', position: 'Account Manager', email: 'david.brown@emerson.com', phone: '+84 908 777 888' },
-        ]
-      }
-    }
-  })
-
-  await prisma.supplier.create({
-    data: {
+      contacts: [
+        { name: 'Mr. David Brown', position: 'Account Manager', email: 'david.brown@emerson.com', phone: '+84 908 777 888' },
+      ]
+    },
+    {
       code: 'NCC-005',
       taxCode: '0108889999',
       name: 'NSK Vietnam',
@@ -669,15 +649,372 @@ async function main() {
       paymentTermId: paymentTermMap['COD'],
       currencyId: currencyMap['VND'],
       status: 'Inactive',
-      contacts: {
-        create: [
-          { name: 'Mr. Sato Kenji', position: 'Factory Manager', email: 'sato@nsk.com', phone: '+84 251 123 456' },
-        ]
-      }
+      contacts: [
+        { name: 'Mr. Sato Kenji', position: 'Factory Manager', email: 'sato@nsk.com', phone: '+84 251 123 456' },
+      ]
+    },
+  ]
+
+  for (const supplierData of suppliersData) {
+    const { contacts, ...supplier } = supplierData
+    const existingSupplier = await prisma.supplier.findUnique({ where: { code: supplier.code } })
+    if (!existingSupplier) {
+      await prisma.supplier.create({
+        data: {
+          ...supplier,
+          contacts: { create: contacts }
+        }
+      })
     }
-  })
+  }
 
   console.log('Suppliers seeded! 5 records added.')
+
+  // === MATERIAL REQUESTS ===
+  console.log('  Seeding MaterialRequests...')
+
+  // Get User IDs for FK relations
+  const users = await prisma.user.findMany()
+  const userMap = Object.fromEntries(users.map(u => [u.employeeCode, u.id]))
+
+  // Get Request Priority IDs
+  const requestPriorities = await prisma.requestPriority.findMany()
+  const priorityMap = Object.fromEntries(requestPriorities.map(p => [p.code, p.id]))
+
+  // Get Request Status IDs
+  const requestStatuses = await prisma.requestStatus.findMany()
+  const requestStatusMap = Object.fromEntries(requestStatuses.map(s => [s.code, s.id]))
+
+  // Get Materials for FK relations
+  const materials = await prisma.material.findMany()
+  const materialMap = Object.fromEntries(materials.map(m => [m.code, m.id]))
+
+  // Helper function to generate request code
+  const generateRequestCode = (index: number) => `YCVT-2026-${String(index).padStart(3, '0')}`
+
+  // Create 20 Material Requests with items
+  const materialRequestsData = [
+    {
+      requestCode: generateRequestCode(1),
+      requesterId: userMap['NV007'],
+      departmentId: deptMap['PKT'],
+      priorityId: priorityMap['URG'],
+      statusId: requestStatusMap['APPR'],
+      approverId: userMap['NV001'],
+      reason: 'Thay thế cảm biến áp suất tổ máy 1 bị lỗi, cần gấp để đảm bảo vận hành',
+      requestDate: new Date('2026-01-15'),
+      workOrder: 'WO-2026-001',
+      step: 3,
+      items: [
+        { materialId: materialMap['PM-TDH-001'], unitId: unitMap['CAI'], requestedQuantity: 2, stock: 15 },
+        { materialId: materialMap['PM-TDH-002'], unitId: unitMap['CAI'], requestedQuantity: 1, stock: 25, notes: 'Loại PT100 cho nhiệt độ cao' },
+      ]
+    },
+    {
+      requestCode: generateRequestCode(2),
+      requesterId: userMap['NV008'],
+      departmentId: deptMap['PXVH'],
+      priorityId: priorityMap['NOR'],
+      statusId: requestStatusMap['PEND'],
+      reason: 'Bổ sung vật tư bảo trì định kỳ quý 1/2026',
+      requestDate: new Date('2026-01-18'),
+      step: 1,
+      items: [
+        { materialId: materialMap['PM-CONS-001'], unitId: unitMap['CAI'], requestedQuantity: 50, stock: 500 },
+        { materialId: materialMap['PM-CONS-002'], unitId: unitMap['CAI'], requestedQuantity: 100, stock: 1000 },
+        { materialId: materialMap['PM-CONS-003'], unitId: unitMap['CAI'], requestedQuantity: 100, stock: 1200 },
+      ]
+    },
+    {
+      requestCode: generateRequestCode(3),
+      requesterId: userMap['NV003'],
+      departmentId: deptMap['PXSCC'],
+      priorityId: priorityMap['URG'],
+      statusId: requestStatusMap['DONE'],
+      approverId: userMap['NV002'],
+      reason: 'Sửa chữa khẩn cấp bơm ly tâm hệ thống làm mát',
+      requestDate: new Date('2026-01-10'),
+      workOrder: 'WO-2026-002',
+      step: 4,
+      items: [
+        { materialId: materialMap['PM-MECH-001'], unitId: unitMap['CAI'], requestedQuantity: 1, stock: 2 },
+        { materialId: materialMap['PM-MECH-002'], unitId: unitMap['CAI'], requestedQuantity: 2, stock: 30 },
+      ]
+    },
+    {
+      requestCode: generateRequestCode(4),
+      requesterId: userMap['NV007'],
+      departmentId: deptMap['PKT'],
+      priorityId: priorityMap['NOR'],
+      statusId: requestStatusMap['APPR'],
+      approverId: userMap['NV001'],
+      reason: 'Chuẩn bị vật tư cho đại tu tuabin định kỳ T3/2026',
+      requestDate: new Date('2026-01-20'),
+      workOrder: 'WO-2026-003',
+      step: 2,
+      items: [
+        { materialId: materialMap['PM-TURB-001'], unitId: unitMap['CAI'], requestedQuantity: 5, stock: 20 },
+        { materialId: materialMap['PM-TURB-002'], unitId: unitMap['BO'], requestedQuantity: 2, stock: 6 },
+        { materialId: materialMap['PM-CHEM-001'], unitId: unitMap['LIT'], requestedQuantity: 200, stock: 2000, notes: 'Dầu tuabin T46' },
+      ]
+    },
+    {
+      requestCode: generateRequestCode(5),
+      requesterId: userMap['NV008'],
+      departmentId: deptMap['PXVH'],
+      priorityId: priorityMap['NOR'],
+      statusId: requestStatusMap['PEND'],
+      reason: 'Cấp đồ bảo hộ lao động cho nhân viên mới',
+      requestDate: new Date('2026-01-22'),
+      step: 1,
+      items: [
+        { materialId: materialMap['PM-PPE-001'], unitId: unitMap['DOI'], requestedQuantity: 10, stock: 100 },
+        { materialId: materialMap['PM-PPE-002'], unitId: unitMap['CAI'], requestedQuantity: 10, stock: 80 },
+      ]
+    },
+    {
+      requestCode: generateRequestCode(6),
+      requesterId: userMap['NV006'],
+      departmentId: deptMap['TDHDK'],
+      priorityId: priorityMap['URG'],
+      statusId: requestStatusMap['APPR'],
+      approverId: userMap['NV001'],
+      reason: 'Thay thế PLC S7-1500 hệ thống điều khiển chính bị lỗi',
+      requestDate: new Date('2026-01-25'),
+      workOrder: 'WO-2026-004',
+      step: 3,
+      items: [
+        { materialId: materialMap['PM-TDH-003'], unitId: unitMap['CAI'], requestedQuantity: 1, stock: 5, notes: 'CPU 1516-3PN' },
+      ]
+    },
+    {
+      requestCode: generateRequestCode(7),
+      requesterId: userMap['NV003'],
+      departmentId: deptMap['PXSCD'],
+      priorityId: priorityMap['NOR'],
+      statusId: requestStatusMap['DONE'],
+      approverId: userMap['NV002'],
+      reason: 'Kiểm tra và thay thế van điều khiển khu vực xử lý nước',
+      requestDate: new Date('2026-01-08'),
+      workOrder: 'WO-2026-005',
+      step: 4,
+      items: [
+        { materialId: materialMap['PM-VALVE-001'], unitId: unitMap['CAI'], requestedQuantity: 2, stock: 4 },
+        { materialId: materialMap['PM-VALVE-002'], unitId: unitMap['CAI'], requestedQuantity: 1, stock: 10 },
+      ]
+    },
+    {
+      requestCode: generateRequestCode(8),
+      requesterId: userMap['NV004'],
+      departmentId: deptMap['PKH'],
+      priorityId: priorityMap['NOR'],
+      statusId: requestStatusMap['PEND'],
+      reason: 'Bổ sung thiết bị đo lường cho phòng thí nghiệm',
+      requestDate: new Date('2026-01-26'),
+      step: 1,
+      items: [
+        { materialId: materialMap['PM-MEAS-001'], unitId: unitMap['CAI'], requestedQuantity: 1, stock: 8 },
+        { materialId: materialMap['PM-MEAS-002'], unitId: unitMap['CAI'], requestedQuantity: 1, stock: 3 },
+      ]
+    },
+    {
+      requestCode: generateRequestCode(9),
+      requesterId: userMap['NV007'],
+      departmentId: deptMap['PKT'],
+      priorityId: priorityMap['NOR'],
+      statusId: requestStatusMap['APPR'],
+      approverId: userMap['NV001'],
+      reason: 'Nâng cấp phần cứng máy chủ hệ thống SCADA',
+      requestDate: new Date('2026-01-28'),
+      workOrder: 'WO-2026-006',
+      step: 2,
+      items: [
+        { materialId: materialMap['PM-SERVER-001'], unitId: unitMap['CAI'], requestedQuantity: 4, stock: 10 },
+        { materialId: materialMap['PM-SERVER-002'], unitId: unitMap['CAI'], requestedQuantity: 2, stock: 8 },
+      ]
+    },
+    {
+      requestCode: generateRequestCode(10),
+      requesterId: userMap['NV008'],
+      departmentId: deptMap['PXVH'],
+      priorityId: priorityMap['URG'],
+      statusId: requestStatusMap['DONE'],
+      approverId: userMap['NV002'],
+      reason: 'Khẩn cấp: Thay thế hóa chất xử lý nước đã hết',
+      requestDate: new Date('2026-01-05'),
+      workOrder: 'WO-2026-007',
+      step: 4,
+      items: [
+        { materialId: materialMap['PM-CHEM-002'], unitId: unitMap['KG'], requestedQuantity: 100, stock: 500 },
+      ]
+    },
+    {
+      requestCode: generateRequestCode(11),
+      requesterId: userMap['NV006'],
+      departmentId: deptMap['TDHDK'],
+      priorityId: priorityMap['NOR'],
+      statusId: requestStatusMap['PEND'],
+      reason: 'Dự phòng cảm biến cho hệ thống TĐH',
+      requestDate: new Date('2026-01-29'),
+      step: 1,
+      items: [
+        { materialId: materialMap['PM-TDH-001'], unitId: unitMap['CAI'], requestedQuantity: 5, stock: 15 },
+        { materialId: materialMap['PM-TDH-002'], unitId: unitMap['CAI'], requestedQuantity: 10, stock: 25 },
+      ]
+    },
+    {
+      requestCode: generateRequestCode(12),
+      requesterId: userMap['NV003'],
+      departmentId: deptMap['PXSCC'],
+      priorityId: priorityMap['NOR'],
+      statusId: requestStatusMap['APPR'],
+      approverId: userMap['NV001'],
+      reason: 'Vật tư cho kế hoạch bảo trì tháng 2',
+      requestDate: new Date('2026-01-30'),
+      workOrder: 'WO-2026-008',
+      step: 2,
+      items: [
+        { materialId: materialMap['PM-CONS-001'], unitId: unitMap['CAI'], requestedQuantity: 100, stock: 500 },
+        { materialId: materialMap['PM-MECH-002'], unitId: unitMap['CAI'], requestedQuantity: 5, stock: 30 },
+      ]
+    },
+    {
+      requestCode: generateRequestCode(13),
+      requesterId: userMap['NV007'],
+      departmentId: deptMap['PKT'],
+      priorityId: priorityMap['URG'],
+      statusId: requestStatusMap['DONE'],
+      approverId: userMap['NV002'],
+      reason: 'Sự cố tuabin - Thay thế vòng bi trục',
+      requestDate: new Date('2026-01-02'),
+      workOrder: 'WO-2026-009',
+      step: 4,
+      items: [
+        { materialId: materialMap['PM-TURB-002'], unitId: unitMap['BO'], requestedQuantity: 1, stock: 6 },
+      ]
+    },
+    {
+      requestCode: generateRequestCode(14),
+      requesterId: userMap['NV004'],
+      departmentId: deptMap['PKH'],
+      priorityId: priorityMap['NOR'],
+      statusId: requestStatusMap['PEND'],
+      reason: 'Chuẩn bị vật tư năm mới 2026',
+      requestDate: new Date('2026-01-31'),
+      step: 1,
+      items: [
+        { materialId: materialMap['PM-PPE-001'], unitId: unitMap['DOI'], requestedQuantity: 20, stock: 100 },
+        { materialId: materialMap['PM-PPE-002'], unitId: unitMap['CAI'], requestedQuantity: 20, stock: 80 },
+        { materialId: materialMap['PM-CONS-002'], unitId: unitMap['CAI'], requestedQuantity: 200, stock: 1000 },
+      ]
+    },
+    {
+      requestCode: generateRequestCode(15),
+      requesterId: userMap['NV008'],
+      departmentId: deptMap['PXVH'],
+      priorityId: priorityMap['NOR'],
+      statusId: requestStatusMap['APPR'],
+      approverId: userMap['NV001'],
+      reason: 'Bổ sung dầu bôi trơn định kỳ',
+      requestDate: new Date('2026-01-27'),
+      workOrder: 'WO-2026-010',
+      step: 3,
+      items: [
+        { materialId: materialMap['PM-CHEM-001'], unitId: unitMap['LIT'], requestedQuantity: 500, stock: 2000, notes: 'Turbo oil ISO 46' },
+      ]
+    },
+    {
+      requestCode: generateRequestCode(16),
+      requesterId: userMap['NV006'],
+      departmentId: deptMap['TDHDK'],
+      priorityId: priorityMap['URG'],
+      statusId: requestStatusMap['DONE'],
+      approverId: userMap['NV002'],
+      reason: 'Thay thế khẩn cấp đồng hồ đo lưu lượng hệ thống khí',
+      requestDate: new Date('2026-01-03'),
+      workOrder: 'WO-2026-011',
+      step: 4,
+      items: [
+        { materialId: materialMap['PM-MEAS-001'], unitId: unitMap['CAI'], requestedQuantity: 1, stock: 8 },
+      ]
+    },
+    {
+      requestCode: generateRequestCode(17),
+      requesterId: userMap['NV003'],
+      departmentId: deptMap['PXSCD'],
+      priorityId: priorityMap['NOR'],
+      statusId: requestStatusMap['PEND'],
+      reason: 'Vật tư sửa chữa điện quý 1',
+      requestDate: new Date('2026-02-01'),
+      step: 1,
+      items: [
+        { materialId: materialMap['PM-TDH-001'], unitId: unitMap['CAI'], requestedQuantity: 3, stock: 15 },
+        { materialId: materialMap['PM-CONS-001'], unitId: unitMap['CAI'], requestedQuantity: 30, stock: 500 },
+      ]
+    },
+    {
+      requestCode: generateRequestCode(18),
+      requesterId: userMap['NV007'],
+      departmentId: deptMap['PKT'],
+      priorityId: priorityMap['NOR'],
+      statusId: requestStatusMap['APPR'],
+      approverId: userMap['NV001'],
+      reason: 'Chuẩn bị vật tư cho đại tu máy phát T2',
+      requestDate: new Date('2026-01-24'),
+      workOrder: 'WO-2026-012',
+      step: 2,
+      items: [
+        { materialId: materialMap['PM-TURB-001'], unitId: unitMap['CAI'], requestedQuantity: 3, stock: 20 },
+        { materialId: materialMap['PM-VALVE-001'], unitId: unitMap['CAI'], requestedQuantity: 1, stock: 4 },
+        { materialId: materialMap['PM-CHEM-001'], unitId: unitMap['LIT'], requestedQuantity: 100, stock: 2000 },
+      ]
+    },
+    {
+      requestCode: generateRequestCode(19),
+      requesterId: userMap['NV004'],
+      departmentId: deptMap['PKH'],
+      priorityId: priorityMap['URG'],
+      statusId: requestStatusMap['DONE'],
+      approverId: userMap['NV002'],
+      reason: 'Thay thế khẩn cấp thiết bị đo pH bị hỏng',
+      requestDate: new Date('2026-01-06'),
+      workOrder: 'WO-2026-013',
+      step: 4,
+      items: [
+        { materialId: materialMap['PM-MEAS-002'], unitId: unitMap['CAI'], requestedQuantity: 1, stock: 3 },
+      ]
+    },
+    {
+      requestCode: generateRequestCode(20),
+      requesterId: userMap['NV008'],
+      departmentId: deptMap['PXVH'],
+      priorityId: priorityMap['NOR'],
+      statusId: requestStatusMap['PEND'],
+      reason: 'Yêu cầu bổ sung vật tư tiêu hao tháng 2/2026',
+      requestDate: new Date('2026-02-01'),
+      step: 1,
+      items: [
+        { materialId: materialMap['PM-CONS-001'], unitId: unitMap['CAI'], requestedQuantity: 80, stock: 500 },
+        { materialId: materialMap['PM-CONS-002'], unitId: unitMap['CAI'], requestedQuantity: 150, stock: 1000 },
+        { materialId: materialMap['PM-CONS-003'], unitId: unitMap['CAI'], requestedQuantity: 150, stock: 1200 },
+        { materialId: materialMap['PM-PPE-001'], unitId: unitMap['DOI'], requestedQuantity: 5, stock: 100 },
+      ]
+    },
+  ]
+
+  for (const requestData of materialRequestsData) {
+    const { items, ...requestFields } = requestData
+    await prisma.materialRequest.create({
+      data: {
+        ...requestFields,
+        items: {
+          create: items
+        }
+      }
+    })
+  }
+
+  console.log('MaterialRequests seeded! 20 records added.')
 }
 
 main()
