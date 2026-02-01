@@ -167,6 +167,7 @@ export function PurchaseRequestsClient({
        const submittedRequest: PurchaseRequest = {
         ...selectedRequest!,
         ...values,
+        source: values.source as any,
         totalAmount: totalAmount,
       };
       setRequests(requests.map((r) => (r.id === submittedRequest.id ? submittedRequest : r)));
@@ -174,6 +175,7 @@ export function PurchaseRequestsClient({
        const submittedRequest: PurchaseRequest = {
         ...selectedRequest!,
         ...values,
+        source: values.source as any,
         totalAmount: totalAmount,
         step: 2,
       };

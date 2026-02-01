@@ -157,11 +157,11 @@ export function OutboundClient({ initialVouchers }: OutboundClientProps) {
   const handleFormSubmit = (values: OutboundFormValues) => {
      const submittedVoucher: OutboundVoucher = {
       ...selectedVoucher!,
-      purpose: values.purpose,
+      purpose: values.purpose as any,
       issueDate: values.issueDate.toISOString(),
       items: values.items?.map(item => ({
         ...item,
-        materialId: item.materialId || "unknown", // Fallback for mock/new items
+        materialId: "unknown", // Fallback
       })) || [],
     };
 

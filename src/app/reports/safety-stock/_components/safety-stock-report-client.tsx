@@ -155,8 +155,8 @@ export function SafetyStockReportClient({
                 <SelectContent>
                     <SelectItem value="all">-- Tất cả nhóm --</SelectItem>
                     {categories.map((category) => (
-                    <SelectItem key={category} value={category}>
-                        {category}
+                    <SelectItem key={category || "undefined"} value={category || "undefined"}>
+                        {category || "Chưa phân loại"}
                     </SelectItem>
                     ))}
                 </SelectContent>

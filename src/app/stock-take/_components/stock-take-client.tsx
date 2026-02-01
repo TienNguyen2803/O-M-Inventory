@@ -145,9 +145,14 @@ export function StockTakeClient({
     const submittedData: StockTake = {
       ...selectedStockTake!,
       ...values,
+      area: values.area as any,
       date: values.date.toISOString(),
       status: selectedStockTake?.status || 'Đang tiến hành',
-      results: values.results || [],
+      results: (values.results || []).map(r => ({
+          ...r,
+          materialId: "unknown",
+          materialName: "Unknown",
+      })),
     };
 
     if (isEditing) {

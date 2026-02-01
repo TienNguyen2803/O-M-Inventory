@@ -158,6 +158,8 @@ export function BiddingsClient({
     const submittedBidding: BiddingPackage = {
       ...selectedBidding!,
       ...values,
+      method: values.method as any,
+      status: values.status as any,
       openingDate: values.openingDate?.toISOString(),
       closingDate: values.closingDate?.toISOString(),
       items: values.items || [],
