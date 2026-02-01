@@ -242,7 +242,9 @@ async function main() {
   await prisma.biddingMethod.createMany({
     data: [
       { code: "OPEN", name: "Đấu thầu rộng rãi", sortOrder: 1 },
-      { code: "DIRECT", name: "Chỉ định thầu", sortOrder: 2 },
+      { code: "LIMITED", name: "Đấu thầu hạn chế", sortOrder: 2 },
+      { code: "DIRECT", name: "Chỉ định thầu", sortOrder: 3 },
+      { code: "COMPETITIVE", name: "Chào hàng cạnh tranh", sortOrder: 4 },
     ],
     skipDuplicates: true
   })
@@ -251,9 +253,9 @@ async function main() {
   console.log('  Seeding BiddingStatus...')
   await prisma.biddingStatus.createMany({
     data: [
-      { code: "INVITE", name: "Đang mời thầu", color: "bg-yellow-100 text-yellow-800", sortOrder: 1 },
-      { code: "OPENED", name: "Đã mở thầu", color: "bg-sky-100 text-sky-800", sortOrder: 2 },
-      { code: "EVAL", name: "Đang chấm thầu", color: "bg-purple-100 text-purple-800", sortOrder: 3 },
+      { code: "INVITE", name: "Đang mời thầu", color: "bg-blue-100 text-blue-800", sortOrder: 1 },
+      { code: "OPEN", name: "Đã mở thầu", color: "bg-yellow-100 text-yellow-800", sortOrder: 2 },
+      { code: "EVAL", name: "Đang chấm thầu", color: "bg-orange-100 text-orange-800", sortOrder: 3 },
       { code: "DONE", name: "Hoàn thành", color: "bg-green-100 text-green-800", sortOrder: 4 },
       { code: "CANCEL", name: "Đã hủy", color: "bg-red-100 text-red-800", sortOrder: 5 },
     ],
@@ -1379,6 +1381,451 @@ async function main() {
   }
 
   console.log('PurchaseRequests seeded! 20 records added.')
+
+  // === BIDDING PACKAGES ===
+  console.log('  Seeding BiddingPackages...')
+
+  // Get bidding master data IDs for FK relations
+  const biddingMethods = await prisma.biddingMethod.findMany()
+  const biddingMethodMap = Object.fromEntries(biddingMethods.map(m => [m.code, m.id]))
+
+  const biddingStatuses = await prisma.biddingStatus.findMany()
+  const biddingStatusMap = Object.fromEntries(biddingStatuses.map(s => [s.code, s.id]))
+
+  // Get suppliers for FK relations
+  const suppliersList = await prisma.supplier.findMany()
+  const supplierIdMap = Object.fromEntries(suppliersList.map(s => [s.code, s.id]))
+
+  // Helper function to generate package code
+  const generatePackageCode = (index: number) => `TB-2026-${String(index).padStart(2, '0')}`
+
+  // Create 20 Bidding Packages with scope items and participants
+  const biddingPackagesData = [
+    {
+      packageCode: generatePackageCode(1),
+      name: 'Mua sắm cảm biến áp suất và nhiệt độ cho hệ thống giám sát',
+      methodId: biddingMethodMap['OPEN'],
+      statusId: biddingStatusMap['DONE'],
+      createdById: userMap['NV002'],
+      winnerId: supplierIdMap['NCC-002'],
+      estimatedBudget: 850000000,
+      openDate: new Date('2026-01-05'),
+      closeDate: new Date('2026-01-20'),
+      step: 4,
+      notes: 'Gói thầu đã hoàn thành, nhà thầu Yokogawa trúng thầu',
+      scopeItems: [
+        { name: 'Cảm biến áp suất 0-100 bar', unitId: unitMap['CAI'], quantity: 10, estimatedAmount: 350000000 },
+        { name: 'Cảm biến nhiệt độ PT100', unitId: unitMap['CAI'], quantity: 15, estimatedAmount: 250000000 },
+        { name: 'Cảm biến lưu lượng DN50', unitId: unitMap['CAI'], quantity: 5, estimatedAmount: 250000000 },
+      ],
+      participants: ['NCC-001', 'NCC-002', 'NCC-004']
+    },
+    {
+      packageCode: generatePackageCode(2),
+      name: 'Mua PLC S7-1500 và phụ kiện cho hệ thống điều khiển',
+      methodId: biddingMethodMap['LIMITED'],
+      statusId: biddingStatusMap['EVAL'],
+      createdById: userMap['NV003'],
+      estimatedBudget: 1250000000,
+      openDate: new Date('2026-01-10'),
+      closeDate: new Date('2026-01-25'),
+      step: 3,
+      notes: 'Đang chấm thầu, dự kiến chọn nhà thầu tuần sau',
+      scopeItems: [
+        { name: 'PLC S7-1516-3PN/DP', unitId: unitMap['CAI'], quantity: 3, estimatedAmount: 600000000 },
+        { name: 'Module I/O SM1231', unitId: unitMap['CAI'], quantity: 20, estimatedAmount: 400000000 },
+        { name: 'Module truyền thông CP1543-1', unitId: unitMap['CAI'], quantity: 5, estimatedAmount: 250000000 },
+      ],
+      participants: ['NCC-001', 'NCC-003']
+    },
+    {
+      packageCode: generatePackageCode(3),
+      name: 'Cung cấp vật tư van điều khiển DN100-DN200',
+      methodId: biddingMethodMap['OPEN'],
+      statusId: biddingStatusMap['OPEN'],
+      createdById: userMap['NV004'],
+      estimatedBudget: 680000000,
+      openDate: new Date('2026-01-15'),
+      closeDate: new Date('2026-02-01'),
+      step: 2,
+      notes: 'Đã mở thầu, đang tiếp nhận hồ sơ dự thầu',
+      scopeItems: [
+        { name: 'Van điều khiển DN100 PN16', unitId: unitMap['CAI'], quantity: 8, estimatedAmount: 320000000 },
+        { name: 'Van điều khiển DN200 PN16', unitId: unitMap['CAI'], quantity: 4, estimatedAmount: 280000000 },
+        { name: 'Actuator điện cho van', unitId: unitMap['CAI'], quantity: 12, estimatedAmount: 80000000 },
+      ],
+      participants: ['NCC-001', 'NCC-003', 'NCC-004']
+    },
+    {
+      packageCode: generatePackageCode(4),
+      name: 'Mua sắm dầu bôi trơn tuabin ISO VG46',
+      methodId: biddingMethodMap['COMPETITIVE'],
+      statusId: biddingStatusMap['DONE'],
+      createdById: userMap['NV002'],
+      winnerId: supplierIdMap['NCC-004'],
+      estimatedBudget: 450000000,
+      openDate: new Date('2025-12-01'),
+      closeDate: new Date('2025-12-15'),
+      step: 4,
+      notes: 'Đã hoàn thành, giao hàng tháng 1/2026',
+      scopeItems: [
+        { name: 'Dầu tuabin ISO VG46', unitId: unitMap['LIT'], quantity: 5000, estimatedAmount: 350000000 },
+        { name: 'Dầu thủy lực ISO VG32', unitId: unitMap['LIT'], quantity: 2000, estimatedAmount: 100000000 },
+      ],
+      participants: ['NCC-004', 'NCC-005']
+    },
+    {
+      packageCode: generatePackageCode(5),
+      name: 'Cung cấp vòng bi chính xác cao cho tuabin khí',
+      methodId: biddingMethodMap['DIRECT'],
+      statusId: biddingStatusMap['DONE'],
+      createdById: userMap['NV003'],
+      winnerId: supplierIdMap['NCC-005'],
+      estimatedBudget: 980000000,
+      openDate: new Date('2025-11-15'),
+      closeDate: new Date('2025-12-01'),
+      step: 4,
+      notes: 'Chỉ định thầu do yêu cầu kỹ thuật đặc biệt của OEM',
+      scopeItems: [
+        { name: 'Vòng bi trục chính SKF 6330', unitId: unitMap['BO'], quantity: 4, estimatedAmount: 480000000 },
+        { name: 'Vòng bi trục phụ SKF 6324', unitId: unitMap['BO'], quantity: 6, estimatedAmount: 360000000 },
+        { name: 'Seal và phụ kiện', unitId: unitMap['BO'], quantity: 10, estimatedAmount: 140000000 },
+      ],
+      participants: ['NCC-005']
+    },
+    {
+      packageCode: generatePackageCode(6),
+      name: 'Mua thiết bị đo lường và phân tích nước',
+      methodId: biddingMethodMap['OPEN'],
+      statusId: biddingStatusMap['INVITE'],
+      createdById: userMap['NV006'],
+      estimatedBudget: 520000000,
+      openDate: new Date('2026-02-01'),
+      closeDate: new Date('2026-02-15'),
+      step: 1,
+      notes: 'Đang mời thầu, hạn nộp hồ sơ 15/02/2026',
+      scopeItems: [
+        { name: 'Máy đo pH online', unitId: unitMap['CAI'], quantity: 3, estimatedAmount: 180000000 },
+        { name: 'Máy đo độ dẫn điện', unitId: unitMap['CAI'], quantity: 3, estimatedAmount: 150000000 },
+        { name: 'Máy đo oxy hòa tan', unitId: unitMap['CAI'], quantity: 2, estimatedAmount: 190000000 },
+      ],
+      participants: []
+    },
+    {
+      packageCode: generatePackageCode(7),
+      name: 'Cung cấp hóa chất xử lý nước làm mát',
+      methodId: biddingMethodMap['COMPETITIVE'],
+      statusId: biddingStatusMap['DONE'],
+      createdById: userMap['NV004'],
+      winnerId: supplierIdMap['NCC-003'],
+      estimatedBudget: 320000000,
+      openDate: new Date('2025-12-10'),
+      closeDate: new Date('2025-12-25'),
+      step: 4,
+      notes: 'Hợp đồng cung cấp hóa chất năm 2026',
+      scopeItems: [
+        { name: 'Hóa chất chống ăn mòn', unitId: unitMap['KG'], quantity: 500, estimatedAmount: 150000000 },
+        { name: 'Hóa chất chống cáu cặn', unitId: unitMap['KG'], quantity: 400, estimatedAmount: 120000000 },
+        { name: 'Hóa chất diệt khuẩn', unitId: unitMap['KG'], quantity: 200, estimatedAmount: 50000000 },
+      ],
+      participants: ['NCC-003', 'NCC-004']
+    },
+    {
+      packageCode: generatePackageCode(8),
+      name: 'Mua sắm bơm ly tâm và phụ kiện',
+      methodId: biddingMethodMap['LIMITED'],
+      statusId: biddingStatusMap['INVITE'],
+      createdById: userMap['NV007'],
+      estimatedBudget: 780000000,
+      openDate: new Date('2026-01-25'),
+      closeDate: new Date('2026-02-10'),
+      step: 1,
+      notes: 'Đấu thầu hạn chế với 3 nhà cung cấp đã được sơ tuyển',
+      scopeItems: [
+        { name: 'Bơm ly tâm 15HP', unitId: unitMap['CAI'], quantity: 4, estimatedAmount: 480000000 },
+        { name: 'Bơm ly tâm 10HP', unitId: unitMap['CAI'], quantity: 6, estimatedAmount: 240000000 },
+        { name: 'Phụ tùng thay thế', unitId: unitMap['BO'], quantity: 10, estimatedAmount: 60000000 },
+      ],
+      participants: []
+    },
+    {
+      packageCode: generatePackageCode(9),
+      name: 'Mua thiết bị bảo hộ lao động năm 2026',
+      methodId: biddingMethodMap['OPEN'],
+      statusId: biddingStatusMap['EVAL'],
+      createdById: userMap['NV002'],
+      estimatedBudget: 180000000,
+      openDate: new Date('2026-01-08'),
+      closeDate: new Date('2026-01-22'),
+      step: 3,
+      notes: 'Đang đánh giá hồ sơ kỹ thuật',
+      scopeItems: [
+        { name: 'Găng tay chịu nhiệt', unitId: unitMap['DOI'], quantity: 200, estimatedAmount: 40000000 },
+        { name: 'Kính bảo hộ chống tia UV', unitId: unitMap['CAI'], quantity: 150, estimatedAmount: 30000000 },
+        { name: 'Mũ bảo hộ công nghiệp', unitId: unitMap['CAI'], quantity: 100, estimatedAmount: 50000000 },
+        { name: 'Giày bảo hộ chống tĩnh điện', unitId: unitMap['DOI'], quantity: 120, estimatedAmount: 60000000 },
+      ],
+      participants: ['NCC-003', 'NCC-005']
+    },
+    {
+      packageCode: generatePackageCode(10),
+      name: 'Cung cấp cánh tuabin HPT dự phòng',
+      methodId: biddingMethodMap['DIRECT'],
+      statusId: biddingStatusMap['EVAL'],
+      createdById: userMap['NV003'],
+      estimatedBudget: 4500000000,
+      openDate: new Date('2026-01-02'),
+      closeDate: new Date('2026-01-20'),
+      step: 3,
+      notes: 'Chỉ định thầu OEM GE, đang đàm phán hợp đồng',
+      scopeItems: [
+        { name: 'Cánh HPT Stage 1', unitId: unitMap['CAI'], quantity: 40, estimatedAmount: 2000000000 },
+        { name: 'Cánh HPT Stage 2', unitId: unitMap['CAI'], quantity: 40, estimatedAmount: 1500000000 },
+        { name: 'Vòng dẫn hướng', unitId: unitMap['BO'], quantity: 2, estimatedAmount: 1000000000 },
+      ],
+      participants: ['NCC-004']
+    },
+    {
+      packageCode: generatePackageCode(11),
+      name: 'Mua RAM và SSD cho hệ thống máy chủ',
+      methodId: biddingMethodMap['COMPETITIVE'],
+      statusId: biddingStatusMap['DONE'],
+      createdById: userMap['NV006'],
+      winnerId: supplierIdMap['NCC-001'],
+      estimatedBudget: 280000000,
+      openDate: new Date('2025-12-05'),
+      closeDate: new Date('2025-12-20'),
+      step: 4,
+      notes: 'Nâng cấp hệ thống SCADA server',
+      scopeItems: [
+        { name: 'RAM DDR4 32GB ECC', unitId: unitMap['CAI'], quantity: 20, estimatedAmount: 160000000 },
+        { name: 'SSD NVMe 2TB Enterprise', unitId: unitMap['CAI'], quantity: 10, estimatedAmount: 120000000 },
+      ],
+      participants: ['NCC-001', 'NCC-003']
+    },
+    {
+      packageCode: generatePackageCode(12),
+      name: 'Cung cấp gioăng và seal chịu nhiệt cao',
+      methodId: biddingMethodMap['OPEN'],
+      statusId: biddingStatusMap['OPEN'],
+      createdById: userMap['NV004'],
+      estimatedBudget: 150000000,
+      openDate: new Date('2026-01-18'),
+      closeDate: new Date('2026-02-05'),
+      step: 2,
+      notes: 'Gói thầu vật tư tiêu hao hàng năm',
+      scopeItems: [
+        { name: 'Gioăng graphite DN50-DN200', unitId: unitMap['CAI'], quantity: 500, estimatedAmount: 75000000 },
+        { name: 'O-ring chịu nhiệt 200°C', unitId: unitMap['CAI'], quantity: 1000, estimatedAmount: 50000000 },
+        { name: 'Seal cơ khí bơm', unitId: unitMap['BO'], quantity: 20, estimatedAmount: 25000000 },
+      ],
+      participants: ['NCC-002', 'NCC-005']
+    },
+    {
+      packageCode: generatePackageCode(13),
+      name: 'Mua sắm thiết bị đo rung và chẩn đoán',
+      methodId: biddingMethodMap['LIMITED'],
+      statusId: biddingStatusMap['INVITE'],
+      createdById: userMap['NV007'],
+      estimatedBudget: 650000000,
+      openDate: new Date('2026-01-28'),
+      closeDate: new Date('2026-02-12'),
+      step: 1,
+      notes: 'Thiết bị chẩn đoán CBM cho tuabin',
+      scopeItems: [
+        { name: 'Máy đo rung Bently Nevada', unitId: unitMap['CAI'], quantity: 2, estimatedAmount: 400000000 },
+        { name: 'Cảm biến gia tốc', unitId: unitMap['CAI'], quantity: 10, estimatedAmount: 150000000 },
+        { name: 'Phần mềm phân tích', unitId: unitMap['BO'], quantity: 1, estimatedAmount: 100000000 },
+      ],
+      participants: []
+    },
+    {
+      packageCode: generatePackageCode(14),
+      name: 'Cung cấp bulong và đai ốc inox',
+      methodId: biddingMethodMap['COMPETITIVE'],
+      statusId: biddingStatusMap['DONE'],
+      createdById: userMap['NV002'],
+      winnerId: supplierIdMap['NCC-005'],
+      estimatedBudget: 85000000,
+      openDate: new Date('2025-11-25'),
+      closeDate: new Date('2025-12-10'),
+      step: 4,
+      notes: 'Vật tư tiêu hao quý 1/2026',
+      scopeItems: [
+        { name: 'Bulong M12x50 inox 304', unitId: unitMap['CAI'], quantity: 2000, estimatedAmount: 40000000 },
+        { name: 'Đai ốc M12 inox 304', unitId: unitMap['CAI'], quantity: 2500, estimatedAmount: 25000000 },
+        { name: 'Vòng đệm phẳng M12', unitId: unitMap['CAI'], quantity: 3000, estimatedAmount: 20000000 },
+      ],
+      participants: ['NCC-003', 'NCC-005']
+    },
+    {
+      packageCode: generatePackageCode(15),
+      name: 'Mua van an toàn PSV cho lò hơi',
+      methodId: biddingMethodMap['OPEN'],
+      statusId: biddingStatusMap['CANCEL'],
+      createdById: userMap['NV003'],
+      estimatedBudget: 920000000,
+      openDate: new Date('2025-12-15'),
+      closeDate: new Date('2026-01-05'),
+      step: 1,
+      notes: 'Hủy do thay đổi kế hoạch sửa chữa lớn',
+      scopeItems: [
+        { name: 'Van an toàn PSV DN80', unitId: unitMap['CAI'], quantity: 6, estimatedAmount: 480000000 },
+        { name: 'Van an toàn PSV DN100', unitId: unitMap['CAI'], quantity: 4, estimatedAmount: 440000000 },
+      ],
+      participants: []
+    },
+    {
+      packageCode: generatePackageCode(16),
+      name: 'Cung cấp khớp nối mềm chống rung',
+      methodId: biddingMethodMap['COMPETITIVE'],
+      statusId: biddingStatusMap['OPEN'],
+      createdById: userMap['NV004'],
+      estimatedBudget: 195000000,
+      openDate: new Date('2026-01-20'),
+      closeDate: new Date('2026-02-03'),
+      step: 2,
+      notes: 'Thay thế khớp nối hệ thống nước làm mát',
+      scopeItems: [
+        { name: 'Khớp nối mềm DN150', unitId: unitMap['CAI'], quantity: 10, estimatedAmount: 100000000 },
+        { name: 'Khớp nối mềm DN200', unitId: unitMap['CAI'], quantity: 6, estimatedAmount: 95000000 },
+      ],
+      participants: ['NCC-002', 'NCC-003']
+    },
+    {
+      packageCode: generatePackageCode(17),
+      name: 'Mua thiết bị hiệu chuẩn cảm biến',
+      methodId: biddingMethodMap['LIMITED'],
+      statusId: biddingStatusMap['DONE'],
+      createdById: userMap['NV006'],
+      winnerId: supplierIdMap['NCC-002'],
+      estimatedBudget: 380000000,
+      openDate: new Date('2025-11-20'),
+      closeDate: new Date('2025-12-05'),
+      step: 4,
+      notes: 'Thiết bị chuẩn cho phòng đo lường',
+      scopeItems: [
+        { name: 'Calibrator áp suất 0-400bar', unitId: unitMap['CAI'], quantity: 2, estimatedAmount: 200000000 },
+        { name: 'Calibrator nhiệt độ -50 đến 650°C', unitId: unitMap['CAI'], quantity: 2, estimatedAmount: 180000000 },
+      ],
+      participants: ['NCC-001', 'NCC-002']
+    },
+    {
+      packageCode: generatePackageCode(18),
+      name: 'Cung cấp biến tần cho quạt làm mát',
+      methodId: biddingMethodMap['OPEN'],
+      statusId: biddingStatusMap['INVITE'],
+      createdById: userMap['NV007'],
+      estimatedBudget: 720000000,
+      openDate: new Date('2026-01-30'),
+      closeDate: new Date('2026-02-15'),
+      step: 1,
+      notes: 'Nâng cấp hệ thống điều khiển quạt AHU',
+      scopeItems: [
+        { name: 'Biến tần 30kW', unitId: unitMap['CAI'], quantity: 4, estimatedAmount: 360000000 },
+        { name: 'Biến tần 22kW', unitId: unitMap['CAI'], quantity: 6, estimatedAmount: 300000000 },
+        { name: 'Phụ kiện lắp đặt', unitId: unitMap['BO'], quantity: 10, estimatedAmount: 60000000 },
+      ],
+      participants: []
+    },
+    {
+      packageCode: generatePackageCode(19),
+      name: 'Mua lọc dầu và phụ tùng hệ thống bôi trơn',
+      methodId: biddingMethodMap['COMPETITIVE'],
+      statusId: biddingStatusMap['EVAL'],
+      createdById: userMap['NV002'],
+      estimatedBudget: 210000000,
+      openDate: new Date('2026-01-12'),
+      closeDate: new Date('2026-01-28'),
+      step: 3,
+      notes: 'Đang đánh giá giá thầu từ 3 nhà cung cấp',
+      scopeItems: [
+        { name: 'Lọc dầu chính 25 micron', unitId: unitMap['CAI'], quantity: 50, estimatedAmount: 100000000 },
+        { name: 'Lọc dầu bypass 3 micron', unitId: unitMap['CAI'], quantity: 30, estimatedAmount: 75000000 },
+        { name: 'Housing lọc và phụ kiện', unitId: unitMap['BO'], quantity: 5, estimatedAmount: 35000000 },
+      ],
+      participants: ['NCC-003', 'NCC-004', 'NCC-005']
+    },
+    {
+      packageCode: generatePackageCode(20),
+      name: 'Cung cấp cáp điện và phụ kiện đấu nối',
+      methodId: biddingMethodMap['OPEN'],
+      statusId: biddingStatusMap['OPEN'],
+      createdById: userMap['NV003'],
+      estimatedBudget: 420000000,
+      openDate: new Date('2026-01-22'),
+      closeDate: new Date('2026-02-08'),
+      step: 2,
+      notes: 'Cáp điều khiển và cáp nguồn cho dự án mở rộng',
+      scopeItems: [
+        { name: 'Cáp điều khiển 12x1.5mm2', unitId: unitMap['MET'], quantity: 2000, estimatedAmount: 160000000 },
+        { name: 'Cáp nguồn 4x25mm2', unitId: unitMap['MET'], quantity: 500, estimatedAmount: 175000000 },
+        { name: 'Đầu cốt và phụ kiện', unitId: unitMap['BO'], quantity: 100, estimatedAmount: 85000000 },
+      ],
+      participants: ['NCC-001', 'NCC-003']
+    },
+  ]
+
+  for (const pkgData of biddingPackagesData) {
+    const { scopeItems, participants, ...packageFields } = pkgData
+
+    // Check if package exists
+    const existingPkg = await prisma.biddingPackage.findUnique({ where: { packageCode: packageFields.packageCode } })
+    if (existingPkg) {
+      console.log(`  Package ${packageFields.packageCode} already exists, skipping...`)
+      continue
+    }
+
+    // Create BiddingPackage first
+    const createdPackage = await prisma.biddingPackage.create({
+      data: {
+        packageCode: packageFields.packageCode,
+        name: packageFields.name,
+        methodId: packageFields.methodId,
+        statusId: packageFields.statusId,
+        createdById: packageFields.createdById,
+        winnerId: packageFields.winnerId || null,
+        estimatedBudget: packageFields.estimatedBudget,
+        openDate: packageFields.openDate,
+        closeDate: packageFields.closeDate,
+        step: packageFields.step,
+        notes: packageFields.notes,
+      }
+    })
+
+    // Create scope items
+    for (const item of scopeItems) {
+      await prisma.biddingScopeItem.create({
+        data: {
+          biddingPackageId: createdPackage.id,
+          name: item.name,
+          unitId: item.unitId,
+          quantity: item.quantity,
+          estimatedAmount: item.estimatedAmount,
+        }
+      })
+    }
+
+    // Create participants
+    for (const supplierCode of participants) {
+      const supplierId = supplierIdMap[supplierCode]
+      if (supplierId) {
+        await prisma.biddingParticipant.create({
+          data: {
+            biddingPackageId: createdPackage.id,
+            supplierId: supplierId,
+            invitedAt: packageFields.openDate,
+            isSubmitted: packageFields.step >= 2,
+            submittedAt: packageFields.step >= 2 ? packageFields.closeDate : null,
+            technicalScore: packageFields.step >= 3 ? Math.floor(Math.random() * 20) + 80 : null,
+            priceScore: packageFields.step >= 3 ? Math.floor(Math.random() * 15) + 85 : null,
+          }
+        })
+      }
+    }
+  }
+
+  console.log('BiddingPackages seeded! 20 records added.')
 }
 
 main()

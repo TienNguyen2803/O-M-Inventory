@@ -59,6 +59,7 @@ model MaterialUnit {
   warehouseItems       WarehouseItem[]
   materialRequestItems MaterialRequestItem[]
   purchaseRequestItems PurchaseRequestItem[] @relation("PurchaseItemUnit")
+  biddingScopeItems    BiddingScopeItem[]    @relation("BiddingScopeUnit")
 
   @@map("material_units")
 }
@@ -293,6 +294,8 @@ model BiddingMethod {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  packages BiddingPackage[]
+
   @@map("bidding_methods")
 }
 
@@ -305,6 +308,8 @@ model BiddingStatus {
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  packages BiddingPackage[]
 
   @@map("bidding_statuses")
 }
@@ -489,6 +494,7 @@ model Material {
 
   requestItems MaterialRequestItem[]
   purchaseRequestItems PurchaseRequestItem[] @relation("PurchaseItemMaterial")
+  biddingScopeItems    BiddingScopeItem[]    @relation("BiddingScopeMaterial")
 
   @@map("materials")
 }
@@ -517,6 +523,8 @@ model Supplier {
 
   contacts               SupplierContact[]
   suggestedPurchaseItems PurchaseRequestItem[] @relation("PurchaseSuggestedSupplier")
+  biddingParticipations  BiddingParticipant[]  @relation("BiddingSupplier")
+  wonBiddings            BiddingPackage[]      @relation("BiddingWinner")
 
   @@map("suppliers")
 }
@@ -645,7 +653,8 @@ model PurchaseRequest {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  items PurchaseRequestItem[]
+  items           PurchaseRequestItem[]
+  biddingPackages BiddingPurchaseRequest[]
 
   @@map("purchase_requests")
 }
@@ -670,42 +679,122 @@ model PurchaseRequestItem {
   @@map("purchase_request_items")
 }
 
+// === BIDDING PACKAGE (Gói thầu) ===
+
 model BiddingPackage {
   id                String   @id @default(uuid())
-  packageCode       String   @unique
+  packageCode       String   @unique  // TB-2026-01
   name              String
-  purchaseRequestId String
-  estimatedPrice    Float
-  method            String
-  status            String
-  step              Int      @default(1)
-  openingDate       DateTime?
-  closingDate       DateTime?
-  winnerSupplier    String?
-  winningPrice      Float?
-  technicalScore    String?
-  negotiationStatus String?
+
+  // FK Relations
+  methodId          String
+  statusId          String
+  createdById       String
+  winnerId          String?  // Nhà thầu trúng thầu
+
+  method            BiddingMethod  @relation(fields: [methodId], references: [id])
+  status            BiddingStatus  @relation(fields: [statusId], references: [id])
+  createdBy         User           @relation("BiddingCreator", fields: [createdById], references: [id])
+  winner            Supplier?      @relation("BiddingWinner", fields: [winnerId], references: [id])
+
+  estimatedBudget   Float
+  openDate          DateTime
+  closeDate         DateTime
+  step              Int      @default(1)  // 1-4 for stepper
+  notes             String?
+
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
-  items BiddingItem[]
+  // Relations
+  purchaseRequests  BiddingPurchaseRequest[]
+  participants      BiddingParticipant[]
+  scopeItems        BiddingScopeItem[]
 
   @@map("bidding_packages")
 }
 
-model BiddingItem {
-  id        String   @id @default(uuid())
-  packageId String
-  name      String
-  unit      String
-  quantity  Int
-  amount    Float
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+// === N:M with Purchase Request ===
+model BiddingPurchaseRequest {
+  id                String   @id @default(uuid())
+  biddingPackageId  String
+  purchaseRequestId String
 
-  package BiddingPackage @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  biddingPackage    BiddingPackage   @relation(fields: [biddingPackageId], references: [id], onDelete: Cascade)
+  purchaseRequest   PurchaseRequest  @relation(fields: [purchaseRequestId], references: [id])
 
-  @@map("bidding_items")
+  createdAt         DateTime @default(now())
+
+  @@unique([biddingPackageId, purchaseRequestId])
+  @@map("bidding_purchase_requests")
+}
+
+// === Scope Items (từ PR items) ===
+model BiddingScopeItem {
+  id                String   @id @default(uuid())
+  biddingPackageId  String
+  materialId        String?
+  name              String   // Tên hạng mục
+  unitId            String
+  quantity          Float
+  estimatedAmount   Float
+
+  biddingPackage    BiddingPackage @relation(fields: [biddingPackageId], references: [id], onDelete: Cascade)
+  material          Material?      @relation("BiddingScopeMaterial", fields: [materialId], references: [id])
+  unit              MaterialUnit   @relation("BiddingScopeUnit", fields: [unitId], references: [id])
+
+  quotations        BidQuotation[]
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@map("bidding_scope_items")
+}
+
+// === Nhà thầu tham gia ===
+model BiddingParticipant {
+  id                String   @id @default(uuid())
+  biddingPackageId  String
+  supplierId        String
+
+  biddingPackage    BiddingPackage @relation(fields: [biddingPackageId], references: [id], onDelete: Cascade)
+  supplier          Supplier       @relation("BiddingSupplier", fields: [supplierId], references: [id])
+
+  invitedAt         DateTime @default(now())
+  submittedAt       DateTime?
+  isSubmitted       Boolean  @default(false)
+
+  // Scoring
+  technicalScore    Float?
+  priceScore        Float?
+  totalScore        Float?
+  rank              Int?
+
+  quotations        BidQuotation[]
+
+  @@unique([biddingPackageId, supplierId])
+  @@map("bidding_participants")
+}
+
+// === Báo giá từng hạng mục của nhà thầu ===
+model BidQuotation {
+  id                  String   @id @default(uuid())
+  participantId       String
+  scopeItemId         String
+
+  participant         BiddingParticipant @relation(fields: [participantId], references: [id], onDelete: Cascade)
+  scopeItem           BiddingScopeItem   @relation(fields: [scopeItemId], references: [id])
+
+  unitPrice           Float
+  quantity            Float
+  totalPrice          Float
+  notes               String?
+
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@unique([participantId, scopeItemId])
+  @@map("bid_quotations")
 }
 
 model InboundReceipt {
@@ -852,6 +941,9 @@ model User {
 
   // PurchaseRequest relations
   purchaseRequests PurchaseRequest[] @relation("PurchaseRequester")
+
+  // BiddingPackage relations
+  createdBiddingPackages BiddingPackage[] @relation("BiddingCreator")
 
   @@map("users")
 }

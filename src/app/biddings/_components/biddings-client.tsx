@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import type { BiddingPackage } from "@/lib/types";
+import type { BiddingPackage, MasterDataItem } from "@/lib/types";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,6 +12,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Filter,
+  RefreshCw,
 } from "lucide-react";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import {
@@ -63,10 +64,43 @@ const Breadcrumbs = () => (
   </div>
 );
 
+// Helper to get status badge class based on status code or name
+function getStatusBadgeClass(status?: MasterDataItem | string): string {
+  const statusCode = typeof status === 'object' ? status?.code : status;
+  const statusName = typeof status === 'object' ? status?.name : status;
+
+  // Check by code first
+  switch (statusCode) {
+    case "INVITE": return "bg-blue-100 text-blue-800";
+    case "OPEN":
+    case "OPENED": return "bg-yellow-100 text-yellow-800";
+    case "EVAL": return "bg-orange-100 text-orange-800";
+    case "DONE": return "bg-green-100 text-green-800";
+    case "CANCEL": return "bg-red-100 text-red-800";
+  }
+
+  // Fallback to name check
+  switch (statusName) {
+    case "Đang mời thầu": return "bg-blue-100 text-blue-800";
+    case "Đã mở thầu": return "bg-yellow-100 text-yellow-800";
+    case "Đang chấm thầu": return "bg-orange-100 text-orange-800";
+    case "Hoàn thành": return "bg-green-100 text-green-800";
+    case "Đã hủy": return "bg-red-100 text-red-800";
+  }
+
+  // Use color from MasterDataItem if available
+  if (typeof status === 'object' && status?.color) {
+    return status.color;
+  }
+
+  return "bg-gray-100 text-gray-800";
+}
+
 export function BiddingsClient({
   initialBiddings,
 }: BiddingsClientProps) {
   const [biddings, setBiddings] = useState<BiddingPackage[]>(initialBiddings);
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -79,6 +113,22 @@ export function BiddingsClient({
   const [methodFilter, setMethodFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
 
+  // Fetch latest data
+  const fetchBiddings = async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetch('/api/bidding-packages?limit=100');
+      if (response.ok) {
+        const json = await response.json();
+        setBiddings(json.data || []);
+      }
+    } catch (error) {
+      console.error('Failed to fetch biddings:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const filteredBiddings = useMemo(() => {
     return biddings.filter((bidding) => {
       const searchLower = searchQuery.toLowerCase();
@@ -87,19 +137,21 @@ export function BiddingsClient({
         bidding.id.toLowerCase().includes(searchLower) ||
         bidding.name.toLowerCase().includes(searchLower);
 
+      const methodName = typeof bidding.method === 'object' ? bidding.method?.name : bidding.method;
       const matchesMethod =
-        methodFilter === "all" || bidding.method === methodFilter;
+        methodFilter === "all" || methodName === methodFilter;
 
+      const statusName = typeof bidding.status === 'object' ? bidding.status?.name : bidding.status;
       const matchesStatus =
-        statusFilter === "all" || bidding.status === statusFilter;
+        statusFilter === "all" || statusName === statusFilter;
 
       return matchesSearch && matchesMethod && matchesStatus;
     });
   }, [biddings, searchQuery, methodFilter, statusFilter]);
-  
+
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 6;
+  const itemsPerPage = 10;
 
   useEffect(() => {
     setCurrentPage(1);
@@ -115,24 +167,14 @@ export function BiddingsClient({
     currentPage * itemsPerPage,
     filteredBiddings.length
   );
-  
+
   // Handlers
   const handleAdd = () => {
-    const newBiddingTemplate: BiddingPackage = {
-      id: `TB-2025-${String(biddings.length + 1).padStart(2, "0")}`,
-      name: "",
-      purchaseRequestId: "",
-      estimatedPrice: 0,
-      method: 'Đấu thầu rộng rãi' as any,
-      status: 'Đang mời thầu' as any,
-      step: 1,
-      items: [],
-    };
-    setSelectedBidding(newBiddingTemplate);
+    setSelectedBidding(null);
     setViewMode(false);
     setIsFormOpen(true);
   };
-  
+
   const handleEdit = (bidding: BiddingPackage) => {
     setSelectedBidding(bidding);
     setViewMode(false);
@@ -145,66 +187,101 @@ export function BiddingsClient({
     setIsFormOpen(true);
   };
 
-  const handleDelete = (id: string) => {
-    setBiddings(biddings.filter((b) => b.id !== id));
-    toast({
-      title: "Thành công",
-      description: `Đã xóa gói thầu ${id}.`,
-      variant: "destructive",
-    });
+  const handleDelete = async (id: string) => {
+    try {
+      const response = await fetch(`/api/bidding-packages/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        setBiddings(biddings.filter((b) => b.id !== id));
+        toast({
+          title: "Thành công",
+          description: `Đã xóa gói thầu ${id}.`,
+        });
+      } else {
+        throw new Error('Failed to delete');
+      }
+    } catch {
+      toast({
+        title: "Lỗi",
+        description: `Không thể xóa gói thầu ${id}.`,
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleFormSubmit = (values: BiddingFormValues) => {
-    const submittedBidding: BiddingPackage = {
-      ...selectedBidding!,
-      ...values,
-      method: values.method as any,
-      status: values.status as any,
-      openingDate: values.openingDate?.toISOString(),
-      closingDate: values.closingDate?.toISOString(),
-      items: values.items || [],
-      result: values.result,
-    };
-
+  const handleFormSubmit = async (values: BiddingFormValues) => {
     if (viewMode) {
       setIsFormOpen(false);
       return;
     }
 
-    const isEditing = biddings.some(b => b.id === submittedBidding.id);
+    const isEditing = selectedBidding && biddings.some(b => b.id === selectedBidding.id);
 
-    if (isEditing) {
-      setBiddings(biddings.map((b) => b.id === submittedBidding.id ? submittedBidding : b));
-    } else {
-      setBiddings([submittedBidding, ...biddings]);
+    try {
+      const method = isEditing ? 'PUT' : 'POST';
+      const url = isEditing
+        ? `/api/bidding-packages/${selectedBidding.id}`
+        : '/api/bidding-packages';
+
+      const response = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(values),
+      });
+
+      if (response.ok) {
+        const json = await response.json();
+        if (isEditing) {
+          setBiddings(biddings.map((b) => b.id === json.data.id ? json.data : b));
+        } else {
+          setBiddings([json.data, ...biddings]);
+        }
+        setIsFormOpen(false);
+        toast({
+          title: "Thành công",
+          description: isEditing ? "Đã cập nhật gói thầu." : "Đã tạo gói thầu mới.",
+        });
+      } else {
+        throw new Error('Failed to save');
+      }
+    } catch {
+      toast({
+        title: "Lỗi",
+        description: "Không thể lưu gói thầu.",
+        variant: "destructive",
+      });
     }
-    setIsFormOpen(false);
-    toast({
-      title: "Thành công",
-      description: isEditing ? "Đã cập nhật gói thầu." : "Đã tạo gói thầu mới.",
-    });
   };
 
-  const getStatusBadgeClass = (status: BiddingPackage["status"]) => {
-    switch (status) {
-      case "Đang mời thầu":
-        return "bg-blue-100 text-blue-800";
-      case "Đã mở thầu":
-        return "bg-cyan-100 text-cyan-800";
-      case "Đang chấm thầu":
-        return "bg-yellow-100 text-yellow-800";
-      case "Hoàn thành":
-        return "bg-green-100 text-green-800";
-      case "Đã hủy":
-        return "bg-red-100 text-red-800";
-      default:
-        return "bg-gray-100 text-gray-800";
+  // Helper to display method/status name
+  const getDisplayName = (value?: MasterDataItem | string): string => {
+    if (!value) return '-';
+    return typeof value === 'object' ? value.name : value;
+  };
+
+  // Format currency
+  const formatCurrency = (amount?: number): string => {
+    if (!amount) return '-';
+    return amount.toLocaleString('vi-VN');
+  };
+
+  // Get PR codes from purchase requests
+  const getPRCodes = (bidding: BiddingPackage): string => {
+    if (bidding.purchaseRequests && bidding.purchaseRequests.length > 0) {
+      return bidding.purchaseRequests.map(pr => pr.requestCode).join(', ');
     }
+    return bidding.purchaseRequestId || '-';
   };
 
   return (
     <div className="w-full space-y-2">
       <PageHeader title="Quản lý Đấu thầu" breadcrumbs={<Breadcrumbs />}>
+        <Button variant="outline" onClick={fetchBiddings} disabled={isLoading}>
+          <RefreshCw className={cn("mr-2 h-4 w-4", isLoading && "animate-spin")} />
+          Làm mới
+        </Button>
         <Button onClick={handleAdd}>
           <Plus className="mr-2 h-4 w-4" />
           Thêm mới
@@ -223,7 +300,9 @@ export function BiddingsClient({
                 <SelectContent>
                     <SelectItem value="all">-- Tất cả --</SelectItem>
                     <SelectItem value="Đấu thầu rộng rãi">Đấu thầu rộng rãi</SelectItem>
+                    <SelectItem value="Đấu thầu hạn chế">Đấu thầu hạn chế</SelectItem>
                     <SelectItem value="Chỉ định thầu">Chỉ định thầu</SelectItem>
+                    <SelectItem value="Chào hàng cạnh tranh">Chào hàng cạnh tranh</SelectItem>
                 </SelectContent>
                 </Select>
             </div>
@@ -287,12 +366,12 @@ export function BiddingsClient({
                       {bidding.name}
                     </TableCell>
                     <TableCell className="text-muted-foreground">
-                      {bidding.purchaseRequestId}
+                      {getPRCodes(bidding)}
                     </TableCell>
                     <TableCell className="text-right font-medium">
-                      {bidding.estimatedPrice.toLocaleString("en-US")}
+                      {formatCurrency(bidding.estimatedBudget || bidding.estimatedPrice)}
                     </TableCell>
-                     <TableCell>{bidding.method}</TableCell>
+                     <TableCell>{getDisplayName(bidding.method)}</TableCell>
                     <TableCell>
                       <span
                         className={cn(
@@ -300,7 +379,7 @@ export function BiddingsClient({
                           getStatusBadgeClass(bidding.status)
                         )}
                       >
-                        {bidding.status}
+                        {getDisplayName(bidding.status)}
                       </span>
                     </TableCell>
                     <TableCell>
@@ -362,7 +441,7 @@ export function BiddingsClient({
                     colSpan={7}
                     className="h-24 text-center text-muted-foreground"
                   >
-                    Không tìm thấy gói thầu nào.
+                    {isLoading ? "Đang tải..." : "Không tìm thấy gói thầu nào."}
                   </TableCell>
                 </TableRow>
               )}
@@ -383,7 +462,7 @@ export function BiddingsClient({
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+            {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => i + 1).map(
               (page) => (
                 <Button
                   key={page}
@@ -403,7 +482,7 @@ export function BiddingsClient({
               onClick={() =>
                 setCurrentPage((p) => Math.min(totalPages, p + 1))
               }
-              disabled={currentPage === totalPages}
+              disabled={currentPage === totalPages || totalPages === 0}
             >
               <ChevronRight className="h-4 w-4" />
             </Button>
@@ -412,12 +491,12 @@ export function BiddingsClient({
       </Card>
 
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-        <DialogContent className="max-w-5xl">
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {viewMode
                 ? `Chi tiết Gói thầu: ${selectedBidding?.id}`
-                : biddings.some(b => b.id === selectedBidding?.id)
+                : selectedBidding
                 ? "Cập nhật Gói thầu"
                 : "Tạo Gói thầu mới"}
             </DialogTitle>
@@ -425,8 +504,12 @@ export function BiddingsClient({
           <BiddingForm
             biddingPackage={selectedBidding}
             onSubmit={handleFormSubmit}
-            onCancel={() => setIsFormOpen(false)}
+            onCancel={() => {
+              setIsFormOpen(false);
+              fetchBiddings(); // Refresh list after closing
+            }}
             viewMode={viewMode}
+            onRefresh={fetchBiddings}
           />
         </DialogContent>
       </Dialog>

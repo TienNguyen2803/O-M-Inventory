@@ -1,4 +1,5 @@
-import type { Material, InventoryLog, WarehouseLocation, WarehouseItem, Supplier, MaterialRequest, MaterialRequestItem, PurchaseRequest, PurchaseRequestItem, BiddingPackage, BiddingItem, BiddingResult, InboundReceipt, InboundReceiptItem, InboundReceiptDocument, OutboundVoucher, OutboundVoucherItem, StockTake, StockTakeResult, User, Role, ActivityLog, GoodsHistoryEvent, MasterDataItem } from "./types";
+import type { Material, InventoryLog, WarehouseLocation, WarehouseItem, Supplier, MaterialRequest, MaterialRequestItem, PurchaseRequest, PurchaseRequestItem, BiddingPackage, InboundReceipt, InboundReceiptItem, InboundReceiptDocument, OutboundVoucher, OutboundVoucherItem, StockTake, StockTakeResult, User, Role, ActivityLog, GoodsHistoryEvent, MasterDataItem } from "./types";
+import prisma from "./db";
 
 export const materials: Material[] = [
   {
@@ -697,184 +698,18 @@ export const suppliers: Supplier[] = [
   },
 ];
 
-export const materialRequests: MaterialRequest[] = Array.from({ length: 25 }, (_, i) => {
-    const id = i + 1;
-    const priority = id % 5 === 0 ? 'Khẩn cấp' : 'Bình thường';
-    const statusOptions: MaterialRequest['status'][] = ['Chờ duyệt', 'Đã duyệt', 'Hoàn thành'];
-    const status = statusOptions[i % statusOptions.length];
-    const depts = ['PX Vận hành 1', 'PX Vận hành 2', 'PX Sửa chữa Cơ', 'PX Sửa chữa Điện', 'PX TĐH-ĐK'];
-    const dept = depts[i % depts.length];
-    
-    const reasons = ['Thay thế định kỳ', 'Sửa chữa đột xuất', 'Dự phòng cho đại tu', 'Lắp đặt mới', 'Thử nghiệm'];
-    const reason = reasons[i % reasons.length];
+// MaterialRequests mock data removed - should be fetched from API
+export const materialRequests: MaterialRequest[] = [];
 
-    const item1 = materials[i % materials.length];
-    const item2 = materials[(i + 5) % materials.length];
-    
-    const requestItems: MaterialRequestItem[] = [
-        {
-            materialId: item1.id,
-            materialCode: item1.code,
-            materialName: item1.name,
-            partNumber: item1.partNo,
-            unit: item1.unit || "Cái",
-            requestedQuantity: Math.floor(Math.random() * 5) + 1,
-            stock: item1.stock,
-            notes: `Cho tổ máy GT1${i % 2 + 1}`
-        },
-    ];
+// PurchaseRequests mock data removed - now fetched from API via getPurchaseRequests()
+export const purchaseRequests: PurchaseRequest[] = [];
 
-    if (i % 2 === 0) {
-      requestItems.push({
-            materialId: item2.id,
-            materialCode: item2.code,
-            materialName: item2.name,
-            partNumber: item2.partNo,
-            unit: item2.unit || "Cái",
-            requestedQuantity: Math.floor(Math.random() * 10) + 1,
-            stock: item2.stock,
-            notes: 'Dự phòng'
-        });
-    }
-
-    let step = 2;
-    if (status === 'Đã duyệt') {
-        step = 3;
-    } else if (status === 'Hoàn thành') {
-        step = 4;
-    }
-
-    return {
-        id: `YCVT-2025-${String(id).padStart(3, '0')}`,
-        requesterName: 'Nguyễn Văn A',
-        requesterDept: dept,
-        reason: `${reason} tổ máy GT1${i % 2 + 1}`,
-        requestDate: new Date(2025, i % 6, id % 28 + 1).toISOString(),
-        priority: priority,
-        status: status,
-        step: step,
-        workOrder: `WO-2025-${String(id + 98).padStart(3, '0')}`,
-        approver: status === 'Đã duyệt' || status === 'Hoàn thành' ? 'Lê Văn Kỹ (P.Kỹ thuật)' : undefined,
-        items: requestItems
-    };
-});
-
-export const purchaseRequests: PurchaseRequest[] = Array.from({ length: 25 }, (_, i) => {
-    const id = i + 1;
-    const item1 = materials[i % materials.length];
-    const item2 = materials[(i + 7) % materials.length];
-    
-    const items: PurchaseRequestItem[] = [
-        { id: `item-${id}-1`, name: item1.name, unit: item1.unit || "Cái", quantity: Math.max(1, (item1.maxStock || 2) - item1.stock), estimatedPrice: Math.floor(Math.random() * 5000000) + 100000, suggestedSupplier: suppliers[i % suppliers.length].name },
-        { id: `item-${id}-2`, name: item2.name, unit: item2.unit || "Cái", quantity: Math.max(1, (item2.maxStock || 2) - item2.stock), estimatedPrice: Math.floor(Math.random() * 2000000) + 50000, suggestedSupplier: suppliers[(i + 1) % suppliers.length].name },
-    ];
-    const totalAmount = items.reduce((acc, item) => acc + (item.quantity * item.estimatedPrice), 0);
-
-    const statuses: PurchaseRequest['status'][] = ['Approved', 'Pending', 'Rejected', 'Completed'];
-    const status = statuses[i % statuses.length];
-
-    let step;
-    switch (status) {
-        case 'Pending':
-            step = 2;
-            break;
-        case 'Approved':
-            step = 3;
-            break;
-        case 'Completed':
-            step = 4;
-            break;
-        case 'Rejected':
-            step = 2; // Rejected at step 2
-            break;
-        default:
-            step = 1;
-    }
-
-    return {
-        id: `PR-2025-${String(id).padStart(3, '0')}`,
-        requesterName: 'Kho Vật tư',
-        requesterDept: 'P.Kế hoạch',
-        description: `Mua sắm bổ sung vật tư tồn kho Quý ${Math.floor(i/6) + 1}`,
-        source: i % 2 !== 0 ? 'Trong nước' : 'Nhập khẩu',
-        fundingSource: i % 3 === 0 ? 'ĐTXD' : 'SCL',
-        totalAmount: totalAmount,
-        status: status,
-        step: step,
-        items: items,
-    };
-});
-
-export const biddingPackages: BiddingPackage[] = Array.from({ length: 25 }, (_, i) => {
-    const id = i + 1;
-    const method = id % 3 === 0 ? 'Chỉ định thầu' : 'Đấu thầu rộng rãi';
-    const statuses: BiddingPackage['status'][] = ['Đang mời thầu', 'Đã mở thầu', 'Đang chấm thầu', 'Hoàn thành', 'Đã hủy'];
-    const status = statuses[i % statuses.length];
-    
-    let step = 1;
-    if (status === 'Đã mở thầu') step = 2;
-    else if (status === 'Đang chấm thầu') step = 3;
-    else if (status === 'Hoàn thành') step = 4;
-    else if (status === 'Đã hủy') step = 0; // or some value to indicate it's off the path
-
-    const items: BiddingItem[] = [
-        { id: 'item-1', name: 'Gói dịch vụ Đại tu Tuabin khí', unit: 'Gói', quantity: 1, amount: 120000000000 },
-        { id: 'item-2', name: 'Vật tư thay thế chính', unit: 'Gói', quantity: 1, amount: 80000000000 },
-        { id: 'item-3', name: 'Chuyên gia kỹ thuật', unit: 'Man-day', quantity: 100, amount: 5000000000 },
-    ];
-    
-    const result: BiddingResult | undefined = status === 'Hoàn thành' ? {
-        winner: suppliers[i % suppliers.length].name,
-        winningPrice: 204500000000,
-        technicalScore: `${Math.floor(Math.random() * 15) + 85}/100`,
-        negotiationStatus: `Đã hoàn tất ${id}/${(id%12)+1}/2025`
-    } : undefined;
-
-    return {
-        id: `TB-2025-${String(id).padStart(2, '0')}`,
-        name: `Gói thầu số ${String(id).padStart(2, '0')} - Đại tu tổ máy GT1${id % 2 + 1}`,
-        purchaseRequestId: `PR-2025-${String(id).padStart(3, '0')}`,
-        estimatedPrice: 210000000000,
-        method: method,
-        status: status,
-        step,
-        openingDate: new Date(2025, 4, id, 9, 0).toISOString(),
-        closingDate: new Date(2025, 8, id, 16, 0).toISOString(),
-        items,
-        result,
-    };
-});
+// BiddingPackages mock data removed - now fetched from API via getBiddingPackages()
+export const biddingPackages: BiddingPackage[] = [];
 
 
-export const outboundVouchers: OutboundVoucher[] = Array.from({ length: 25 }, (_, i) => {
-    const id = i + 1;
-    const purposes: OutboundVoucher['purpose'][] = ['Cấp O&M', 'Khẩn cấp', 'Cho mượn', 'Đi Sửa chữa'];
-    const statuses: OutboundVoucher['status'][] = ['Đã xuất', 'Chờ xuất', 'Đã hủy', 'Đang soạn hàng'];
-    const materialRequest = materialRequests[i];
-
-    return {
-        id: `PXK-2025-${String(id).padStart(3, '0')}`,
-        purpose: purposes[i % purposes.length],
-        materialRequestId: materialRequest.id,
-        department: materialRequest.requesterDept,
-        receiverName: "Nguyễn Văn A",
-        reason: 'Sửa chữa thường xuyên',
-        status: statuses[i % statuses.length],
-        step: (i % 4) + 1,
-        issueDate: new Date(2025, i % 7, id % 28 + 1).toISOString(),
-        items: materialRequest.items.map((item, index) => ({
-            id: `out-item-${id}-${index}`,
-            materialId: item.materialId,
-            materialCode: item.materialCode,
-            materialName: item.materialName,
-            unit: item.unit || "Cái",
-            requestedQuantity: item.requestedQuantity,
-            issuedQuantity: item.requestedQuantity,
-            pickLocationSuggestion: `Khu A-${index + 1} (Tồn: ${item.stock})`,
-            actualSerial: index % 2 === 0 ? `Lô ${2023 + index}` : `-`
-        })),
-    };
-});
+// OutboundVouchers mock data removed - should be fetched from API
+export const outboundVouchers: OutboundVoucher[] = [];
 
 export const stockTakes: StockTake[] = Array.from({ length: 25 }, (_, i) => {
   const id = i + 1;
@@ -1213,16 +1048,58 @@ export const getMaterialRequests = async (): Promise<MaterialRequest[]> => {
 
 export const getPurchaseRequests = async (): Promise<PurchaseRequest[]> => {
     try {
-        const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
-        const response = await fetch(`${baseUrl}/api/purchase-requests?limit=100`, {
-            cache: 'no-store'
+        const requests = await prisma.purchaseRequest.findMany({
+            take: 100,
+            orderBy: { createdAt: 'desc' },
+            include: {
+                requester: { select: { id: true, name: true, employeeCode: true } },
+                department: { select: { id: true, code: true, name: true } },
+                status: { select: { id: true, code: true, name: true, color: true } },
+                source: { select: { id: true, code: true, name: true } },
+                fundingSource: { select: { id: true, code: true, name: true } },
+                items: {
+                    include: {
+                        material: { select: { id: true, code: true, name: true } },
+                        unit: { select: { id: true, code: true, name: true } },
+                        suggestedSupplier: { select: { id: true, name: true } },
+                    },
+                },
+            }
         });
-        if (!response.ok) {
-            console.error('Failed to fetch purchase requests from API');
-            return [];
-        }
-        const json = await response.json();
-        return json.data || [];
+
+        return requests.map(req => ({
+            id: req.requestCode,
+            requestCode: req.requestCode,
+            requesterId: req.requesterId,
+            departmentId: req.departmentId,
+            statusId: req.statusId,
+            sourceId: req.sourceId,
+            fundingSourceId: req.fundingSourceId,
+            requester: req.requester,
+            department: req.department,
+            status: req.status,
+            source: req.source,
+            fundingSource: req.fundingSource,
+            requesterName: req.requester.name,
+            requesterDept: req.department.name,
+            description: req.description,
+            totalAmount: req.totalAmount,
+            step: req.step,
+            createdAt: req.createdAt.toISOString(),
+            updatedAt: req.updatedAt.toISOString(),
+            items: req.items.map(item => ({
+                id: item.id,
+                materialId: item.materialId,
+                name: item.name,
+                unitId: item.unitId,
+                material: item.material,
+                unit: item.unit,
+                suggestedSupplier: item.suggestedSupplier,
+                suggestedSupplierId: item.suggestedSupplierId,
+                quantity: item.quantity,
+                estimatedPrice: item.estimatedPrice,
+            }))
+        })) as PurchaseRequest[];
     } catch (error) {
         console.error('Error fetching purchase requests:', error);
         return [];
@@ -1230,8 +1107,82 @@ export const getPurchaseRequests = async (): Promise<PurchaseRequest[]> => {
 }
 
 export const getBiddingPackages = async (): Promise<BiddingPackage[]> => {
-    await new Promise(resolve => setTimeout(resolve, 100));
-    return biddingPackages.sort((a, b) => a.id.localeCompare(b.id));
+    try {
+        const packages = await prisma.biddingPackage.findMany({
+            take: 100,
+            orderBy: { createdAt: 'desc' },
+            include: {
+                method: { select: { id: true, code: true, name: true } },
+                status: { select: { id: true, code: true, name: true, color: true } },
+                createdBy: { select: { id: true, name: true, employeeCode: true } },
+                winner: { select: { id: true, code: true, name: true } },
+                purchaseRequests: {
+                    include: {
+                        purchaseRequest: {
+                            select: { id: true, requestCode: true, description: true, totalAmount: true }
+                        }
+                    }
+                },
+                participants: {
+                    include: {
+                        supplier: { select: { id: true, code: true, name: true } }
+                    }
+                },
+                scopeItems: {
+                    include: {
+                        material: { select: { id: true, code: true, name: true } },
+                        unit: { select: { id: true, code: true, name: true } }
+                    }
+                }
+            }
+        });
+
+        return packages.map(pkg => ({
+            id: pkg.packageCode,
+            packageCode: pkg.packageCode,
+            name: pkg.name,
+            methodId: pkg.methodId,
+            statusId: pkg.statusId,
+            createdById: pkg.createdById,
+            winnerId: pkg.winnerId,
+            method: pkg.method,
+            status: pkg.status,
+            createdBy: pkg.createdBy,
+            winner: pkg.winner,
+            estimatedBudget: pkg.estimatedBudget,
+            openDate: pkg.openDate?.toISOString(),
+            closeDate: pkg.closeDate?.toISOString(),
+            step: pkg.step,
+            notes: pkg.notes,
+            createdAt: pkg.createdAt.toISOString(),
+            updatedAt: pkg.updatedAt.toISOString(),
+            purchaseRequests: pkg.purchaseRequests?.map(pr => pr.purchaseRequest) || [],
+            participants: pkg.participants?.map(p => ({
+                id: p.id,
+                supplier: p.supplier,
+                invitedAt: p.invitedAt?.toISOString(),
+                submittedAt: p.submittedAt?.toISOString(),
+                isSubmitted: p.isSubmitted,
+                technicalScore: p.technicalScore,
+                priceScore: p.priceScore,
+                totalScore: p.totalScore,
+                rank: p.rank
+            })) || [],
+            scopeItems: pkg.scopeItems?.map(item => ({
+                id: item.id,
+                materialId: item.materialId,
+                name: item.name,
+                unitId: item.unitId,
+                quantity: item.quantity,
+                estimatedAmount: item.estimatedAmount,
+                material: item.material,
+                unit: item.unit
+            })) || []
+        })) as BiddingPackage[];
+    } catch (error) {
+        console.error('Error fetching bidding packages:', error);
+        return [];
+    }
 }
 
 

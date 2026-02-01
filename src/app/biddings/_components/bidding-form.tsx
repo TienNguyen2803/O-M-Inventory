@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useState, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -17,6 +18,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -40,33 +42,31 @@ import {
   TableFooter,
 } from "@/components/ui/table";
 import { DialogFooter } from "@/components/ui/dialog";
-import { CalendarIcon, Save, Check } from "lucide-react";
-import type { BiddingPackage } from "@/lib/types";
+import { CalendarIcon, Save, Check, Loader2 } from "lucide-react";
+import type { BiddingPackage, BiddingParticipant, MasterDataItem } from "@/lib/types";
+import { useToast } from "@/hooks/use-toast";
+import { BiddingParticipantsSection } from "./bidding-participants-section";
+import { BiddingWorkflowStepActions } from "./bidding-workflow-step-actions";
 
 const formSchema = z.object({
-  id: z.string(),
   name: z.string().min(1, "Tên gói thầu là bắt buộc."),
-  purchaseRequestId: z.string(),
-  method: z.string(),
-  estimatedPrice: z.coerce.number(),
-  openingDate: z.date().optional(),
-  closingDate: z.date().optional(),
-  items: z.array(
+  methodId: z.string().min(1, "Hình thức là bắt buộc."),
+  createdById: z.string().min(1, "Người tạo là bắt buộc."),
+  estimatedBudget: z.coerce.number().min(0, "Giá dự toán phải >= 0"),
+  openDate: z.date({ required_error: "Ngày mở thầu là bắt buộc." }),
+  closeDate: z.date({ required_error: "Ngày đóng thầu là bắt buộc." }),
+  notes: z.string().optional(),
+  purchaseRequestIds: z.array(z.string()).optional(),
+  scopeItems: z.array(
     z.object({
-      id: z.string(),
+      id: z.string().optional(),
+      materialId: z.string().optional(),
       name: z.string(),
-      unit: z.string(),
-      quantity: z.number(),
-      amount: z.number(),
+      unitId: z.string(),
+      quantity: z.coerce.number(),
+      estimatedAmount: z.coerce.number(),
     })
   ).optional(),
-  result: z.object({
-    winner: z.string(),
-    winningPrice: z.coerce.number(),
-    technicalScore: z.string(),
-    negotiationStatus: z.string(),
-  }).optional(),
-  status: z.string(), // To decide whether to show results
 });
 
 export type BiddingFormValues = z.infer<typeof formSchema>;
@@ -76,6 +76,7 @@ type BiddingFormProps = {
   onSubmit: (values: BiddingFormValues) => void;
   onCancel: () => void;
   viewMode: boolean;
+  onRefresh?: () => void;
 };
 
 const Stepper = ({ currentStep }: { currentStep: number }) => {
@@ -140,47 +141,174 @@ export function BiddingForm({
   onSubmit,
   onCancel,
   viewMode,
+  onRefresh,
 }: BiddingFormProps) {
+  const [methods, setMethods] = useState<MasterDataItem[]>([]);
+  const [users, setUsers] = useState<{ id: string; name: string; employeeCode: string }[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [currentStep, setCurrentStep] = useState(biddingPackage?.step || 1);
+  const [participants, setParticipants] = useState<BiddingParticipant[]>(biddingPackage?.participants || []);
+  const [winnerId, setWinnerId] = useState<string | undefined>(biddingPackage?.winnerId);
+  const { toast } = useToast();
+
+  // Fetch master data
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [methodsRes, usersRes] = await Promise.all([
+          fetch('/api/master-data/bidding-method'),
+          fetch('/api/users?limit=100'),
+        ]);
+
+        if (methodsRes.ok) {
+          const methodsData = await methodsRes.json();
+          setMethods(methodsData.items || methodsData.data || []);
+        }
+
+        if (usersRes.ok) {
+          const usersData = await usersRes.json();
+          setUsers(usersData.data || usersData || []);
+        }
+      } catch (error) {
+        console.error('Error fetching master data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
   const form = useForm<BiddingFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: biddingPackage
       ? {
-          ...biddingPackage,
-          openingDate: biddingPackage.openingDate ? new Date(biddingPackage.openingDate) : undefined,
-          closingDate: biddingPackage.closingDate ? new Date(biddingPackage.closingDate) : undefined,
+          name: biddingPackage.name,
+          methodId: biddingPackage.methodId || '',
+          createdById: biddingPackage.createdById || '',
+          estimatedBudget: biddingPackage.estimatedBudget || biddingPackage.estimatedPrice || 0,
+          openDate: biddingPackage.openDate ? new Date(biddingPackage.openDate) :
+                   biddingPackage.openingDate ? new Date(biddingPackage.openingDate) : new Date(),
+          closeDate: biddingPackage.closeDate ? new Date(biddingPackage.closeDate) :
+                    biddingPackage.closingDate ? new Date(biddingPackage.closingDate) : new Date(),
+          notes: biddingPackage.notes || '',
+          purchaseRequestIds: biddingPackage.purchaseRequests?.map(pr => pr.id) || [],
+          scopeItems: biddingPackage.scopeItems || biddingPackage.items || [],
         }
       : {
-          id: "",
           name: "",
-          purchaseRequestId: "",
-          method: "Đấu thầu rộng rãi",
-          estimatedPrice: 0,
-          items: [],
-          status: "Đang mời thầu",
+          methodId: "",
+          createdById: "",
+          estimatedBudget: 0,
+          openDate: new Date(),
+          closeDate: new Date(),
+          notes: "",
+          purchaseRequestIds: [],
+          scopeItems: [],
         },
   });
 
-  const totalAmount = form.watch("items")?.reduce((sum, item) => sum + (item.amount || 0), 0) || 0;
-  const showResults = biddingPackage?.status === "Hoàn thành";
+  const scopeItems = form.watch("scopeItems") || [];
+  const totalAmount = scopeItems.reduce((sum, item) => sum + (item.estimatedAmount || 0), 0);
+
+  // Show winner info if package is complete
+  const showResults = currentStep === 4 || !!winnerId;
+
+  // Handle winner selection
+  const handleSelectWinner = async (supplierId: string) => {
+    if (!biddingPackage?.id) return;
+
+    try {
+      const res = await fetch(`/api/bidding-packages/${biddingPackage.id}/select-winner`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ winnerId: supplierId }),
+      });
+
+      if (res.ok) {
+        setWinnerId(supplierId);
+        setCurrentStep(4);
+        toast({
+          title: "Thanh cong",
+          description: "Da chon nha thau trung thau.",
+        });
+        if (onRefresh) onRefresh();
+      } else {
+        throw new Error("Failed to select winner");
+      }
+    } catch {
+      toast({
+        title: "Loi",
+        description: "Khong the chon nha thau trung thau.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Handle step change
+  const handleStepChange = (newStep: number, _newStatusCode: string) => {
+    setCurrentStep(newStep);
+    if (onRefresh) onRefresh();
+  };
+
+  // Handle participants change
+  const handleParticipantsChange = (newParticipants: BiddingParticipant[]) => {
+    setParticipants(newParticipants);
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <span className="ml-2">Đang tải dữ liệu...</span>
+      </div>
+    );
+  }
 
   return (
     <div className="max-h-[85vh] overflow-y-auto pr-2">
-      {biddingPackage?.step && <Stepper currentStep={biddingPackage.step} />}
+      {biddingPackage && <Stepper currentStep={currentStep} />}
+
+      {/* Workflow Actions - show for existing packages in view mode */}
+      {biddingPackage && (
+        <div className="mb-4 p-3 bg-muted/50 rounded-lg">
+          <BiddingWorkflowStepActions
+            packageId={biddingPackage.id}
+            currentStep={currentStep}
+            hasParticipants={participants.length > 0}
+            hasScores={participants.some(p => p.totalScore !== null && p.totalScore !== undefined)}
+            winnerId={winnerId}
+            viewMode={viewMode}
+            onStepChange={handleStepChange}
+          />
+        </div>
+      )}
+
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit)}
           className="space-y-4 pt-2 pl-2"
         >
           <div className="grid grid-cols-2 gap-x-6 gap-y-4">
-            <div className="col-span-2">
+            {/* Package Code - Read Only */}
+            {biddingPackage && (
+              <div className="col-span-1">
+                <FormItem>
+                  <FormLabel>Mã Gói</FormLabel>
+                  <Input value={biddingPackage.id} disabled className="bg-muted" />
+                </FormItem>
+              </div>
+            )}
+
+            <div className={biddingPackage ? "col-span-1" : "col-span-2"}>
               <FormField
                 control={form.control}
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Tên Gói thầu</FormLabel>
+                    <FormLabel>Tên Gói thầu *</FormLabel>
                     <FormControl>
-                      <Input {...field} disabled={viewMode} />
+                      <Input {...field} disabled={viewMode} placeholder="Nhập tên gói thầu" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -190,116 +318,135 @@ export function BiddingForm({
 
             <FormField
               control={form.control}
-              name="id"
+              name="methodId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Mã Gói</FormLabel>
-                  <FormControl>
-                    <Input {...field} disabled />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="purchaseRequestId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Căn cứ PR</FormLabel>
-                  <FormControl>
-                    <Input {...field} disabled={viewMode} />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="method"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Hình thức</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value} disabled={viewMode}>
-                    <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
+                  <FormLabel>Hình thức *</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value} disabled={viewMode}>
+                    <FormControl><SelectTrigger><SelectValue placeholder="Chọn hình thức" /></SelectTrigger></FormControl>
                     <SelectContent>
-                      <SelectItem value="Đấu thầu rộng rãi">Đấu thầu rộng rãi</SelectItem>
-                      <SelectItem value="Chỉ định thầu">Chỉ định thầu</SelectItem>
+                      {methods.map(m => (
+                        <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
+                  <FormMessage />
                 </FormItem>
               )}
             />
 
             <FormField
               control={form.control}
-              name="estimatedPrice"
+              name="createdById"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Giá dự toán</FormLabel>
-                  <FormControl>
-                    <Input type="text" value={field.value.toLocaleString('vi-VN')} disabled={viewMode} className="font-semibold text-right" onChange={(e) => {
-                       const numValue = parseInt(e.target.value.replace(/,/g, ''), 10);
-                       field.onChange(isNaN(numValue) ? 0 : numValue);
-                    }} />
-                  </FormControl>
+                  <FormLabel>Người tạo *</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value} disabled={viewMode}>
+                    <FormControl><SelectTrigger><SelectValue placeholder="Chọn người tạo" /></SelectTrigger></FormControl>
+                    <SelectContent>
+                      {users.map(u => (
+                        <SelectItem key={u.id} value={u.id}>{u.name} ({u.employeeCode})</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
                 </FormItem>
               )}
             />
 
             <FormField
-                control={form.control}
-                name="openingDate"
-                render={({ field }) => (
-                  <FormItem className="flex flex-col">
-                    <FormLabel>Ngày Mở thầu</FormLabel>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant={"outline"}
-                            className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
-                            disabled={viewMode}
-                          >
-                            {field.value ? format(field.value, "dd/MM/yyyy hh:mm a") : <span>Chọn ngày</span>}
-                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                          </Button>
-                        </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus />
-                      </PopoverContent>
-                    </Popover>
-                  </FormItem>
-                )}
-              />
+              control={form.control}
+              name="estimatedBudget"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Giá dự toán *</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="text"
+                      value={field.value?.toLocaleString('vi-VN') || ''}
+                      disabled={viewMode}
+                      className="font-semibold text-right"
+                      onChange={(e) => {
+                        const numValue = parseInt(e.target.value.replace(/[.,]/g, ''), 10);
+                        field.onChange(isNaN(numValue) ? 0 : numValue);
+                      }}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             <FormField
+              control={form.control}
+              name="openDate"
+              render={({ field }) => (
+                <FormItem className="flex flex-col">
+                  <FormLabel>Ngày Mở thầu *</FormLabel>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant={"outline"}
+                          className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
+                          disabled={viewMode}
+                        >
+                          {field.value ? format(field.value, "dd/MM/yyyy") : <span>Chọn ngày</span>}
+                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus />
+                    </PopoverContent>
+                  </Popover>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="closeDate"
+              render={({ field }) => (
+                <FormItem className="flex flex-col">
+                  <FormLabel>Ngày Đóng thầu *</FormLabel>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant={"outline"}
+                          className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
+                          disabled={viewMode}
+                        >
+                          {field.value ? format(field.value, "dd/MM/yyyy") : <span>Chọn ngày</span>}
+                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus />
+                    </PopoverContent>
+                  </Popover>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className="col-span-2">
+              <FormField
                 control={form.control}
-                name="closingDate"
+                name="notes"
                 render={({ field }) => (
-                  <FormItem className="flex flex-col">
-                    <FormLabel>Ngày Đóng thầu</FormLabel>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant={"outline"}
-                            className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
-                            disabled={viewMode}
-                          >
-                            {field.value ? format(field.value, "dd/MM/yyyy hh:mm a") : <span>Chọn ngày</span>}
-                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                          </Button>
-                        </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus />
-                      </PopoverContent>
-                    </Popover>
+                  <FormItem>
+                    <FormLabel>Ghi chú</FormLabel>
+                    <FormControl>
+                      <Textarea {...field} disabled={viewMode} placeholder="Nhập ghi chú (nếu có)" rows={2} />
+                    </FormControl>
                   </FormItem>
                 )}
               />
+            </div>
           </div>
 
           <div className="space-y-2 pt-2">
@@ -315,14 +462,22 @@ export function BiddingForm({
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {form.getValues("items")?.map((item) => (
-                    <TableRow key={item.id}>
-                      <TableCell className="font-medium">{item.name}</TableCell>
-                      <TableCell>{item.unit}</TableCell>
-                      <TableCell className="text-right">{item.quantity.toLocaleString('vi-VN')}</TableCell>
-                      <TableCell className="text-right">{item.amount.toLocaleString('vi-VN')}</TableCell>
+                  {scopeItems.length > 0 ? (
+                    scopeItems.map((item, index) => (
+                      <TableRow key={item.id || index}>
+                        <TableCell className="font-medium">{item.name}</TableCell>
+                        <TableCell>{typeof item.unitId === 'object' ? (item.unitId as MasterDataItem).name : item.unitId}</TableCell>
+                        <TableCell className="text-right">{item.quantity?.toLocaleString('vi-VN')}</TableCell>
+                        <TableCell className="text-right">{item.estimatedAmount?.toLocaleString('vi-VN')}</TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
+                        Chưa có hạng mục nào
+                      </TableCell>
                     </TableRow>
-                  ))}
+                  )}
                 </TableBody>
                 <TableFooter>
                   <TableRow>
@@ -334,59 +489,36 @@ export function BiddingForm({
             </div>
           </div>
 
-          {showResults && biddingPackage?.result && (
+          {showResults && biddingPackage?.winner && (
             <div className="space-y-4 pt-2">
-              <FormSectionHeader title="Kết quả lựa chọn" />
-              <div className="bg-yellow-50/50 p-4 rounded-lg border border-yellow-200 grid grid-cols-2 gap-x-6 gap-y-4">
-                 <FormField
-                    control={form.control}
-                    name="result.winner"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Nhà thầu trúng</FormLabel>
-                        <FormControl>
-                          <Input {...field} disabled className="font-bold bg-white" />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                   <FormField
-                    control={form.control}
-                    name="result.winningPrice"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Giá trúng thầu</FormLabel>
-                        <FormControl>
-                          <Input value={(field.value || 0).toLocaleString('vi-VN')} disabled className="font-bold text-right bg-white" />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                   <FormField
-                    control={form.control}
-                    name="result.technicalScore"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Điểm kỹ thuật</FormLabel>
-                        <FormControl>
-                          <Input {...field} disabled className="font-bold bg-white"/>
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                   <FormField
-                    control={form.control}
-                    name="result.negotiationStatus"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Thương thảo HĐ</FormLabel>
-                        <FormControl>
-                          <Input {...field} disabled className="bg-white" />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
+              <FormSectionHeader title="Ket qua lua chon" />
+              <div className="bg-green-50/50 p-4 rounded-lg border border-green-200 grid grid-cols-2 gap-x-6 gap-y-4">
+                <FormItem>
+                  <FormLabel>Nha thau trung</FormLabel>
+                  <Input value={biddingPackage.winner.name} disabled className="font-bold bg-white" />
+                </FormItem>
+                <FormItem>
+                  <FormLabel>So nha thau tham gia</FormLabel>
+                  <Input value={`${participants.length} nha thau`} disabled className="bg-white" />
+                </FormItem>
               </div>
+            </div>
+          )}
+
+          {/* Participants section - always show for existing packages */}
+          {biddingPackage && (
+            <div className="space-y-2 pt-2">
+              <FormSectionHeader title="Nha thau tham gia" />
+              <BiddingParticipantsSection
+                packageId={biddingPackage.id}
+                participants={participants}
+                scopeItems={biddingPackage.scopeItems || biddingPackage.items || []}
+                winnerId={winnerId}
+                step={currentStep}
+                viewMode={viewMode}
+                onParticipantsChange={handleParticipantsChange}
+                onSelectWinner={handleSelectWinner}
+              />
             </div>
           )}
 

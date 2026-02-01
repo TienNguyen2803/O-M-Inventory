@@ -241,33 +241,85 @@ export interface PurchaseRequest {
   updatedAt?: string;
 }
 
-export interface BiddingItem {
+export interface BiddingScopeItem {
   id: string;
+  materialId?: string;
   name: string;
-  unit: string;
+  unitId: string;
   quantity: number;
-  amount: number;
+  estimatedAmount: number;
+  // Nested relations
+  material?: { id: string; code: string; name: string };
+  unit?: MasterDataItem;
 }
 
-export interface BiddingResult {
-  winner: string;
-  winningPrice: number;
-  technicalScore: string;
-  negotiationStatus: string;
+export interface BidQuotation {
+  id: string;
+  scopeItemId: string;
+  scopeItemName?: string;
+  unitPrice: number;
+  quantity: number;
+  totalPrice: number;
+  notes?: string;
+}
+
+export interface BiddingParticipant {
+  id: string;
+  supplierId?: string;
+  supplier?: { id: string; code: string; name: string };
+  invitedAt?: string;
+  submittedAt?: string;
+  isSubmitted: boolean;
+  technicalScore?: number;
+  priceScore?: number;
+  totalScore?: number;
+  rank?: number;
+  quotations?: BidQuotation[];
 }
 
 export interface BiddingPackage {
-  id: string; // Mã gói
+  id: string; // packageCode (TB-2026-01)
+  packageCode?: string;
   name: string; // Tên gói thầu
-  purchaseRequestId: string; // Căn cứ PR
-  estimatedPrice: number; // Giá dự toán
-  method: 'Đấu thầu rộng rãi' | 'Chỉ định thầu'; // Hình thức
-  status: 'Đang mời thầu' | 'Đã mở thầu' | 'Đang chấm thầu' | 'Hoàn thành' | 'Đã hủy'; // Trạng thái
+
+  // FK IDs
+  methodId?: string;
+  statusId?: string;
+  createdById?: string;
+  winnerId?: string;
+
+  // Nested relations
+  method?: MasterDataItem;
+  status?: MasterDataItem;
+  createdBy?: { id: string; name: string; employeeCode?: string };
+  winner?: { id: string; code: string; name: string };
+
+  estimatedBudget: number; // Giá dự toán
+  openDate?: string; // Ngày mở thầu
+  closeDate?: string; // Ngày đóng thầu
   step: number;
-  openingDate?: string; // Ngày mở thầu
-  closingDate?: string; // Ngày đóng thầu
-  items?: BiddingItem[]; // Phạm vi cung cấp
-  result?: BiddingResult; // Kết quả lựa chọn
+  notes?: string;
+
+  // Relations
+  purchaseRequests?: Array<{ id: string; requestCode: string; description: string; totalAmount: number }>;
+  participants?: BiddingParticipant[];
+  scopeItems?: BiddingScopeItem[];
+
+  createdAt?: string;
+  updatedAt?: string;
+
+  // Legacy fields for backward compatibility
+  purchaseRequestId?: string;
+  estimatedPrice?: number;
+  openingDate?: string;
+  closingDate?: string;
+  items?: BiddingScopeItem[];
+  result?: {
+    winner: string;
+    winningPrice: number;
+    technicalScore: string;
+    negotiationStatus: string;
+  };
 }
 
 export interface OutboundVoucherItem {
