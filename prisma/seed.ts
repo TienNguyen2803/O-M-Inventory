@@ -342,9 +342,11 @@ async function main() {
   console.log('  Seeding StocktakeStatus...')
   await prisma.stocktakeStatus.createMany({
     data: [
-      { code: "PROG", name: "Đang tiến hành", color: "bg-yellow-100 text-yellow-800", sortOrder: 1 },
-      { code: "DONE", name: "Đã hoàn thành", color: "bg-green-100 text-green-800", sortOrder: 2 },
-      { code: "CANCEL", name: "Đã hủy", color: "bg-red-100 text-red-800", sortOrder: 3 },
+      { code: "DRAFT", name: "Nháp", color: "bg-gray-100 text-gray-800", sortOrder: 1 },
+      { code: "COUNTING", name: "Đang kiểm đếm", color: "bg-blue-100 text-blue-800", sortOrder: 2 },
+      { code: "RECONCILING", name: "Đang đối soát", color: "bg-yellow-100 text-yellow-800", sortOrder: 3 },
+      { code: "COMPLETED", name: "Hoàn thành", color: "bg-green-100 text-green-800", sortOrder: 4 },
+      { code: "CANCELLED", name: "Đã hủy", color: "bg-red-100 text-red-800", sortOrder: 5 },
     ],
     skipDuplicates: true
   })
@@ -357,6 +359,17 @@ async function main() {
       { code: "A", name: "Khu A", sortOrder: 2 },
       { code: "B", name: "Khu B", sortOrder: 3 },
       { code: "COLD", name: "Kho Lạnh", sortOrder: 4 },
+    ],
+    skipDuplicates: true
+  })
+
+  // 23. Stocktake Assignment Status
+  console.log('  Seeding StocktakeAssignmentStatus...')
+  await prisma.stocktakeAssignmentStatus.createMany({
+    data: [
+      { code: "PENDING", name: "Chờ kiểm", color: "bg-gray-100 text-gray-800", sortOrder: 1 },
+      { code: "COUNTING", name: "Đang đếm", color: "bg-blue-100 text-blue-800", sortOrder: 2 },
+      { code: "COMPLETED", name: "Hoàn thành", color: "bg-green-100 text-green-800", sortOrder: 3 },
     ],
     skipDuplicates: true
   })
@@ -2528,6 +2541,260 @@ async function main() {
   }
 
   console.log('OutboundReceipts seeded! 12 records added.')
+
+  // === STOCKTAKE (Kiểm kê kho) ===
+  console.log('\n📋 Phase 6: Seeding Stocktakes...')
+
+  // Get StocktakeStatus IDs
+  const stocktakeStatuses = await prisma.stocktakeStatus.findMany()
+  const stocktakeStatusMap = Object.fromEntries(stocktakeStatuses.map(s => [s.code, s.id]))
+
+  // Get StocktakeArea IDs
+  const stocktakeAreas = await prisma.stocktakeArea.findMany()
+  const stocktakeAreaMap = Object.fromEntries(stocktakeAreas.map(a => [a.code, a.id]))
+
+  // Get StocktakeAssignmentStatus IDs
+  const assignmentStatuses = await prisma.stocktakeAssignmentStatus.findMany()
+  const assignmentStatusMap = Object.fromEntries(assignmentStatuses.map(s => [s.code, s.id]))
+
+  // Helper function to generate stocktake code
+  const generateStocktakeCode = (index: number) => `KK-2026-${String(index).padStart(3, '0')}`
+
+  const stocktakesData = [
+    {
+      takeCode: generateStocktakeCode(1),
+      name: 'Kiểm kê tổng kho tháng 1/2026',
+      statusId: stocktakeStatusMap['COMPLETED'],
+      areaId: stocktakeAreaMap['ALL'],
+      createdById: userMap['NV002'],
+      takeDate: new Date('2026-01-05'),
+      notes: 'Kiểm kê đầu năm 2026 - hoàn thành đúng kế hoạch',
+      completedAt: new Date('2026-01-07'),
+      assignments: [
+        { locationCode: 'A1-01-01', assigneeId: userMap['NV003'], statusCode: 'COMPLETED', completedAt: new Date('2026-01-06') },
+        { locationCode: 'A1-01-02', assigneeId: userMap['NV003'], statusCode: 'COMPLETED', completedAt: new Date('2026-01-06') },
+        { locationCode: 'B1-01-01', assigneeId: userMap['NV004'], statusCode: 'COMPLETED', completedAt: new Date('2026-01-07') },
+      ],
+      results: [
+        { materialCode: 'PM-TDH-001', locationCode: 'A1-01-01', unitCode: 'CAI', bookQuantity: 15, actualQuantity: 15, countedById: userMap['NV003'], serialBatch: 'SN-PS-001' },
+        { materialCode: 'PM-TDH-002', locationCode: 'A1-01-02', unitCode: 'CAI', bookQuantity: 25, actualQuantity: 24, countedById: userMap['NV003'], notes: 'Phát hiện thiếu 1 cảm biến nhiệt độ' },
+        { materialCode: 'PM-CONS-001', locationCode: 'B1-01-01', unitCode: 'CAI', bookQuantity: 500, actualQuantity: 498, countedById: userMap['NV004'] },
+      ]
+    },
+    {
+      takeCode: generateStocktakeCode(2),
+      name: 'Kiểm kê khu A - Quý 1/2026',
+      statusId: stocktakeStatusMap['COMPLETED'],
+      areaId: stocktakeAreaMap['A'],
+      createdById: userMap['NV002'],
+      takeDate: new Date('2026-01-10'),
+      notes: 'Kiểm kê định kỳ khu A',
+      completedAt: new Date('2026-01-12'),
+      assignments: [
+        { locationCode: 'A1-01-01', assigneeId: userMap['NV003'], statusCode: 'COMPLETED', completedAt: new Date('2026-01-11') },
+        { locationCode: 'A1-01-03', assigneeId: userMap['NV004'], statusCode: 'COMPLETED', completedAt: new Date('2026-01-12') },
+      ],
+      results: [
+        { materialCode: 'PM-TDH-003', locationCode: 'A1-01-01', unitCode: 'CAI', bookQuantity: 5, actualQuantity: 5, countedById: userMap['NV003'], serialBatch: 'SN-PLC-001' },
+        { materialCode: 'PM-VALVE-001', locationCode: 'A1-01-03', unitCode: 'CAI', bookQuantity: 4, actualQuantity: 4, countedById: userMap['NV004'] },
+      ]
+    },
+    {
+      takeCode: generateStocktakeCode(3),
+      name: 'Kiểm kê khu B - Quý 1/2026',
+      statusId: stocktakeStatusMap['COUNTING'],
+      areaId: stocktakeAreaMap['B'],
+      createdById: userMap['NV002'],
+      takeDate: new Date('2026-01-20'),
+      notes: 'Đang tiến hành kiểm kê khu B',
+      assignments: [
+        { locationCode: 'B1-01-01', assigneeId: userMap['NV003'], statusCode: 'COUNTING' },
+        { locationCode: 'B1-01-02', assigneeId: userMap['NV004'], statusCode: 'PENDING' },
+        { locationCode: 'B1-02-01', assigneeId: userMap['NV008'], statusCode: 'PENDING' },
+      ],
+      results: [
+        { materialCode: 'PM-MECH-002', locationCode: 'B1-01-01', unitCode: 'CAI', bookQuantity: 30, actualQuantity: 28, countedById: userMap['NV003'], notes: 'Đang đếm lại' },
+      ]
+    },
+    {
+      takeCode: generateStocktakeCode(4),
+      name: 'Kiểm kê kho lạnh định kỳ',
+      statusId: stocktakeStatusMap['COMPLETED'],
+      areaId: stocktakeAreaMap['COLD'],
+      createdById: userMap['NV001'],
+      takeDate: new Date('2026-01-08'),
+      notes: 'Kiểm kê định kỳ kho lạnh - Hóa chất và dầu mỡ',
+      completedAt: new Date('2026-01-09'),
+      assignments: [
+        { locationCode: 'COLD-01-01', assigneeId: userMap['NV004'], statusCode: 'COMPLETED', completedAt: new Date('2026-01-09') },
+      ],
+      results: [
+        { materialCode: 'PM-CHEM-001', locationCode: 'COLD-01-01', unitCode: 'LIT', bookQuantity: 2000, actualQuantity: 1985, countedById: userMap['NV004'], notes: 'Hao hụt tự nhiên trong phạm vi cho phép' },
+      ]
+    },
+    {
+      takeCode: generateStocktakeCode(5),
+      name: 'Kiểm kê đột xuất - Phát hiện chênh lệch',
+      statusId: stocktakeStatusMap['RECONCILING'],
+      areaId: stocktakeAreaMap['A'],
+      createdById: userMap['NV001'],
+      takeDate: new Date('2026-01-22'),
+      notes: 'Kiểm kê đột xuất sau khi phát hiện chênh lệch tồn kho',
+      assignments: [
+        { locationCode: 'A1-01-01', assigneeId: userMap['NV003'], statusCode: 'COMPLETED', completedAt: new Date('2026-01-22') },
+        { locationCode: 'A1-01-02', assigneeId: userMap['NV004'], statusCode: 'COMPLETED', completedAt: new Date('2026-01-22') },
+      ],
+      results: [
+        { materialCode: 'PM-TURB-001', locationCode: 'A1-01-01', unitCode: 'CAI', bookQuantity: 20, actualQuantity: 18, countedById: userMap['NV003'], notes: 'Thiếu 2 cánh tuabin - đang điều tra' },
+        { materialCode: 'PM-TURB-002', locationCode: 'A1-01-02', unitCode: 'BO', bookQuantity: 6, actualQuantity: 6, countedById: userMap['NV004'], serialBatch: 'SN-BRG-001' },
+      ]
+    },
+    {
+      takeCode: generateStocktakeCode(6),
+      name: 'Kiểm kê toàn bộ tháng 2/2026',
+      statusId: stocktakeStatusMap['DRAFT'],
+      areaId: stocktakeAreaMap['ALL'],
+      createdById: userMap['NV002'],
+      takeDate: new Date('2026-02-01'),
+      notes: 'Dự kiến kiểm kê toàn bộ đầu tháng 2',
+      assignments: [],
+      results: []
+    },
+    {
+      takeCode: generateStocktakeCode(7),
+      name: 'Kiểm kê thiết bị đo lường',
+      statusId: stocktakeStatusMap['COMPLETED'],
+      areaId: stocktakeAreaMap['A'],
+      createdById: userMap['NV007'],
+      takeDate: new Date('2026-01-15'),
+      notes: 'Kiểm kê định kỳ thiết bị đo lường - Phục vụ hiệu chuẩn',
+      completedAt: new Date('2026-01-16'),
+      assignments: [
+        { locationCode: 'A1-01-01', assigneeId: userMap['NV007'], statusCode: 'COMPLETED', completedAt: new Date('2026-01-16') },
+      ],
+      results: [
+        { materialCode: 'PM-MEAS-001', locationCode: 'A1-01-01', unitCode: 'CAI', bookQuantity: 8, actualQuantity: 8, countedById: userMap['NV007'], serialBatch: 'SN-FM-001~008' },
+        { materialCode: 'PM-MEAS-002', locationCode: 'A1-01-01', unitCode: 'CAI', bookQuantity: 3, actualQuantity: 3, countedById: userMap['NV007'], serialBatch: 'SN-PH-001~003', notes: 'Tất cả đang hoạt động tốt' },
+      ]
+    },
+    {
+      takeCode: generateStocktakeCode(8),
+      name: 'Kiểm kê vật tư tiêu hao Q1/2026',
+      statusId: stocktakeStatusMap['COUNTING'],
+      areaId: stocktakeAreaMap['B'],
+      createdById: userMap['NV002'],
+      takeDate: new Date('2026-01-25'),
+      notes: 'Kiểm kê vật tư tiêu hao khu B',
+      assignments: [
+        { locationCode: 'B1-01-01', assigneeId: userMap['NV004'], statusCode: 'COMPLETED', completedAt: new Date('2026-01-26') },
+        { locationCode: 'B1-02-01', assigneeId: userMap['NV008'], statusCode: 'COUNTING' },
+      ],
+      results: [
+        { materialCode: 'PM-CONS-002', locationCode: 'B1-01-01', unitCode: 'CAI', bookQuantity: 1000, actualQuantity: 995, countedById: userMap['NV004'], notes: 'Thiếu 5 bulong do sử dụng chưa ghi nhận' },
+        { materialCode: 'PM-CONS-003', locationCode: 'B1-01-01', unitCode: 'CAI', bookQuantity: 1200, actualQuantity: 1198, countedById: userMap['NV004'] },
+      ]
+    },
+    {
+      takeCode: generateStocktakeCode(9),
+      name: 'Kiểm kê kho hóa chất',
+      statusId: stocktakeStatusMap['COMPLETED'],
+      areaId: stocktakeAreaMap['ALL'],
+      createdById: userMap['NV001'],
+      takeDate: new Date('2026-01-18'),
+      notes: 'Kiểm kê an toàn hóa chất định kỳ',
+      completedAt: new Date('2026-01-19'),
+      assignments: [
+        { locationCode: 'CHEM-01-01', assigneeId: userMap['NV008'], statusCode: 'COMPLETED', completedAt: new Date('2026-01-19') },
+      ],
+      results: [
+        { materialCode: 'PM-CHEM-002', locationCode: 'CHEM-01-01', unitCode: 'KG', bookQuantity: 500, actualQuantity: 480, countedById: userMap['NV008'], notes: 'Hao hụt do bay hơi và sử dụng test' },
+      ]
+    },
+    {
+      takeCode: generateStocktakeCode(10),
+      name: 'Kiểm kê server và thiết bị IT',
+      statusId: stocktakeStatusMap['CANCELLED'],
+      areaId: stocktakeAreaMap['A'],
+      createdById: userMap['NV006'],
+      takeDate: new Date('2026-01-12'),
+      notes: 'Hủy do lịch bảo trì hệ thống IT - chuyển sang tháng 2',
+      assignments: [
+        { locationCode: 'A1-01-01', assigneeId: userMap['NV006'], statusCode: 'PENDING' },
+      ],
+      results: []
+    },
+  ]
+
+  for (const stocktakeData of stocktakesData) {
+    const { assignments, results, ...stocktakeFields } = stocktakeData
+
+    // Check if stocktake already exists
+    const existingStocktake = await prisma.stocktake.findUnique({ where: { takeCode: stocktakeFields.takeCode } })
+    if (existingStocktake) {
+      console.log(`  Stocktake ${stocktakeFields.takeCode} already exists, skipping...`)
+      continue
+    }
+
+    // Create Stocktake
+    const createdStocktake = await prisma.stocktake.create({
+      data: {
+        takeCode: stocktakeFields.takeCode,
+        name: stocktakeFields.name,
+        statusId: stocktakeFields.statusId,
+        areaId: stocktakeFields.areaId,
+        createdById: stocktakeFields.createdById,
+        takeDate: stocktakeFields.takeDate,
+        notes: stocktakeFields.notes || null,
+        completedAt: stocktakeFields.completedAt || null,
+      }
+    })
+
+    // Create assignments
+    for (const assignment of assignments) {
+      const assignmentData = assignment as { locationCode: string; assigneeId: string; statusCode: string; completedAt?: Date }
+      const locationId = locationMap[assignmentData.locationCode]
+      if (!locationId) {
+        console.log(`  Warning: Location ${assignmentData.locationCode} not found, skipping assignment...`)
+        continue
+      }
+      await prisma.stocktakeAssignment.create({
+        data: {
+          stocktakeId: createdStocktake.id,
+          locationId: locationId,
+          assigneeId: assignmentData.assigneeId,
+          statusId: assignmentStatusMap[assignmentData.statusCode],
+          completedAt: assignmentData.completedAt || null,
+        }
+      })
+    }
+
+    // Create results
+    for (const result of results) {
+      const resultData = result as { materialCode: string; locationCode: string; unitCode: string; bookQuantity: number; actualQuantity: number; countedById: string; serialBatch?: string; notes?: string }
+      const materialId = materialMap[resultData.materialCode]
+      const locationId = locationMap[resultData.locationCode]
+      if (!materialId || !locationId) {
+        console.log(`  Warning: Material or Location not found, skipping result...`)
+        continue
+      }
+      await prisma.stocktakeResult.create({
+        data: {
+          stocktakeId: createdStocktake.id,
+          materialId: materialId,
+          locationId: locationId,
+          unitId: unitMap[resultData.unitCode],
+          bookQuantity: resultData.bookQuantity,
+          actualQuantity: resultData.actualQuantity,
+          variance: resultData.actualQuantity - resultData.bookQuantity,
+          countedById: resultData.countedById,
+          serialBatch: resultData.serialBatch || null,
+          notes: resultData.notes || null,
+        }
+      })
+    }
+  }
+
+  console.log('Stocktakes seeded! 10 records added.')
 }
 
 main()

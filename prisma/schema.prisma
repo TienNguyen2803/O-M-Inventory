@@ -62,6 +62,7 @@ model MaterialUnit {
   biddingScopeItems    BiddingScopeItem[]    @relation("BiddingScopeUnit")
   inboundItems         InboundReceiptItem[]  @relation("InboundItemUnit")
   outboundItems        OutboundReceiptItem[] @relation("OutboundItemUnit")
+  stocktakeResults     StocktakeResult[]     @relation("StocktakeResultUnit")
 
   @@map("material_units")
 }
@@ -395,7 +396,7 @@ model OutboundStatus {
   @@map("outbound_statuses")
 }
 
-// === KIỂM KÊ (2 bảng) ===
+// === KIỂM KÊ (4 bảng) ===
 
 model StocktakeStatus {
   id        String   @id @default(uuid())
@@ -406,6 +407,8 @@ model StocktakeStatus {
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  stocktakes Stocktake[]
 
   @@map("stocktake_statuses")
 }
@@ -420,7 +423,23 @@ model StocktakeArea {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  stocktakes Stocktake[]
+
   @@map("stocktake_areas")
+}
+
+model StocktakeAssignmentStatus {
+  id        String   @id @default(uuid())
+  code      String   @unique
+  name      String
+  color     String?
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  assignments StocktakeAssignment[]
+
+  @@map("stocktake_assignment_statuses")
 }
 
 // === NGƯỜI DÙNG & NHẬT KÝ (2 bảng) ===
@@ -522,6 +541,7 @@ model Material {
   biddingScopeItems    BiddingScopeItem[]    @relation("BiddingScopeMaterial")
   inboundItems         InboundReceiptItem[]  @relation("InboundItemMaterial")
   outboundItems        OutboundReceiptItem[] @relation("OutboundItemMaterial")
+  stocktakeResults     StocktakeResult[]     @relation("StocktakeMaterial")
 
   @@map("materials")
 }
@@ -591,6 +611,8 @@ model WarehouseLocation {
   items  WarehouseItem[]
   inboundItems  InboundReceiptItem[]  @relation("InboundItemLocation")
   outboundItems OutboundReceiptItem[] @relation("OutboundItemLocation")
+  stocktakeAssignments StocktakeAssignment[] @relation("StocktakeLocation")
+  stocktakeResults     StocktakeResult[]     @relation("StocktakeResultLocation")
 
   @@map("warehouse_locations")
 }
@@ -610,6 +632,7 @@ model WarehouseItem {
   location WarehouseLocation @relation(fields: [locationId], references: [id], onDelete: Cascade)
   unit     MaterialUnit      @relation(fields: [unitId], references: [id])
 
+  @@unique([locationId, materialId])
   @@map("warehouse_items")
 }
 
@@ -960,38 +983,84 @@ model OutboundReceiptItem {
   @@map("outbound_receipt_items")
 }
 
-model StockTake {
-  id        String   @id @default(uuid())
-  takeCode  String   @unique
-  name      String
-  date      DateTime
-  status    String
-  area      String
-  leader    String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+// Stocktake - Kiểm kê kho với FK relationships
+model Stocktake {
+  id           String   @id @default(uuid())
+  takeCode     String   @unique  // KK-2026-001
+  name         String   // "Kiểm kê tháng 1/2026"
 
-  results StockTakeResult[]
+  // FK Relations
+  statusId     String
+  areaId       String              // Phạm vi kiểm kê (StocktakeArea)
+  createdById  String
 
-  @@map("stock_takes")
+  status       StocktakeStatus     @relation(fields: [statusId], references: [id])
+  area         StocktakeArea       @relation(fields: [areaId], references: [id])
+  createdBy    User                @relation("StocktakeCreator", fields: [createdById], references: [id])
+
+  takeDate     DateTime            // Ngày kiểm kê
+  notes        String?
+  completedAt  DateTime?
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  assignments  StocktakeAssignment[]
+  results      StocktakeResult[]
+
+  @@map("stocktakes")
 }
 
-model StockTakeResult {
+// StocktakeAssignment - Phân công kiểm kê theo location
+model StocktakeAssignment {
+  id           String   @id @default(uuid())
+  stocktakeId  String
+  locationId   String
+  assigneeId   String
+  statusId     String
+
+  stocktake    Stocktake                   @relation(fields: [stocktakeId], references: [id], onDelete: Cascade)
+  location     WarehouseLocation           @relation("StocktakeLocation", fields: [locationId], references: [id])
+  assignee     User                        @relation("StocktakeAssignee", fields: [assigneeId], references: [id])
+  status       StocktakeAssignmentStatus   @relation(fields: [statusId], references: [id])
+
+  completedAt  DateTime?
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([stocktakeId, locationId])
+  @@map("stocktake_assignments")
+}
+
+// StocktakeResult - Kết quả kiểm kê từng vật tư
+model StocktakeResult {
   id             String   @id @default(uuid())
-  stockTakeId    String
+  stocktakeId    String
+
+  // FK Relations
   materialId     String
-  materialCode   String
-  materialName   String
-  location       String
-  bookQuantity   Int
-  actualQuantity Int
+  locationId     String
+  unitId         String
+  countedById    String     // Người đếm
+
+  stocktake      Stocktake         @relation(fields: [stocktakeId], references: [id], onDelete: Cascade)
+  material       Material          @relation("StocktakeMaterial", fields: [materialId], references: [id])
+  location       WarehouseLocation @relation("StocktakeResultLocation", fields: [locationId], references: [id])
+  unit           MaterialUnit      @relation("StocktakeResultUnit", fields: [unitId], references: [id])
+  countedBy      User              @relation("StocktakeCounter", fields: [countedById], references: [id])
+
+  bookQuantity   Int         // Số lượng sổ sách
+  actualQuantity Int         // Số lượng thực tế
+  variance       Int         // Chênh lệch = actual - book
+  serialBatch    String?     // Serial/batch nếu có
   notes          String?
+
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  stockTake StockTake @relation(fields: [stockTakeId], references: [id], onDelete: Cascade)
-
-  @@map("stock_take_results")
+  @@unique([stocktakeId, materialId, locationId])
+  @@map("stocktake_results")
 }
 
 model User {
@@ -1026,6 +1095,11 @@ model User {
   receivedOutboundReceipts  OutboundReceipt[] @relation("OutboundReceiver")
   createdOutboundReceipts   OutboundReceipt[] @relation("OutboundCreator")
   approvedOutboundReceipts  OutboundReceipt[] @relation("OutboundApprover")
+
+  // Stocktake relations
+  createdStocktakes     Stocktake[]           @relation("StocktakeCreator")
+  stocktakeAssignments  StocktakeAssignment[] @relation("StocktakeAssignee")
+  stocktakeResults      StocktakeResult[]     @relation("StocktakeCounter")
 
   @@map("users")
 }
