@@ -128,10 +128,19 @@ export interface Supplier {
   taxCode: string;
   name: string;
   address: string;
-  country: string;
-  type: string;
-  paymentTerm: string;
-  currency: string;
+
+  // FK IDs
+  countryId: string;
+  typeId: string;
+  paymentTermId: string;
+  currencyId: string;
+
+  // Nested relations
+  country: MasterDataItem;
+  supplierType: MasterDataItem;
+  paymentTerm: MasterDataItem;
+  currency: MasterDataItem;
+
   status: "Active" | "Inactive";
   contacts: ContactPerson[];
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import type { Supplier } from "@/lib/types";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,7 @@ import {
   Eye,
   ChevronLeft,
   ChevronRight,
+  Loader2,
 } from "lucide-react";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import {
@@ -56,15 +57,31 @@ const Breadcrumbs = () => (
 );
 
 export function SuppliersClient({ initialSuppliers }: SuppliersClientProps) {
-  const [suppliers, setSuppliers] =
-    useState<Supplier[]>(initialSuppliers);
+  const [suppliers, setSuppliers] = useState<Supplier[]>(initialSuppliers);
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [selectedSupplier, setSelectedSupplier] =
-    useState<Supplier | null>(null);
+  const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null);
   const [viewMode, setViewMode] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState<string | null>(null);
   const { toast } = useToast();
-  
+
   const [searchQuery, setSearchQuery] = useState("");
+
+  const fetchSuppliers = useCallback(async () => {
+    try {
+      const response = await fetch('/api/suppliers');
+      if (response.ok) {
+        const data = await response.json();
+        setSuppliers(data);
+      }
+    } catch (error) {
+      console.error('Error fetching suppliers:', error);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchSuppliers();
+  }, [fetchSuppliers]);
 
   const filteredSuppliers = useMemo(() => {
     return suppliers.filter((supplier) => {
@@ -81,7 +98,7 @@ export function SuppliersClient({ initialSuppliers }: SuppliersClientProps) {
 
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
-  
+
   useEffect(() => {
     setCurrentPage(1);
   }, [searchQuery]);
@@ -112,48 +129,95 @@ export function SuppliersClient({ initialSuppliers }: SuppliersClientProps) {
     setIsFormOpen(true);
   };
 
-  const handleDelete = (supplierId: string) => {
-    setSuppliers(suppliers.filter((s) => s.id !== supplierId));
-    toast({
-      title: "Thành công",
-      description: "Đã xóa nhà cung cấp thành công.",
-      variant: "destructive",
-    });
+  const handleDelete = async (supplierId: string) => {
+    setIsDeleting(supplierId);
+    try {
+      const response = await fetch(`/api/suppliers/${supplierId}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        setSuppliers(suppliers.filter((s) => s.id !== supplierId));
+        toast({
+          title: "Thành công",
+          description: "Đã xóa nhà cung cấp thành công.",
+        });
+      } else {
+        const error = await response.json();
+        toast({
+          title: "Lỗi",
+          description: error.error || "Không thể xóa nhà cung cấp.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Error deleting supplier:', error);
+      toast({
+        title: "Lỗi",
+        description: "Đã xảy ra lỗi khi xóa nhà cung cấp.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeleting(null);
+    }
   };
 
-  const handleFormSubmit = (values: SupplierFormValues) => {
+  const handleFormSubmit = async (values: SupplierFormValues) => {
     if (viewMode) {
       setIsFormOpen(false);
       return;
     }
+
+    setIsSubmitting(true);
     const isEditing = !!selectedSupplier;
 
-    if (isEditing) {
-      const updatedSupplier: Supplier = {
-        ...selectedSupplier,
-        ...values,
-      };
-      setSuppliers(
-        suppliers.map((s) =>
-          s.id === selectedSupplier.id ? updatedSupplier : s
-        )
-      );
-    } else {
-      const newSupplier: Supplier = {
-        id: `sup-${Date.now()}`,
-        status: "Active", // Default status
-        contacts: [],
-        ...values,
-      };
-      setSuppliers([newSupplier, ...suppliers]);
+    try {
+      const url = isEditing
+        ? `/api/suppliers/${selectedSupplier.id}`
+        : '/api/suppliers';
+
+      const response = await fetch(url, {
+        method: isEditing ? 'PUT' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(values),
+      });
+
+      if (response.ok) {
+        const updatedSupplier = await response.json();
+
+        if (isEditing) {
+          setSuppliers(suppliers.map((s) =>
+            s.id === selectedSupplier.id ? updatedSupplier : s
+          ));
+        } else {
+          setSuppliers([updatedSupplier, ...suppliers]);
+        }
+
+        setIsFormOpen(false);
+        toast({
+          title: "Thành công",
+          description: isEditing
+            ? "Đã cập nhật nhà cung cấp."
+            : "Đã thêm nhà cung cấp mới.",
+        });
+      } else {
+        const error = await response.json();
+        toast({
+          title: "Lỗi",
+          description: error.error || "Không thể lưu nhà cung cấp.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Error saving supplier:', error);
+      toast({
+        title: "Lỗi",
+        description: "Đã xảy ra lỗi khi lưu nhà cung cấp.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
     }
-    setIsFormOpen(false);
-    toast({
-      title: "Thành công",
-      description: isEditing
-        ? "Đã cập nhật nhà cung cấp."
-        : "Đã thêm nhà cung cấp mới.",
-    });
   };
 
   const handleCancel = () => {
@@ -171,11 +235,11 @@ export function SuppliersClient({ initialSuppliers }: SuppliersClientProps) {
           Thêm mới
         </Button>
       </PageHeader>
-      
+
       <Card>
         <CardContent className="pt-6">
           <div className="grid grid-cols-1 gap-2">
-            <Input 
+            <Input
               placeholder="Tìm kiếm mã, tên, MST, địa chỉ..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -252,8 +316,13 @@ export function SuppliersClient({ initialSuppliers }: SuppliersClientProps) {
                               variant="ghost"
                               size="icon"
                               className="h-8 w-8 text-destructive/80 hover:text-destructive"
+                              disabled={isDeleting === supplier.id}
                             >
-                              <Trash2 className="h-4 w-4" />
+                              {isDeleting === supplier.id ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <Trash2 className="h-4 w-4" />
+                              )}
                             </Button>
                           </AlertDialogTrigger>
                           <AlertDialogContent>
@@ -346,6 +415,7 @@ export function SuppliersClient({ initialSuppliers }: SuppliersClientProps) {
             </DialogTitle>
           </DialogHeader>
           <SupplierForm
+            key={selectedSupplier?.id || 'new'}
             supplier={selectedSupplier}
             onSubmit={handleFormSubmit}
             onCancel={handleCancel}

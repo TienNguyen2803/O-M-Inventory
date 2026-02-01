@@ -135,6 +135,8 @@ model SupplierType {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  suppliers Supplier[]
+
   @@map("supplier_types")
 }
 
@@ -148,6 +150,8 @@ model PaymentTerm {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  suppliers Supplier[]
+
   @@map("payment_terms")
 }
 
@@ -160,6 +164,8 @@ model Currency {
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  suppliers Supplier[]
 
   @@map("currencies")
 }
@@ -177,6 +183,7 @@ model Country {
   updatedAt DateTime @updatedAt
 
   materials Material[]
+  suppliers Supplier[]
 
   @@map("countries")
 }
@@ -445,18 +452,26 @@ model Material {
 }
 
 model Supplier {
-  id          String   @id @default(uuid())
-  code        String   @unique
-  taxCode     String
-  name        String
-  address     String
-  country     String
-  type        String
-  paymentTerm String
-  currency    String
-  status      String   @default("Active")
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id            String   @id @default(uuid())
+  code          String   @unique
+  taxCode       String
+  name          String
+  address       String
+
+  // FK Relations to Master Data
+  countryId     String
+  typeId        String
+  paymentTermId String
+  currencyId    String
+
+  country       Country      @relation(fields: [countryId], references: [id])
+  supplierType  SupplierType @relation(fields: [typeId], references: [id])
+  paymentTerm   PaymentTerm  @relation(fields: [paymentTermId], references: [id])
+  currency      Currency     @relation(fields: [currencyId], references: [id])
+
+  status        String   @default("Active")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   contacts SupplierContact[]
 

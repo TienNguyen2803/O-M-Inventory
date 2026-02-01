@@ -1,4 +1,4 @@
-import type { Material, InventoryLog, WarehouseLocation, WarehouseItem, Supplier, MaterialRequest, MaterialRequestItem, PurchaseRequest, PurchaseRequestItem, BiddingPackage, BiddingItem, BiddingResult, InboundReceipt, InboundReceiptItem, InboundReceiptDocument, OutboundVoucher, OutboundVoucherItem, StockTake, StockTakeResult, User, Role, ActivityLog, GoodsHistoryEvent } from "./types";
+import type { Material, InventoryLog, WarehouseLocation, WarehouseItem, Supplier, MaterialRequest, MaterialRequestItem, PurchaseRequest, PurchaseRequestItem, BiddingPackage, BiddingItem, BiddingResult, InboundReceipt, InboundReceiptItem, InboundReceiptDocument, OutboundVoucher, OutboundVoucherItem, StockTake, StockTakeResult, User, Role, ActivityLog, GoodsHistoryEvent, MasterDataItem } from "./types";
 
 export const materials: Material[] = [
   {
@@ -587,335 +587,114 @@ export const warehouseLocations: WarehouseLocation[] = [
   { id: 'wh-25', code: 'B3-01-01', name: 'Kệ 01 - Tầng 1 - Dãy B3', areaId: areaB.id, typeId: typeMedium.id, statusId: statusActive.id, area: areaB, type: typeMedium, status: statusActive, items: [] },
 ];
 
+// Mock master data for suppliers
+const mockCountryVN: MasterDataItem = { id: 'country-vn', code: 'VN', name: 'Việt Nam' };
+const mockCountryUS: MasterDataItem = { id: 'country-us', code: 'US', name: 'USA' };
+const mockCountryDE: MasterDataItem = { id: 'country-de', code: 'DE', name: 'Đức' };
+const mockCountryJP: MasterDataItem = { id: 'country-jp', code: 'JP', name: 'Nhật Bản' };
+
+const mockTypeOEM: MasterDataItem = { id: 'type-oem', code: 'OEM', name: 'OEM' };
+const mockTypeMFG: MasterDataItem = { id: 'type-mfg', code: 'MFG', name: 'Manufacturer' };
+const mockTypeDIST: MasterDataItem = { id: 'type-dist', code: 'DIST', name: 'Distributor' };
+
+const mockTermNet30: MasterDataItem = { id: 'term-net30', code: 'NET30', name: 'Net 30' };
+const mockTermNet45: MasterDataItem = { id: 'term-net45', code: 'NET45', name: 'Net 45' };
+const mockTermCOD: MasterDataItem = { id: 'term-cod', code: 'COD', name: 'COD' };
+
+const mockCurrVND: MasterDataItem = { id: 'curr-vnd', code: 'VND', name: 'VND' };
+const mockCurrUSD: MasterDataItem = { id: 'curr-usd', code: 'USD', name: 'USD' };
+const mockCurrEUR: MasterDataItem = { id: 'curr-eur', code: 'EUR', name: 'EUR' };
+const mockCurrJPY: MasterDataItem = { id: 'curr-jpy', code: 'JPY', name: 'JPY' };
+
 export const suppliers: Supplier[] = [
-  { 
-    id: 'sup-1', 
-    code: 'NCC-001', 
+  {
+    id: 'sup-1',
+    code: 'NCC-001',
     taxCode: '0101234567',
-    name: 'Siemens Energy Vietnam', 
+    name: 'Siemens Energy Vietnam',
     address: 'Deutsches Haus, TP.HCM',
-    country: 'Vietnam',
-    type: 'OEM',
-    paymentTerm: 'Net 30',
-    currency: 'VND',
+    countryId: mockCountryDE.id,
+    typeId: mockTypeOEM.id,
+    paymentTermId: mockTermNet30.id,
+    currencyId: mockCurrUSD.id,
+    country: mockCountryDE,
+    supplierType: mockTypeOEM,
+    paymentTerm: mockTermNet30,
+    currency: mockCurrUSD,
     status: 'Active',
     contacts: [
       { id: 'cont-1-1', name: 'Mr. John', position: 'Sales Mgr', email: 'john@siemens.com', phone: '+84 909 123 456' },
       { id: 'cont-1-2', name: 'Ms. Anna', position: 'Tech Support', email: 'anna@siemens.com', phone: '+84 918 654 321' },
     ]
   },
-  { 
-    id: 'sup-2', 
-    code: 'NCC-002', 
+  {
+    id: 'sup-2',
+    code: 'NCC-002',
     taxCode: '0300123456',
-    name: 'General Electric (GE)', 
+    name: 'General Electric (GE)',
     address: 'New York, USA',
-    country: 'USA',
-    type: 'Manufacturer',
-    paymentTerm: 'Net 60',
-    currency: 'USD',
+    countryId: mockCountryUS.id,
+    typeId: mockTypeMFG.id,
+    paymentTermId: mockTermNet45.id,
+    currencyId: mockCurrUSD.id,
+    country: mockCountryUS,
+    supplierType: mockTypeMFG,
+    paymentTerm: mockTermNet45,
+    currency: mockCurrUSD,
     status: 'Active',
-    contacts: [] 
+    contacts: []
   },
-  { 
-    id: 'sup-3', 
-    code: 'NCC-003', 
+  {
+    id: 'sup-3',
+    code: 'NCC-003',
     taxCode: '0101234568',
-    name: 'ABB Ltd', 
-    address: 'Zurich, Switzerland',
-    country: 'Switzerland',
-    type: 'OEM',
-    paymentTerm: 'Net 30',
-    currency: 'EUR',
+    name: 'Yokogawa Vietnam',
+    address: 'Tokyo, Japan',
+    countryId: mockCountryJP.id,
+    typeId: mockTypeMFG.id,
+    paymentTermId: mockTermNet45.id,
+    currencyId: mockCurrJPY.id,
+    country: mockCountryJP,
+    supplierType: mockTypeMFG,
+    paymentTerm: mockTermNet45,
+    currency: mockCurrJPY,
     status: 'Active',
     contacts: []
   },
-  { 
-    id: 'sup-4', 
-    code: 'NCC-004', 
+  {
+    id: 'sup-4',
+    code: 'NCC-004',
     taxCode: '0300123457',
-    name: 'Công ty TNHH Bách Tùng', 
+    name: 'Công ty TNHH Bách Tùng',
     address: 'Hanoi, Vietnam',
-    country: 'Vietnam',
-    type: 'Distributor',
-    paymentTerm: 'COD',
-    currency: 'VND',
+    countryId: mockCountryVN.id,
+    typeId: mockTypeDIST.id,
+    paymentTermId: mockTermCOD.id,
+    currencyId: mockCurrVND.id,
+    country: mockCountryVN,
+    supplierType: mockTypeDIST,
+    paymentTerm: mockTermCOD,
+    currency: mockCurrVND,
     status: 'Inactive',
     contacts: []
   },
-  { 
-    id: 'sup-5', 
-    code: 'NCC-005', 
+  {
+    id: 'sup-5',
+    code: 'NCC-005',
     taxCode: '0101234569',
-    name: 'Schneider Electric', 
-    address: 'Paris, France',
-    country: 'France',
-    type: 'Manufacturer',
-    paymentTerm: 'Net 45',
-    currency: 'EUR',
-    status: 'Active',
-    contacts: []
-  },
-  { 
-    id: 'sup-6', 
-    code: 'NCC-006', 
-    taxCode: '0300123458',
-    name: 'Honeywell Vietnam', 
+    name: 'ABB Vietnam',
     address: 'Ho Chi Minh City, Vietnam',
-    country: 'Vietnam',
-    type: 'Distributor',
-    paymentTerm: 'Net 30',
-    currency: 'VND',
+    countryId: mockCountryDE.id,
+    typeId: mockTypeDIST.id,
+    paymentTermId: mockTermNet45.id,
+    currencyId: mockCurrEUR.id,
+    country: mockCountryDE,
+    supplierType: mockTypeDIST,
+    paymentTerm: mockTermNet45,
+    currency: mockCurrEUR,
     status: 'Active',
     contacts: []
   },
-  { 
-    id: 'sup-7', 
-    code: 'NCC-007', 
-    taxCode: '0101234570',
-    name: 'Rockwell Automation', 
-    address: 'Milwaukee, USA',
-    country: 'USA',
-    type: 'Manufacturer',
-    paymentTerm: 'Net 60',
-    currency: 'USD',
-    status: 'Active',
-    contacts: []
-  },
-  { 
-    id: 'sup-8', 
-    code: 'NCC-008', 
-    taxCode: '0300123459',
-    name: 'Mitsubishi Electric', 
-    address: 'Tokyo, Japan',
-    country: 'Japan',
-    type: 'OEM',
-    paymentTerm: 'Net 30',
-    currency: 'JPY',
-    status: 'Active',
-    contacts: []
-  },
-  { 
-    id: 'sup-9', 
-    code: 'NCC-009', 
-    taxCode: '0101234571',
-    name: 'Emerson Electric', 
-    address: 'St. Louis, USA',
-    country: 'USA',
-    type: 'Manufacturer',
-    paymentTerm: 'Net 60',
-    currency: 'USD',
-    status: 'Inactive',
-    contacts: []
-  },
-  { 
-    id: 'sup-10', 
-    code: 'NCC-010', 
-    taxCode: '0300123460',
-    name: 'Bosch Rexroth AG', 
-    address: 'Lohr am Main, Germany',
-    country: 'Germany',
-    type: 'OEM',
-    paymentTerm: 'Net 30',
-    currency: 'EUR',
-    status: 'Active',
-    contacts: []
-  },
-  { 
-    id: 'sup-11', 
-    code: 'NCC-011', 
-    taxCode: '0101234572',
-    name: 'Yokogawa Electric', 
-    address: 'Tokyo, Japan',
-    country: 'Japan',
-    type: 'Manufacturer',
-    paymentTerm: 'Net 45',
-    currency: 'JPY',
-    status: 'Active',
-    contacts: []
-  },
-  { 
-    id: 'sup-12', 
-    code: 'NCC-012', 
-    taxCode: '0300123461',
-    name: 'Danfoss', 
-    address: 'Nordborg, Denmark',
-    country: 'Denmark',
-    type: 'Manufacturer',
-    paymentTerm: 'Net 30',
-    currency: 'EUR',
-    status: 'Active',
-    contacts: []
-  },
-  { 
-    id: 'sup-13', 
-    code: 'NCC-013', 
-    taxCode: '0101234573',
-    name: 'Parker Hannifin', 
-    address: 'Cleveland, USA',
-    country: 'USA',
-    type: 'Manufacturer',
-    paymentTerm: 'Net 60',
-    currency: 'USD',
-    status: 'Active',
-    contacts: []
-  },
-  { 
-    id: 'sup-14', 
-    code: 'NCC-014', 
-    taxCode: '0300123462',
-    name: 'Festo', 
-    address: 'Esslingen, Germany',
-    country: 'Germany',
-    type: 'OEM',
-    paymentTerm: 'Net 30',
-    currency: 'EUR',
-    status: 'Active',
-    contacts: []
-  },
-  { 
-    id: 'sup-15', 
-    code: 'NCC-015', 
-    taxCode: '0101234574',
-    name: 'SMC Corporation', 
-    address: 'Tokyo, Japan',
-    country: 'Japan',
-    type: 'Manufacturer',
-    paymentTerm: 'Net 30',
-    currency: 'JPY',
-    status: 'Inactive',
-    contacts: []
-  },
-  { 
-    id: 'sup-16', 
-    code: 'NCC-016', 
-    taxCode: '0300123463',
-    name: 'Endress+Hauser', 
-    address: 'Reinach, Switzerland',
-    country: 'Switzerland',
-    type: 'OEM',
-    paymentTerm: 'Net 45',
-    currency: 'CHF',
-    status: 'Active',
-    contacts: []
-  },
-  { 
-    id: 'sup-17', 
-    code: 'NCC-017', 
-    taxCode: '0101234575',
-    name: 'WIKA Alexander Wiegand', 
-    address: 'Klingenberg, Germany',
-    country: 'Germany',
-    type: 'Manufacturer',
-    paymentTerm: 'Net 30',
-    currency: 'EUR',
-    status: 'Active',
-    contacts: []
-  },
-  { 
-    id: 'sup-18', 
-    code: 'NCC-018', 
-    taxCode: '0300123464',
-    name: 'Phoenix Contact', 
-    address: 'Blomberg, Germany',
-    country: 'Germany',
-    type: 'Manufacturer',
-    paymentTerm: 'Net 30',
-    currency: 'EUR',
-    status: 'Active',
-    contacts: []
-  },
-  { 
-    id: 'sup-19', 
-    code: 'NCC-019', 
-    taxCode: '0101234576',
-    name: 'Weidmüller', 
-    address: 'Detmold, Germany',
-    country: 'Germany',
-    type: 'Manufacturer',
-    paymentTerm: 'Net 30',
-    currency: 'EUR',
-    status: 'Active',
-    contacts: []
-  },
-  { 
-    id: 'sup-20', 
-    code: 'NCC-020', 
-    taxCode: '0300123465',
-    name: 'OMRON Corporation', 
-    address: 'Kyoto, Japan',
-    country: 'Japan',
-    type: 'OEM',
-    paymentTerm: 'Net 45',
-    currency: 'JPY',
-    status: 'Active',
-    contacts: []
-  },
-  { 
-    id: 'sup-21', 
-    code: 'NCC-021', 
-    taxCode: '0101234577',
-    name: 'Pilz GmbH &amp; Co. KG', 
-    address: 'Ostfildern, Germany',
-    country: 'Germany',
-    type: 'OEM',
-    paymentTerm: 'Net 30',
-    currency: 'EUR',
-    status: 'Active',
-    contacts: []
-  },
-  { 
-    id: 'sup-22', 
-    code: 'NCC-022', 
-    taxCode: '0300123466',
-    name: 'IFM Electronic', 
-    address: 'Essen, Germany',
-    country: 'Germany',
-    type: 'Manufacturer',
-    paymentTerm: 'Net 30',
-    currency: 'EUR',
-    status: 'Active',
-    contacts: []
-  },
-  { 
-    id: 'sup-23', 
-    code: 'NCC-023', 
-    taxCode: '0101234578',
-    name: 'Pepperl+Fuchs', 
-    address: 'Mannheim, Germany',
-    country: 'Germany',
-    type: 'Manufacturer',
-    paymentTerm: 'Net 30',
-    currency: 'EUR',
-    status: 'Active',
-    contacts: []
-  },
-  { 
-    id: 'sup-24', 
-    code: 'NCC-024', 
-    taxCode: '0300123467',
-    name: 'Turck', 
-    address: 'Mülheim, Germany',
-    country: 'Germany',
-    type: 'Manufacturer',
-    paymentTerm: 'Net 30',
-    currency: 'EUR',
-    status: 'Inactive',
-    contacts: []
-  },
-  { 
-    id: 'sup-25', 
-    code: 'NCC-025', 
-    taxCode: '0101234579',
-    name: 'Balluff', 
-    address: 'Neuhausen, Germany',
-    country: 'Germany',
-    type: 'OEM',
-    paymentTerm: 'Net 30',
-    currency: 'EUR',
-    status: 'Active',
-    contacts: []
-  }
 ];
 
 export const materialRequests: MaterialRequest[] = Array.from({ length: 25 }, (_, i) => {

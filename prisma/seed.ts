@@ -118,6 +118,7 @@ async function main() {
       { code: "OEM", name: "OEM", sortOrder: 1 },
       { code: "MFG", name: "Manufacturer", sortOrder: 2 },
       { code: "DIST", name: "Distributor", sortOrder: 3 },
+      { code: "AGENT", name: "Agent", sortOrder: 4 },
     ],
     skipDuplicates: true
   })
@@ -564,6 +565,119 @@ async function main() {
     skipDuplicates: true
   })
   console.log('WarehouseLocations seeded! 11 records added.')
+
+  // === SUPPLIERS ===
+  console.log('  Seeding Suppliers...')
+
+  // Get supplier master data IDs for FK relations
+  const supplierTypes = await prisma.supplierType.findMany()
+  const supplierTypeMap = Object.fromEntries(supplierTypes.map(t => [t.code, t.id]))
+
+  const paymentTerms = await prisma.paymentTerm.findMany()
+  const paymentTermMap = Object.fromEntries(paymentTerms.map(p => [p.code, p.id]))
+
+  const currencies = await prisma.currency.findMany()
+  const currencyMap = Object.fromEntries(currencies.map(c => [c.code, c.id]))
+
+  // Create suppliers with FK relations
+  await prisma.supplier.create({
+    data: {
+      code: 'NCC-001',
+      taxCode: '0101234567',
+      name: 'Siemens Energy Vietnam',
+      address: 'Deutsches Haus, 33 Le Duan, District 1, Ho Chi Minh City',
+      countryId: countryMap['DE'],
+      typeId: supplierTypeMap['OEM'],
+      paymentTermId: paymentTermMap['NET30'],
+      currencyId: currencyMap['USD'],
+      status: 'Active',
+      contacts: {
+        create: [
+          { name: 'Mr. John Schmidt', position: 'Sales Manager', email: 'john.schmidt@siemens.com', phone: '+84 909 123 456' },
+          { name: 'Ms. Anna Weber', position: 'Technical Support', email: 'anna.weber@siemens.com', phone: '+84 918 654 321' },
+        ]
+      }
+    }
+  })
+
+  await prisma.supplier.create({
+    data: {
+      code: 'NCC-002',
+      taxCode: '0309876543',
+      name: 'Yokogawa Vietnam',
+      address: 'Saigon Tower, 29 Le Duan, District 1, Ho Chi Minh City',
+      countryId: countryMap['JP'],
+      typeId: supplierTypeMap['MFG'],
+      paymentTermId: paymentTermMap['NET45'],
+      currencyId: currencyMap['JPY'],
+      status: 'Active',
+      contacts: {
+        create: [
+          { name: 'Mr. Tanaka Hiroshi', position: 'Country Manager', email: 'tanaka@yokogawa.com', phone: '+84 903 111 222' },
+        ]
+      }
+    }
+  })
+
+  await prisma.supplier.create({
+    data: {
+      code: 'NCC-003',
+      taxCode: '0105551234',
+      name: 'ABB Vietnam',
+      address: '2 Hai Trieu, District 1, Ho Chi Minh City',
+      countryId: countryMap['DE'],
+      typeId: supplierTypeMap['DIST'],
+      paymentTermId: paymentTermMap['NET60'],
+      currencyId: currencyMap['EUR'],
+      status: 'Active',
+      contacts: {
+        create: [
+          { name: 'Ms. Nguyen Thi Mai', position: 'Sales Representative', email: 'mai.nguyen@abb.com', phone: '+84 907 333 444' },
+          { name: 'Mr. Tran Van Duc', position: 'Service Engineer', email: 'duc.tran@abb.com', phone: '+84 912 555 666' },
+        ]
+      }
+    }
+  })
+
+  await prisma.supplier.create({
+    data: {
+      code: 'NCC-004',
+      taxCode: '0100112233',
+      name: 'Emerson Vietnam',
+      address: 'Bitexco Tower, 2 Hai Trieu, District 1, Ho Chi Minh City',
+      countryId: countryMap['US'],
+      typeId: supplierTypeMap['OEM'],
+      paymentTermId: paymentTermMap['NET30'],
+      currencyId: currencyMap['USD'],
+      status: 'Active',
+      contacts: {
+        create: [
+          { name: 'Mr. David Brown', position: 'Account Manager', email: 'david.brown@emerson.com', phone: '+84 908 777 888' },
+        ]
+      }
+    }
+  })
+
+  await prisma.supplier.create({
+    data: {
+      code: 'NCC-005',
+      taxCode: '0108889999',
+      name: 'NSK Vietnam',
+      address: 'Amata Industrial Park, Bien Hoa, Dong Nai',
+      countryId: countryMap['JP'],
+      typeId: supplierTypeMap['MFG'],
+      paymentTermId: paymentTermMap['COD'],
+      currencyId: currencyMap['VND'],
+      status: 'Inactive',
+      contacts: {
+        create: [
+          { name: 'Mr. Sato Kenji', position: 'Factory Manager', email: 'sato@nsk.com', phone: '+84 251 123 456' },
+        ]
+      }
+    }
+  })
+
+  console.log('Suppliers seeded! 5 records added.')
 }
 
 main()

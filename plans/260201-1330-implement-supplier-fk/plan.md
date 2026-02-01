@@ -1,7 +1,7 @@
 ---
 title: "Implement Supplier Feature with FK Relationships"
 description: "Refactor Supplier model to use FK for master data, add CRUD contacts, integrate API"
-status: pending
+status: completed
 priority: P0
 effort: 2d
 branch: main
