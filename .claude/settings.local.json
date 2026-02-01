@@ -21,7 +21,9 @@
       "Bash(test:*)",
       "Bash(git push:*)",
       "Bash(npm run lint)",
-      "Bash(npx next build:*)"
+      "Bash(npx next build:*)",
+      "Bash(done)",
+      "Bash(PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION=\"Yes, reset dev DB\" npx prisma db push:*)"
     ]
   }
 }
