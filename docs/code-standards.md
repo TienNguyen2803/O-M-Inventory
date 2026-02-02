@@ -59,7 +59,7 @@ Zod schemas in `src/lib/validations/`:
 | `inbound.ts` | InboundReceipt validation |
 | `outbound.ts` | OutboundReceipt validation |
 | `stocktake.ts` | Stocktake, Assignment, Result |
-| `lifecycle.ts` | Lifecycle tracking |
+| `lifecycle.ts` | MaterialEvent, Installation |
 
 **Validation Pattern for API Routes:**
 
@@ -120,7 +120,7 @@ Use pattern `PREFIX-YYYY-XXX`:
 | Purchase Request | `PR-YYYY-XXX` | PR-2026-001 |
 | Material Request | `MR-YYYY-XXX` | MR-2026-001 |
 | Inbound Receipt | `NK-YYYY-XXX` | NK-2026-001 |
-| Outbound Voucher | `XK-YYYY-XXX` | XK-2026-001 |
+| Outbound Receipt | `XK-YYYY-XXX` | XK-2026-001 |
 | Stocktake | `KK-YYYY-XXX` | KK-2026-001 |
 
 **Implementation:**
@@ -149,5 +149,26 @@ model Stocktake {
 // API response includes nested objects
 const data = await prisma.stocktake.findMany({
   include: { status: true, area: true, createdBy: { select: { id: true, name: true } } }
+});
+```
+
+## 11. Lifecycle Tracking Pattern
+
+Material lifecycle events are created automatically by business operations:
+
+```typescript
+// After inbound receipt completion
+await prisma.materialEvent.create({
+  data: {
+    materialId,
+    eventType: "INBOUND",
+    eventDate: new Date(),
+    actorId: userId,
+    actorName: userName,
+    referenceType: "InboundReceipt",
+    referenceId: receiptId,
+    referenceCode: receiptCode,
+    description: `Received ${quantity} units`,
+  },
 });
 ```

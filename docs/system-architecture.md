@@ -2,7 +2,7 @@
 
 ## Overview
 
-PowerTrack Logistics is an O&M (Operation & Maintenance) inventory management system for power plants, built on a modern full-stack architecture.
+PowerTrack Logistics is an O&M inventory management system for power plants, built on a modern full-stack architecture.
 
 ## Architecture Diagram
 
@@ -13,7 +13,7 @@ PowerTrack Logistics is an O&M (Operation & Maintenance) inventory management sy
 │  │              Next.js 15.5 App Router                  │   │
 │  │  ┌────────────┐  ┌────────────┐  ┌────────────────┐  │   │
 │  │  │   Pages    │  │ Components │  │   API Routes   │  │   │
-│  │  │ (21 routes)│  │    (36+)   │  │  (44+ routes)  │  │   │
+│  │  │ (21 routes)│  │    (35)    │  │  (46 routes)   │  │   │
 │  │  └────────────┘  └────────────┘  └────────────────┘  │   │
 │  └──────────────────────────────────────────────────────┘   │
 └─────────────────────────────────────────────────────────────┘
@@ -35,7 +35,7 @@ PowerTrack Logistics is an O&M (Operation & Maintenance) inventory management sy
 │  ┌──────────────────────────────────────────────────────┐   │
 │  │           PostgreSQL (Docker Container)               │   │
 │  │  ┌──────────────────┐  ┌───────────────────────────┐ │   │
-│  │  │ 24 Master Tables │  │  Business Data Tables     │ │   │
+│  │  │ 28 Master Tables │  │  Business Data Tables     │ │   │
 │  │  └──────────────────┘  └───────────────────────────┘ │   │
 │  └──────────────────────────────────────────────────────┘   │
 └─────────────────────────────────────────────────────────────┘
@@ -70,6 +70,8 @@ PowerTrack Logistics is an O&M (Operation & Maintenance) inventory management sy
 | `/inbound` | Goods receipt (GRN) |
 | `/outbound` | Goods issue (GIV) |
 | `/stock-take` | Physical inventory counting |
+| `/lifecycle` | Material lifecycle tracking |
+| `/goods-history` | Material movement history |
 | `/reports/inventory` | Inventory report |
 | `/reports/safety-stock` | Safety stock alerts |
 | `/reports/slow-moving` | Slow-moving items |
@@ -77,7 +79,6 @@ PowerTrack Logistics is an O&M (Operation & Maintenance) inventory management sy
 | `/roles` | Role management |
 | `/settings` | Master data configuration |
 | `/activity-log` | Audit log |
-| `/lifecycle` | Material lifecycle tracking |
 
 ## Data Flow
 
@@ -111,11 +112,11 @@ User Action → React Component → API Route → Prisma Client → PostgreSQL
 
 ---
 
-## API Endpoints Summary
+## API Endpoints Summary (20 groups, 46 routes)
 
 ### Master Data API
 
-Generic API for 24 master data tables:
+Generic API for 28 master data tables:
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
@@ -125,19 +126,27 @@ Generic API for 24 master data tables:
 | PUT | `/api/master-data/{tableId}/{id}` | Update item |
 | DELETE | `/api/master-data/{tableId}/{id}` | Soft delete |
 
-**tableId values**: `material-status`, `material-category`, `material-unit`, `management-type`, `warehouse-area`, `warehouse-type`, `warehouse-status`, `supplier-type`, `payment-term`, `currency`, `request-priority`, `request-status`, `purchase-source`, `purchase-status`, `bidding-method`, `bidding-status`, `inbound-type`, `inbound-status`, `outbound-purpose`, `outbound-status`, `stocktake-status`, `stocktake-area`, `user-status`, `activity-action`, `department`, `country`
-
 ---
 
 ### Materials API
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/materials` | List (pagination, search, filter by categoryId/statusId) |
+| GET | `/api/materials` | List (pagination, search, filter) |
 | POST | `/api/materials` | Create material |
 | GET | `/api/materials/{id}` | Get material |
 | PUT | `/api/materials/{id}` | Update material |
 | DELETE | `/api/materials/{id}` | Delete material |
+| GET | `/api/materials/{id}/lifecycle` | Get lifecycle events |
+
+---
+
+### Lifecycle API
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/materials/{id}/lifecycle` | Get material lifecycle events |
+| POST | `/api/installations` | Create installation record |
 
 ---
 
@@ -151,8 +160,6 @@ Generic API for 24 master data tables:
 | PUT | `/api/warehouse-locations/{id}` | Update location |
 | DELETE | `/api/warehouse-locations/{id}` | Delete location |
 
-**FK Relations**: areaId → WarehouseArea, typeId → WarehouseType, statusId → WarehouseStatus
-
 ---
 
 ### Suppliers API
@@ -164,8 +171,6 @@ Generic API for 24 master data tables:
 | GET | `/api/suppliers/{id}` | Get with contacts |
 | PUT | `/api/suppliers/{id}` | Update (transactional) |
 | DELETE | `/api/suppliers/{id}` | Cascade delete contacts |
-
-**FK Relations**: countryId, typeId, paymentTermId, currencyId
 
 ---
 
@@ -182,8 +187,6 @@ Generic API for 24 master data tables:
 | GET/POST | `/api/features` | CRUD features (grouped) |
 | GET/POST/DELETE | `/api/feature-actions` | Manage mappings |
 
-**Permission Model**: Role ↔ RoleFeatureAction ↔ FeatureAction ↔ Feature + Action
-
 ---
 
 ### Material Requests API
@@ -197,8 +200,6 @@ Generic API for 24 master data tables:
 | DELETE | `/api/material-requests/{id}` | Cascade delete items |
 | POST | `/api/material-requests/{id}/approve` | Approve/Reject |
 
-**FK Relations**: requesterId, departmentId, priorityId, statusId, approverId
-
 ---
 
 ### Purchase Requests API
@@ -211,8 +212,6 @@ Generic API for 24 master data tables:
 | PUT | `/api/purchase-requests/{id}` | Update |
 | DELETE | `/api/purchase-requests/{id}` | Cascade delete items |
 
-**FK Relations**: requesterId, departmentId, statusId, sourceId, fundingSourceId
-
 ---
 
 ### Bidding Packages API
@@ -221,15 +220,13 @@ Generic API for 24 master data tables:
 |--------|----------|-------------|
 | GET | `/api/bidding-packages` | List packages |
 | POST | `/api/bidding-packages` | Create with PRs, scope items |
-| GET | `/api/bidding-packages/{id}` | Get package (id=packageCode) |
+| GET | `/api/bidding-packages/{id}` | Get package |
 | PUT | `/api/bidding-packages/{id}` | Update package |
 | DELETE | `/api/bidding-packages/{id}` | Cascade delete |
 | GET/POST | `/api/bidding-packages/{id}/participants` | Manage participants |
 | PATCH | `/api/bidding-packages/{id}/participants` | Update scores/quotations |
-| DELETE | `/api/bidding-packages/{id}/participants?participantId=...` | Remove participant |
+| DELETE | `/api/bidding-packages/{id}/participants?...` | Remove participant |
 | POST | `/api/bidding-packages/{id}/select-winner` | Select winner |
-
-**Workflow**: Invite → Receive → Evaluate → Done
 
 ---
 
@@ -243,24 +240,21 @@ Generic API for 24 master data tables:
 | PUT | `/api/inbound/{id}` | Update receipt |
 | DELETE | `/api/inbound/{id}` | Delete receipt |
 
-**FK Relations**: typeId → InboundType, supplierId → Supplier, statusId → InboundStatus
-
 ---
 
 ### Outbound API
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/outbound` | List vouchers |
-| POST | `/api/outbound` | Create voucher |
-| GET | `/api/outbound/{id}` | Get voucher |
-| PUT | `/api/outbound/{id}` | Update voucher |
-| DELETE | `/api/outbound/{id}` | Delete voucher |
+| GET | `/api/outbound` | List receipts |
+| POST | `/api/outbound` | Create receipt |
+| GET | `/api/outbound/{id}` | Get receipt |
+| PUT | `/api/outbound/{id}` | Update receipt |
+| DELETE | `/api/outbound/{id}` | Delete receipt |
 | POST | `/api/outbound/{id}/approve` | Approve issue |
-| POST | `/api/outbound/{id}/issue` | Execute issue (decrement stock) |
+| POST | `/api/outbound/{id}/issue` | Execute issue |
 
 **Workflow**: Draft → Approved → Issued
-**FK Relations**: purposeId, statusId, requesterId, departmentId
 
 ---
 
@@ -269,21 +263,18 @@ Generic API for 24 master data tables:
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | GET | `/api/stocktake` | List stocktakes |
-| POST | `/api/stocktake` | Create stocktake with assignments |
-| GET | `/api/stocktake/{id}` | Get stocktake details |
+| POST | `/api/stocktake` | Create stocktake |
+| GET | `/api/stocktake/{id}` | Get stocktake |
 | PUT | `/api/stocktake/{id}` | Update stocktake |
 | DELETE | `/api/stocktake/{id}` | Delete stocktake |
 | POST | `/api/stocktake/{id}/start` | Start counting |
 | POST | `/api/stocktake/{id}/reconcile` | Reconcile variances |
 | POST | `/api/stocktake/{id}/complete` | Complete stocktake |
-| GET/POST | `/api/stocktake/{id}/assignments` | Manage location assignments |
-| PUT/DELETE | `/api/stocktake/{id}/assignments/{assignId}` | Update/remove assignment |
-| GET/POST/PUT | `/api/stocktake/{id}/results` | Manage counting results |
+| GET/POST | `/api/stocktake/{id}/assignments` | Manage assignments |
+| PUT/DELETE | `/api/stocktake/{id}/assignments/{assignId}` | Update/remove |
+| GET/POST/PUT | `/api/stocktake/{id}/results` | Manage results |
 
 **Workflow**: Draft → In Progress → Reconciling → Completed
-**FK Relations**: statusId → StocktakeStatus, areaId → StocktakeArea, createdById → User
-
-**Code Pattern**: `KK-YYYY-XXX` (auto-generated)
 
 ---
 
@@ -296,7 +287,7 @@ Generic API for 24 master data tables:
 | `usePermissions()` | Actions, features, roles management |
 | `useMaterialRequests()` | Material request CRUD |
 | `useToast()` | Toast notifications |
-| `useMobile()` | Mobile breakpoint detection |
+| `useMobile()` | Mobile breakpoint detection (in sidebar.tsx) |
 
 ---
 
@@ -308,7 +299,7 @@ Generic API for 24 master data tables:
 | Purchase Request | `PR-YYYY-XXX` | PR-2026-001 |
 | Material Request | `MR-YYYY-XXX` | MR-2026-001 |
 | Inbound Receipt | `NK-YYYY-XXX` | NK-2026-001 |
-| Outbound Voucher | `XK-YYYY-XXX` | XK-2026-001 |
+| Outbound Receipt | `XK-YYYY-XXX` | XK-2026-001 |
 | Stocktake | `KK-YYYY-XXX` | KK-2026-001 |
 
 ---

@@ -1,12 +1,12 @@
 # Codebase Summary
 
 **Last Updated:** 2026-02-01
-**Version:** 1.4.0
-**Status:** Production Ready (Most Modules Live)
+**Version:** 1.5.0
+**Status:** Production Ready (All Core Modules Live)
 
 ## Overview
 
-PowerTrack Logistics (O-M-Inventory) is a Next.js 15.5 application for inventory management in power plants. The codebase has transitioned from prototype to production-ready state with most modules fully connected to PostgreSQL via Prisma 7.
+PowerTrack Logistics (O-M-Inventory) is a Next.js 15.5 application for inventory management in power plants. The codebase has transitioned from prototype to production-ready state with all core modules fully connected to PostgreSQL via Prisma 7.
 
 ## Tech Stack
 
@@ -25,61 +25,64 @@ PowerTrack Logistics (O-M-Inventory) is a Next.js 15.5 application for inventory
 
 | Directory | Module | Status | Description |
 |-----------|--------|--------|-------------|
-| `api/` | **API Routes** | Live | 19 endpoint groups, 44+ routes connected to Prisma |
+| `api/` | **API Routes** | Live | 20 endpoint groups, 46 routes connected to Prisma |
 | `materials/` | Materials | Live | Full CRUD with FK relations |
 | `material-requests/` | Requests | Live | Approval workflow with items |
 | `purchase-requests/` | Purchase | Live | Procurement workflow |
 | `biddings/` | Bidding | Live | Full workflow with participants, quotations |
 | `warehouses/` | Locations | Live | Full CRUD with FK relations |
 | `suppliers/` | Suppliers | Live | CRUD with contacts management |
-| `inbound/` | Inbound | Live | Goods receipt with FK relations |
+| `inbound/` | Inbound | Live | Goods receipt with FK relations, KCS |
 | `outbound/` | Outbound | Live | Goods issue with stock decrement |
 | `stock-take/` | Stocktake | Live | Counting with assignments and reconciliation |
+| `lifecycle/` | Lifecycle | Live | Material lifecycle timeline tracking |
+| `goods-history/` | History | Live | Material movement history search |
 | `users/`, `roles/` | Auth | Live | RBAC with feature-action permissions |
 | `reports/` | Reports | Hybrid | UI exists, client-side calculations |
 | `dashboard/` | Dashboard | Hybrid | Charts with partial live data |
-| `lifecycle/` | Lifecycle | Prototype | Timeline view with mock data |
 
 ### `src/lib` (Utilities)
 
 | File | Description |
 |------|-------------|
 | `db.ts` | Prisma client singleton |
-| `types.ts` | TypeScript interfaces (~630 lines) |
-| `master-data-tables.ts` | 24 master data table mappings |
+| `types.ts` | TypeScript interfaces |
+| `master-data-tables.ts` | 28 master data table mappings |
 | `validations/` | Zod schemas (inbound, outbound, stocktake, warehouse-location, lifecycle) |
 
 ### `src/components`
 
 | Directory | Description |
 |-----------|-------------|
-| `ui/` | 35+ shadcn/ui components |
-| `layout/` | AppLayout, AppHeader, SidebarNav (5 nav groups, 18 items) |
+| `ui/` | 35 shadcn/ui components |
+| `layout/` | AppLayout, AppHeader, SidebarNav (5 nav groups, 19 items) |
 | `shared/` | PageHeader and shared components |
 
 ### `src/hooks`
 
-Custom hooks: `useToast`, `useMobile`, `useMasterData`, `useUsers`, `usePermissions`, `useMaterialRequests`
+Custom hooks: `useToast`, `useMasterData`, `useUsers`, `usePermissions`, `useMaterialRequests`
 
-## API Endpoints (19 groups, 44+ routes)
+## API Endpoints (20 groups, 46 routes)
 
 - **Auth**: `/api/auth/login` (email-based)
 - **Users/Roles**: CRUD + role assignment + RBAC
-- **Materials**: Material catalog CRUD
+- **Materials**: Material catalog CRUD + lifecycle
 - **Suppliers**: Vendor management
 - **Warehouse Locations**: Storage hierarchy
-- **Master Data**: Dynamic CRUD for 24 lookup tables
+- **Master Data**: Dynamic CRUD for 28 lookup tables
 - **Material Requests**: Requisition + approval workflow
 - **Purchase Requests**: PR management
 - **Bidding Packages**: Bidding workflow
-- **Inbound**: Goods receipt
+- **Inbound**: Goods receipt with KCS
 - **Outbound**: Goods issue with stock decrement
 - **Stocktake**: Counting, assignments, results, reconciliation
+- **Lifecycle**: Material events + installations
 
-## Database (~50 tables)
+## Database (~55 tables)
 
-- **Master Data**: 24 lookup tables (statuses, types, categories)
+- **Master Data**: 28 lookup tables (statuses, types, categories)
 - **Business Data**: Material, Supplier, WarehouseLocation, MaterialRequest, PurchaseRequest, BiddingPackage, InboundReceipt, OutboundReceipt, Stocktake
+- **Lifecycle**: MaterialEvent, Installation
 - **User/Permissions**: User, Role, Action, Feature, FeatureAction, RoleFeatureAction, ActivityLog, InventoryLog
 
 ## Known Technical Debt
@@ -97,3 +100,4 @@ The `src/app/materials` module serves as the **gold standard**:
 - Client-side filtering
 - Zod validation
 - Decoupled data access via API routes
+- Lifecycle event tracking integration

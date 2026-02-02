@@ -10,7 +10,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Planned
 - Inbound stock increase logic on receipt
 - Server-side reporting engine with Prisma `groupBy`
-- Lifecycle tracking API integration
+- Export to Excel/PDF
+
+---
+
+## [1.6.0] - 2026-02-01
+
+### Added
+- **Item History Module**: Transaction-based material history tracking:
+  - `MaterialTransaction` model for grouping related events
+  - `TransactionStatus` enum: PENDING, COMPLETED, CANCELLED
+  - `ReferenceType` enum: OUTBOUND_RECEIPT, INBOUND_RECEIPT
+  - Extended `MaterialEvent` with transaction relationship (transactionId, stepOrder, stepTitle)
+  - API endpoint: `GET /api/materials/{id}/history`
+  - API endpoint: `GET /api/materials/{id}/transactions/{txId}`
+  - Frontend page: `/item-history` with search, statistics, grouped timeline
+  - Components: StatisticsCard, GroupedTimeline, TransactionGroup, EventStep
+  - Zod validation in `src/lib/validations/item-history.ts`
+  - UUID format validation for API security
+
+---
+
+## [1.5.0] - 2026-02-01
+
+### Added
+- **Lifecycle Tracking Module**: Complete material lifecycle implementation:
+  - `MaterialEvent` model with FK to Material and User
+  - `MaterialEventType` enum: REQUEST, APPROVED, PO_ISSUED, INBOUND, QC, OUTBOUND, INSTALLED
+  - `Installation` model for tracking material installations
+  - API endpoint: `GET /api/materials/{id}/lifecycle`
+  - API endpoint: `POST /api/installations`
+  - Zod validation in `src/lib/validations/lifecycle.ts`
+  - Timeline UI for lifecycle visualization
+- **Goods History**: Material movement history search and filtering
+
+### Fixed
+- **Goods History**: Replaced useState with useEffect for initial search load
 
 ---
 
@@ -20,6 +55,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Stocktake Management Module**: Full physical inventory counting implementation:
   - `Stocktake` model with FK relations to StocktakeStatus, StocktakeArea, User
   - `StocktakeAssignment` for location-based counting assignments
+  - `StocktakeAssignmentStatus` master data table
   - `StocktakeResult` for counting results with variance tracking
   - CRUD API endpoints at `/api/stocktake`
   - Workflow endpoints: `/start`, `/reconcile`, `/complete`
@@ -27,8 +63,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Results management: GET/POST/PUT with bulk update support
   - Zod validation schemas in `src/lib/validations/stocktake.ts`
   - Auto-generated codes: `KK-YYYY-XXX`
-  - 10 seed records for testing
-- **Lifecycle Tracking Plan**: Added lifecycle management plan for material tracing
 
 ### Changed
 - **Outbound Module**: Improved form component structure and organization
@@ -44,11 +78,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `OutboundReceiptItem` with FK to Material, Unit, Location
   - CRUD API at `/api/outbound`
   - Approve/Issue endpoints with stock decrement logic
-  - 12 seed records
 
 ### Changed
 - **Inbound FK Refactoring**: Migrated from string columns to FK relations
-- **Master Data Count**: Updated to 24 tables (added StocktakeStatus, StocktakeArea)
+- **Master Data Count**: Updated to 28 tables
 
 ---
 

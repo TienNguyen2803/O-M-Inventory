@@ -50,11 +50,12 @@ To provide a comprehensive, real-time inventory management solution for power pl
 **Goal:** Manage the receipt of goods into warehouses.
 - Goods Receipt Notes (GRN) with PO matching
 - FK relations (InboundType, Supplier, InboundStatus)
+- KCS inspection support
 - **Status:** Full CRUD at `/api/inbound`
 
 ### 2.8 Outbound Logistics (Live)
 **Goal:** Control the issuance of materials to plant subsystems.
-- Goods Issue Vouchers (GIV) with approve/issue workflow
+- Goods Issue Receipts (GIR) with approve/issue workflow
 - Stock decrement on issue
 - **Status:** Full CRUD at `/api/outbound`
 
@@ -69,6 +70,13 @@ To provide a comprehensive, real-time inventory management solution for power pl
 **Goal:** Operational insights and inventory valuation.
 - Stock Level Reports, Movement History, Slow-moving analysis
 - **Status:** UI exists with client-side calculation. Needs server-side aggregation.
+
+### 2.11 Lifecycle Tracking (Live)
+**Goal:** Track complete material lifecycle from request to installation.
+- MaterialEvent logs for all lifecycle events (REQUEST, APPROVED, INBOUND, QC, OUTBOUND, INSTALLED)
+- Installation tracking with location and slot information
+- Timeline visualization per material
+- **Status:** Full CRUD at `/api/materials/{id}/lifecycle` and `/api/installations`
 
 ## 3. Technical Requirements
 
