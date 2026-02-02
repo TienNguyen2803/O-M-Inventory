@@ -1,6 +1,6 @@
 # Feature: Lịch sử Hàng hóa (Item History)
 
-> **Status**: APPROVED  
+> **Status**: IMPLEMENTED
 > **Dependency**: [lifecycle-tracking](../260201-2150-implement-lifecycle-tracking/plan.md)
 
 ---
@@ -10,31 +10,21 @@
 ### Enums
 ```prisma
 enum TransactionStatus { PENDING COMPLETED CANCELLED }
-enum ReferenceType { OutboundReceipt InboundReceipt }
+enum ReferenceType { OUTBOUND_RECEIPT INBOUND_RECEIPT }
 ```
 
-### Master Data
+### MODIFY: Relations (with onDelete)
 ```prisma
-model OutboundType {
-  id        String   @id @default(uuid())
-  code      String   @unique  // SALE, WARRANTY_OUT, REPAIR_OUT, TRANSFER, RETURN
-  name      String
-  outboundReceipts     OutboundReceipt[]
-  materialTransactions MaterialTransaction[] @relation("TransactionOutboundType")
-  @@map("outbound_types")
+model OutboundPurpose {
+  materialTransactions MaterialTransaction[] @relation("TransactionOutboundPurpose")
 }
 
 model InboundType {
-  id        String   @id @default(uuid())
-  code      String   @unique  // PO, WARRANTY_IN, REPAIR_IN, TRANSFER, RETURN
-  name      String
-  inboundReceipts      InboundReceipt[]
   materialTransactions MaterialTransaction[] @relation("TransactionInboundType")
-  @@map("inbound_types")
 }
 ```
 
-### MaterialTransaction
+### NEW: MaterialTransaction
 ```prisma
 model MaterialTransaction {
   id             String   @id @default(uuid())
@@ -43,12 +33,12 @@ model MaterialTransaction {
   
   title          String
   status         TransactionStatus @default(PENDING)
+  quantity       Int      @default(1)  // For inventory tracking
   
-  // Dual optional typeIds (XOR enforced via Zod)
-  outboundTypeId String?
-  inboundTypeId  String?
-  outboundType   OutboundType? @relation("TransactionOutboundType", fields: [outboundTypeId], references: [id])
-  inboundType    InboundType?  @relation("TransactionInboundType", fields: [inboundTypeId], references: [id])
+  outboundPurposeId String?
+  inboundTypeId     String?
+  outboundPurpose   OutboundPurpose? @relation("TransactionOutboundPurpose", fields: [outboundPurposeId], references: [id], onDelete: SetNull)
+  inboundType       InboundType?     @relation("TransactionInboundType", fields: [inboundTypeId], references: [id], onDelete: SetNull)
   
   referenceType     ReferenceType
   referenceId       String
@@ -57,178 +47,188 @@ model MaterialTransaction {
   startedAt   DateTime
   completedAt DateTime?
   createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
   
   events MaterialEvent[]
   
+  @@unique([referenceType, referenceId])
   @@index([materialId, startedAt])
-  @@index([referenceType, referenceId])
   @@index([completedAt])
   @@map("material_transactions")
 }
 ```
 
-### Material Warranty Fields
+### MODIFY: MaterialEvent
 ```prisma
-model Material {
-  supplierWarrantyStart DateTime?
-  supplierWarrantyEnd   DateTime?
-  serviceWarrantyStart  DateTime?
-  serviceWarrantyEnd    DateTime?
-  supplierWarranty      String?  // @deprecated backup
-  serviceWarranty       String?  // @deprecated backup
+model MaterialEvent {
+  transactionId String?
+  transaction   MaterialTransaction? @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  stepOrder     Int?      // Required when transactionId is set (enforced via Zod)
+  stepTitle     String?
 }
 ```
 
 ---
 
-## 2. Migration Script (Cursor-based)
+## 2. Code Quality Fixes
+
+```typescript
+const MS_PER_DAY = 86_400_000;
+
+function calculateAge(createdAt: Date): { value: number; unit: string } {
+  const days = Math.floor((Date.now() - createdAt.getTime()) / MS_PER_DAY);
+  if (days < 0) {
+    console.warn(`Future createdAt detected: ${createdAt.toISOString()}`);
+    return { value: 0, unit: 'days' };
+  }
+  if (days < 30) return { value: days, unit: 'days' };
+  if (days < 365) return { value: Math.floor(days / 30), unit: 'months' };
+  return { value: Math.floor(days / 365), unit: 'years' };
+}
+
+function parseDate(str: string): Date | null {
+  let date: Date;
+  if (str.includes('/')) {
+    const [d, m, y] = str.split('/').map(Number);
+    if (d < 1 || d > 31 || m < 1 || m > 12) {
+      console.error(`Invalid date: ${str}`);
+      return null;
+    }
+    date = new Date(Date.UTC(y, m - 1, d));
+  } else {
+    date = new Date(str + 'T00:00:00Z');
+  }
+  
+  // Validate parsed date
+  if (!date || date.getMonth() !== m - 1) {
+    console.error(`Failed to parse date: ${str}`);
+    return null;
+  }
+  return isNaN(date.getTime()) ? null : date;
+}
+```
+
+---
+
+## 3. API Endpoints
+
+```
+GET /api/materials/:id/history
+  Query: ?limit=20&offset=0
+  Response: { material, statistics, transactions[], pagination }
+  Errors: 404 (not found), 403 (unauthorized)
+
+GET /api/materials/:id/transactions/:txId
+  Response: { transaction with events[] }
+  Errors: 404, 403
+```
+
+### Security
+- Validate `referenceId` exists in actual receipts
+- Authorization: only owners/admins can view transaction history
+- Sanitize `counterpartyName` before storage (XSS prevention)
+
+---
+
+## 4. Frontend Components
+
+```
+src/app/item-history/
+├── page.tsx              # ItemHistoryPage
+├── _components/
+│   ├── material-info-card.tsx
+│   ├── statistics-card.tsx
+│   ├── grouped-timeline.tsx
+│   ├── transaction-group.tsx
+│   └── event-step.tsx
+└── loading.tsx           # Skeleton
+```
+
+**UI States:**
+- Loading: skeleton shimmer
+- Empty: "Chưa có lịch sử giao dịch"
+- Error: "Không thể tải dữ liệu. Vui lòng thử lại."
+- Pagination: infinite scroll or "Load more"
+
+---
+
+## 5. Migration (with progress tracking)
+
+```typescript
+// migrations/001_create_failed_log.sql
+CREATE TABLE IF NOT EXISTS migration_failed_log (
+  id VARCHAR PRIMARY KEY,
+  error TEXT,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+ALTER TABLE materials ADD COLUMN migration_status VARCHAR DEFAULT 'pending';
+```
 
 ```typescript
 // scripts/migrate-warranty.ts
 const BATCH_SIZE = 100;
 
-interface MigrationState {
-  lastId: string | null;
-  processed: number;
-  failed: string[];
-}
-
-async function migrateWarranty(dryRun: boolean, resume?: MigrationState) {
-  let state: MigrationState = resume || { lastId: null, processed: 0, failed: [] };
-  
+async function migrateWarranty() {
   while (true) {
     const batch = await prisma.material.findMany({
-      where: {
-        OR: [{ supplierWarranty: { not: null } }, { serviceWarranty: { not: null } }],
-        ...(state.lastId ? { id: { gt: state.lastId } } : {})
-      },
+      where: { migrationStatus: 'pending' },
       orderBy: { id: 'asc' },
       take: BATCH_SIZE
     });
     
-    if (batch.length === 0) break;
+    if (!batch.length) break;
     
-    await prisma.$transaction(async (tx) => {
-      for (const m of batch) {
-        try {
-          const supplier = parseWarrantyString(m.supplierWarranty);
-          const service = parseWarrantyString(m.serviceWarranty);
-          
-          if (!dryRun) {
-            await tx.material.update({
-              where: { id: m.id },
-              data: {
-                supplierWarrantyStart: supplier?.start,
-                supplierWarrantyEnd: supplier?.end,
-                serviceWarrantyStart: service?.start,
-                serviceWarrantyEnd: service?.end,
-              }
-            });
+    for (const m of batch) {
+      try {
+        const supplier = parseWarrantyString(m.supplierWarranty);
+        const service = parseWarrantyString(m.serviceWarranty);
+        
+        await prisma.material.update({
+          where: { id: m.id },
+          data: {
+            supplierWarrantyStart: supplier?.start,
+            supplierWarrantyEnd: supplier?.end,
+            serviceWarrantyStart: service?.start,
+            serviceWarrantyEnd: service?.end,
+            migrationStatus: 'completed'
           }
-        } catch (e) {
-          state.failed.push(m.id);
-          console.error(`Failed ${m.code}: ${e.message}`);
-        }
+        });
+      } catch (e) {
+        await prisma.material.update({
+          where: { id: m.id },
+          data: { migrationStatus: 'failed' }
+        });
+        await logMigrationError(m.id, e.message);
       }
-    });
-    
-    state.lastId = batch[batch.length - 1].id;
-    state.processed += batch.length;
-    
-    // Checkpoint
-    await fs.writeFile('migration-state.json', JSON.stringify(state));
-    console.log(`Processed ${state.processed}, last: ${state.lastId}`);
-  }
-  
-  return state;
-}
-
-// Warranty string parser
-function parseWarrantyString(str: string | null): { start: Date; end: Date } | null {
-  if (!str) return null;
-  
-  // Format: "01/01/2024 - 01/01/2026" or "2024-01-01 to 2026-01-01"
-  const patterns = [
-    /(\d{2}\/\d{2}\/\d{4})\s*[-–]\s*(\d{2}\/\d{2}\/\d{4})/,  // DD/MM/YYYY
-    /(\d{4}-\d{2}-\d{2})\s*(?:to|-)\s*(\d{4}-\d{2}-\d{2})/   // YYYY-MM-DD
-  ];
-  
-  for (const pattern of patterns) {
-    const match = str.match(pattern);
-    if (match) {
-      const [, startStr, endStr] = match;
-      const start = parseDate(startStr);
-      const end = parseDate(endStr);
-      if (start && end) return { start, end };
     }
   }
-  
-  console.warn(`Unparseable: "${str}"`);
-  return null;
-}
-
-function parseDate(str: string): Date | null {
-  if (str.includes('/')) {
-    const [d, m, y] = str.split('/').map(Number);
-    return new Date(y, m - 1, d);
-  }
-  return new Date(str);
 }
 ```
 
 ---
 
-## 3. API Response
+## 6. Test Plan
 
-```typescript
-interface ItemHistoryResponse {
-  material: MaterialInfo;
-  statistics: {
-    stockAge: { value: number; unit: 'days' | 'months' | 'years' };
-    warrantyCount: number;
-    lifespan: { value: number; unit: 'days' | 'months' | 'years' };
-  };
-  transactions: MaterialTransactionDto[];
-  pagination: { total: number; limit: number; offset: number };
-}
-```
+| Phase | Tests |
+|-------|-------|
+| 0b | Warranty parsing: valid, invalid (32/13), edge cases |
+| 2 | API: 404, 403, pagination, empty results |
+| 3 | UI: loading, empty, error states, pagination |
 
 ---
 
-## 4. Access Control
+## 7. Phases
 
-```typescript
-// ITEM_HISTORY:VIEW inherits from MATERIAL:VIEW
-// If user has MATERIAL:VIEW, they automatically have ITEM_HISTORY:VIEW
-const canView = hasPermission(user, 'ITEM_HISTORY', 'VIEW') || 
-                hasPermission(user, 'MATERIAL', 'VIEW');
-```
-
----
-
-## 5. Phases
-
-| Phase | Tasks | Estimate |
-|-------|-------|----------|
-| **0a** | Schema: enums, types, transaction, indexes | 0.5d |
-| **0b** | Migration: cursor-based, parseWarrantyString | 0.5d |
-| **0c** | Admin UI for OutboundType/InboundType | 0.5d |
-| **1** | Lifecycle plan (dependency) | 4d |
-| **2** | History API with pagination | 2d |
-| **3a** | Core: Page, InfoCard, Stats | 1d |
-| **3b** | Timeline: Groups, Events | 1d |
-| **Total** | | **~9.5d** |
-
----
-
-## 6. Risks & Mitigations
-
-| Risk | Mitigation |
-|------|------------|
-| Migration fails mid-way | Checkpoint/resume logic |
-| Orphaned transactions | Prisma middleware cascade |
-| Slow history queries | completedAt index, caching |
-| Unparseable warranty | Fallback to String backup |
+| Phase | Tasks | Estimate | Status |
+|-------|-------|----------|--------|
+| 0a | Schema + failed_log migration | 0.5d | ✅ Done |
+| 0b | Warranty migration with progress | 0.5d | ⏳ Skipped (no legacy data) |
+| 1 | Lifecycle plan (dependency) | 4d | ✅ Done |
+| 1b | Admin UI for types (parallel) | 0.5d | ⏳ Deferred |
+| 2 | History API + security | 2d | ✅ Done |
+| 3 | Frontend + error states | 2d | ✅ Done |
+| **Total** | | **~9.5d** | |
 
 ---
 
