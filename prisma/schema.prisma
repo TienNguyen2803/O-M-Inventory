@@ -330,6 +330,7 @@ model InboundType {
   updatedAt DateTime @updatedAt
 
   receipts InboundReceipt[]
+  materialTransactions MaterialTransaction[] @relation("TransactionInboundType")
 
   @@map("inbound_types")
 }
@@ -377,6 +378,7 @@ model OutboundPurpose {
   updatedAt DateTime @updatedAt
 
   receipts OutboundReceipt[]
+  materialTransactions MaterialTransaction[] @relation("TransactionOutboundPurpose")
 
   @@map("outbound_purposes")
 }
@@ -546,6 +548,7 @@ model Material {
   // Lifecycle tracking relations
   lifecycleEvents MaterialEvent[]
   installations   Installation[]
+  transactions    MaterialTransaction[]
 
   @@index([serialNumber])
   @@map("materials")
@@ -1241,6 +1244,17 @@ model InventoryLog {
 // LIFECYCLE TRACKING
 // ============================================
 
+enum TransactionStatus {
+  PENDING
+  COMPLETED
+  CANCELLED
+}
+
+enum ReferenceType {
+  OUTBOUND_RECEIPT
+  INBOUND_RECEIPT
+}
+
 enum MaterialEventType {
   REQUEST
   APPROVED
@@ -1271,13 +1285,52 @@ model MaterialEvent {
   description String
   metadata    Json?
 
+  // Transaction relationship for grouped history
+  transactionId String?
+  transaction   MaterialTransaction? @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  stepOrder     Int?      // Required when transactionId is set (enforced via Zod)
+  stepTitle     String?
+
   createdAt   DateTime @default(now())
 
   material    Material @relation(fields: [materialId], references: [id])
 
   @@index([materialId, eventDate])
   @@index([referenceType, referenceId])
+  @@index([transactionId])
   @@map("material_events")
+}
+
+// MaterialTransaction - Groups related events into transactions
+model MaterialTransaction {
+  id             String   @id @default(uuid())
+  materialId     String
+  material       Material @relation(fields: [materialId], references: [id], onDelete: Cascade)
+
+  title          String
+  status         TransactionStatus @default(PENDING)
+  quantity       Int      @default(1)  // For inventory tracking
+
+  outboundPurposeId String?
+  inboundTypeId     String?
+  outboundPurpose   OutboundPurpose? @relation("TransactionOutboundPurpose", fields: [outboundPurposeId], references: [id], onDelete: SetNull)
+  inboundType       InboundType?     @relation("TransactionInboundType", fields: [inboundTypeId], references: [id], onDelete: SetNull)
+
+  referenceType     ReferenceType
+  referenceId       String
+  counterpartyName  String?
+
+  startedAt   DateTime
+  completedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  events MaterialEvent[]
+
+  @@unique([referenceType, referenceId])
+  @@index([materialId, startedAt])
+  @@index([completedAt])
+  @@map("material_transactions")
 }
 
 // Installation - Tracks where materials are installed
