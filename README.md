@@ -1,7 +1,7 @@
 # PowerTrack Logistics - O&M Inventory Management System
 
 > **Status:** Active Development
-> **Version:** 1.4.0
+> **Version:** 1.6.0
 
 A comprehensive inventory management system for Power Plant Operation & Maintenance (O&M), built with modern Next.js stack.
 
