@@ -12,6 +12,23 @@ export interface MaterialInfo {
   status: { code: string; name: string; color: string | null };
 }
 
+// Extended material info for goods-history view
+export interface MaterialInfoExtended extends MaterialInfo {
+  nameEn: string | null;
+  manufacturer: string | null;
+  location: string | null;
+  stockAge: string | null;
+  supplierWarranty: string | null;
+  serviceWarranty: string | null;
+  chassisPn: string | null;
+  chassisSn: string | null;
+  origin: string | null;
+  originAsPerCustomer: string | null;
+  originOnDocs: string | null;
+  warrantyCount: number | null;
+  lifespan: string | null;
+}
+
 // Current location/installation info
 export interface LocationInfo {
   type: "warehouse" | "installed" | "unknown";
