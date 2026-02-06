@@ -6,12 +6,13 @@ import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Search, Loader2, Save, MapPin, ScanLine } from "lucide-react";
+import { Search, Loader2, Save, MapPin, ScanLine, Plus, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { useSearchParams } from "next/navigation";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { WarehouseMap } from "./warehouse-map";
+import { Label } from "@/components/ui/label";
 
 const Breadcrumbs = () => (
   <div className="text-sm text-muted-foreground mb-1">
@@ -42,7 +43,13 @@ export function PickingClient({ initialVouchers, allLocations }: { initialVouche
             const foundVoucher = vouchers.find(v => v.id.toLowerCase() === query.toLowerCase());
             if (foundVoucher) {
                 if (['Chờ xuất', 'Đang soạn hàng', 'Đã xuất'].includes(foundVoucher.status)) {
-                    setCurrentVoucher(foundVoucher);
+                    const initializedItems = foundVoucher.items?.map(item => ({
+                        ...item,
+                        pickLocations: (item.pickLocations && item.pickLocations.length > 0)
+                            ? item.pickLocations
+                            : [{ location: item.pickLocationSuggestion, quantity: item.requestedQuantity, serial: item.actualSerial || '' }]
+                    })) || [];
+                    setCurrentVoucher({ ...foundVoucher, items: initializedItems });
                 } else {
                     setCurrentVoucher(null);
                     toast({
@@ -75,21 +82,81 @@ export function PickingClient({ initialVouchers, allLocations }: { initialVouche
         }
     }, [searchParams, handleSearch]);
     
-    const handleValueChange = (itemId: string, field: 'issuedQuantity' | 'actualSerial', value: string | number) => {
+    const handleSplitChange = (itemId: string, splitIndex: number, field: 'location' | 'quantity' | 'serial', value: string | number) => {
         if (!currentVoucher || !currentVoucher.items) return;
 
-        const updatedItems = currentVoucher.items.map(item => {
-            if (item.id === itemId) {
-                return { ...item, [field]: value };
+        const itemToUpdate = currentVoucher.items.find(item => item.id === itemId);
+        if (!itemToUpdate) return;
+        
+        const newPicks = [...(itemToUpdate.pickLocations || [])];
+        const newPick = { ...newPicks[splitIndex], [field]: field === 'quantity' ? Number(value) : value };
+        newPicks[splitIndex] = newPick;
+
+        if (field === 'quantity') {
+            const totalSplitQuantity = newPicks.reduce((sum, split) => sum + split.quantity, 0);
+            if (totalSplitQuantity > itemToUpdate.requestedQuantity) {
+                toast({
+                    variant: "destructive",
+                    title: "Số lượng không hợp lệ",
+                    description: `Tổng số lượng lấy (${totalSplitQuantity}) không thể vượt quá số lượng yêu cầu (${itemToUpdate.requestedQuantity}).`,
+                });
+                return;
             }
-            return item;
-        });
+        }
+
+        const updatedItems = currentVoucher.items.map(item => 
+            item.id === itemId ? { ...item, pickLocations: newPicks } : item
+        );
 
         setCurrentVoucher({ ...currentVoucher, items: updatedItems });
     };
 
+    const handleAddSplit = (itemId: string) => {
+        if (!currentVoucher || !currentVoucher.items) return;
+         const updatedItems = currentVoucher.items.map(item => {
+            if (item.id === itemId) {
+                const newPicks = [...(item.pickLocations || []), { location: '', quantity: 0, serial: '' }];
+                return { ...item, pickLocations: newPicks };
+            }
+            return item;
+        });
+        setCurrentVoucher({ ...currentVoucher, items: updatedItems });
+    };
+
+    const handleRemoveSplit = (itemId: string, splitIndex: number) => {
+         if (!currentVoucher || !currentVoucher.items) return;
+         const updatedItems = currentVoucher.items.map(item => {
+            if (item.id === itemId) {
+                const newPicks = item.pickLocations?.filter((_, index) => index !== splitIndex);
+                return { ...item, pickLocations: newPicks };
+            }
+            return item;
+        });
+        setCurrentVoucher({ ...currentVoucher, items: updatedItems });
+    };
+
     const handleConfirmPicking = () => {
-        if (!currentVoucher) return;
+        if (!currentVoucher || !currentVoucher.items) return;
+
+        for (const item of currentVoucher.items) {
+            const totalPicked = item.pickLocations?.reduce((sum, pick) => sum + pick.quantity, 0) || 0;
+            if (totalPicked !== item.requestedQuantity) {
+                toast({
+                    variant: "destructive",
+                    title: "Số lượng không khớp",
+                    description: `Tổng số lượng lấy cho "${item.materialName}" (${totalPicked}) không khớp với yêu cầu (${item.requestedQuantity}).`,
+                });
+                return;
+            }
+            if (item.pickLocations?.some(p => !p.location.trim() || (item.materialCode.includes('Serial') && !p.serial.trim()) )) {
+                 toast({
+                    variant: "destructive",
+                    title: "Chưa hoàn tất",
+                    description: `Vui lòng nhập đầy đủ vị trí và serial (nếu cần) cho "${item.materialName}".`,
+                });
+                return;
+            }
+        }
 
         const updatedVoucher = { ...currentVoucher, status: 'Đã xuất' as const, step: 4 };
         setVouchers(vouchers.map(v => v.id === updatedVoucher.id ? updatedVoucher : v));
@@ -109,11 +176,19 @@ export function PickingClient({ initialVouchers, allLocations }: { initialVouche
     const handleLocationSelect = (locationCode: string) => {
         if (!currentVoucher || !mapViewItem) return;
 
-        const updatedItems = currentVoucher.items?.map(item =>
-        item.id === mapViewItem.id
-            ? { ...item, pickLocationSuggestion: locationCode }
-            : item
-        );
+        const updatedItems = currentVoucher.items?.map(item => {
+            if (item.id === mapViewItem.id) {
+                const newPicks = [...(item.pickLocations || [])];
+                const emptyIndex = newPicks.findIndex(p => !p.location.trim());
+                if (emptyIndex !== -1) {
+                    newPicks[emptyIndex].location = locationCode;
+                } else {
+                    newPicks.push({ location: locationCode, quantity: 0, serial: '' });
+                }
+                return { ...item, pickLocations: newPicks };
+            }
+            return item;
+        });
 
         setCurrentVoucher({ ...currentVoucher, items: updatedItems });
         setMapDialogOpen(false);
@@ -125,6 +200,25 @@ export function PickingClient({ initialVouchers, allLocations }: { initialVouche
         .filter(loc => loc.items?.some(item => item.materialCode === mapViewItem.materialCode))
         .map(loc => loc.code);
     }, [allLocations, mapViewItem]);
+
+    const AllocatedSummary = ({ item }: { item: OutboundVoucherItem }) => {
+        const allocated = item.pickLocations?.reduce((sum, s) => sum + s.quantity, 0) || 0;
+        const remaining = item.requestedQuantity - allocated;
+        
+        const remainingColor = () => {
+            if (remaining < 0) return "text-red-600 font-bold";
+            if (remaining > 0) return "text-blue-600";
+            return "text-green-600 font-bold";
+        }
+
+        return (
+            <div className="text-xs text-muted-foreground mt-1">
+                <span>Y/C: {item.requestedQuantity}</span> | 
+                <span className="text-green-600"> Đã lấy: {allocated}</span> | 
+                <span className={cn("transition-colors", remainingColor())}> Còn lại: {remaining}</span>
+            </div>
+        )
+    };
 
 
     return (
@@ -182,45 +276,60 @@ export function PickingClient({ initialVouchers, allLocations }: { initialVouche
                             {currentVoucher.items?.map((item) => (
                                 <Card key={item.id} className="overflow-hidden bg-card">
                                     <CardHeader className="bg-muted/50 p-4">
-                                        <CardTitle className="text-base">{item.materialName}</CardTitle>
-                                        <CardDescription>
-                                            {item.materialCode} | Yêu cầu: <span className="font-bold text-foreground">{item.requestedQuantity} {item.unit}</span>
-                                        </CardDescription>
-                                    </CardHeader>
-                                    <CardContent className="p-4 space-y-4">
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="flex justify-between items-start">
                                             <div>
-                                                <label className="text-xs font-semibold text-muted-foreground">Vị trí lấy hàng (gợi ý)</label>
-                                                 <Button variant="link" className="font-semibold text-primary p-0 h-auto text-base flex justify-start w-full" onClick={() => handleOpenMap(item)}>
-                                                    {item.pickLocationSuggestion}
-                                                    <MapPin className="ml-2 h-4 w-4" />
-                                                </Button>
+                                                <CardTitle className="text-base">{item.materialName}</CardTitle>
+                                                <CardDescription>
+                                                    {item.materialCode} | Y/C: <span className="font-bold text-foreground">{item.requestedQuantity} {item.unit}</span>
+                                                </CardDescription>
                                             </div>
-                                            <div>
-                                                 <label className="text-sm font-medium" htmlFor={`issued-qty-${item.id}`}>Số lượng thực tế</label>
-                                                 <Input
-                                                    id={`issued-qty-${item.id}`}
-                                                    type="number"
-                                                    value={item.issuedQuantity}
-                                                    onChange={(e) => handleValueChange(item.id, 'issuedQuantity', e.target.value)}
-                                                    disabled={currentVoucher.status === 'Đã xuất'}
-                                                />
-                                            </div>
-                                            <div className="md:col-span-2">
-                                                 <label className="text-sm font-medium" htmlFor={`serial-${item.id}`}>Serial/Batch thực tế</label>
-                                                  <div className="relative">
-                                                    <Input
-                                                        id={`serial-${item.id}`}
-                                                        value={item.actualSerial}
-                                                        onChange={(e) => handleValueChange(item.id, 'actualSerial', e.target.value)}
-                                                        placeholder="Quét hoặc nhập serial/batch"
-                                                        disabled={currentVoucher.status === 'Đã xuất'}
-                                                        className="pl-10"
-                                                    />
-                                                     <ScanLine className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
-                                                </div>
-                                            </div>
+                                            <Button variant="link" className="font-semibold text-primary p-0 h-auto text-base flex items-center gap-1" onClick={() => handleOpenMap(item)}>
+                                                Xem vị trí
+                                                <MapPin className="h-4 w-4" />
+                                            </Button>
                                         </div>
+                                    </CardHeader>
+                                    <CardContent className="p-4 space-y-2">
+                                        <div className="flex flex-col gap-2">
+                                            {item.pickLocations?.map((pick, index) => (
+                                                <div key={index} className="space-y-2 rounded-md border p-2 bg-background">
+                                                    <div className="flex flex-wrap items-end gap-2">
+                                                        <div className="flex-grow space-y-1" style={{minWidth: '150px'}}>
+                                                            <Label htmlFor={`loc-${item.id}-${index}`} className="text-xs">Vị trí lấy</Label>
+                                                            <Input id={`loc-${item.id}-${index}`} value={pick.location} onChange={(e) => handleSplitChange(item.id, index, 'location', e.target.value)} placeholder="Quét hoặc nhập vị trí..."/>
+                                                        </div>
+                                                        <div className="space-y-1" style={{width: '90px'}}>
+                                                            <Label htmlFor={`qty-${item.id}-${index}`} className="text-xs">Số lượng</Label>
+                                                            <Input id={`qty-${item.id}-${index}`} type="number" value={pick.quantity}  onChange={(e) => handleSplitChange(item.id, index, 'quantity', e.target.value)} />
+                                                        </div>
+                                                        <div className="flex-grow space-y-1" style={{minWidth: '150px'}}>
+                                                            <Label htmlFor={`ser-${item.id}-${index}`} className="text-xs">Serial/Batch</Label>
+                                                            <div className="relative">
+                                                                <Input id={`ser-${item.id}-${index}`} value={pick.serial} onChange={(e) => handleSplitChange(item.id, index, 'serial', e.target.value)} placeholder="Quét hoặc nhập serial..." className="pl-8"/>
+                                                                <ScanLine className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                                                            </div>
+                                                        </div>
+                                                        <div>
+                                                            <Button variant="ghost" size="icon" onClick={() => handleRemoveSplit(item.id, index)} disabled={currentVoucher.status === 'Đã xuất' || (item.pickLocations && item.pickLocations.length <= 1)}>
+                                                                <Trash2 className="h-4 w-4 text-destructive"/>
+                                                            </Button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                        {currentVoucher.status !== 'Đã xuất' && (
+                                            <div className="flex items-center justify-between mt-2">
+                                                <Button 
+                                                    variant="outline" 
+                                                    size="sm" 
+                                                    onClick={() => handleAddSplit(item.id)}
+                                                >
+                                                    <Plus className="mr-2 h-3 w-3" /> Tách vị trí
+                                                </Button>
+                                                <AllocatedSummary item={item} />
+                                            </div>
+                                        )}
                                     </CardContent>
                                 </Card>
                             ))}

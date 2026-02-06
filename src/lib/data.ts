@@ -1,4 +1,4 @@
-import type { Material, InventoryLog, WarehouseLocation, WarehouseItem, Supplier, MaterialRequest, MaterialRequestItem, PurchaseRequest, PurchaseRequestItem, BiddingPackage, BiddingItem, BiddingResult, InboundReceipt, InboundReceiptItem, InboundReceiptDocument, OutboundVoucher, OutboundVoucherItem, StockTake, StockTakeResult, User, Role, ActivityLog, GoodsHistoryEvent } from "./types";
+import type { Material, InventoryLog, WarehouseLocation, WarehouseItem, Supplier, MaterialRequest, MaterialRequestItem, PurchaseRequest, PurchaseRequestItem, BiddingPackage, BiddingItem, BiddingResult, InboundReceipt, InboundReceiptItem, InboundReceiptDocument, OutboundVoucher, OutboundVoucherItem, StockTake, StockTakeResult, User, Role, ActivityLog, GoodsHistoryEvent, OutboundVoucherPick } from "./types";
 
 export const materials: Material[] = [
   {
@@ -1146,6 +1146,7 @@ export const outboundVouchers: OutboundVoucher[] = Array.from({ length: 25 }, (_
     const id = i + 1;
     const purposes: OutboundVoucher['purpose'][] = ['Cấp O&M', 'Khẩn cấp', 'Cho mượn', 'Đi Sửa chữa'];
     const statuses: OutboundVoucher['status'][] = ['Đã xuất', 'Chờ xuất', 'Đã hủy', 'Đang soạn hàng'];
+    const status = statuses[i % statuses.length];
     const materialRequest = materialRequests[i];
 
     const findLocationForMaterial = (materialId: string): string => {
@@ -1165,7 +1166,7 @@ export const outboundVouchers: OutboundVoucher[] = Array.from({ length: 25 }, (_
         department: materialRequest.requesterDept,
         receiverName: "Nguyễn Văn A",
         reason: 'Sửa chữa thường xuyên',
-        status: statuses[i % statuses.length],
+        status: status,
         step: (i % 4) + 1,
         issueDate: new Date(2025, i % 7, id % 28 + 1).toISOString(),
         items: materialRequest.items.map((item, index) => ({
@@ -1177,7 +1178,12 @@ export const outboundVouchers: OutboundVoucher[] = Array.from({ length: 25 }, (_
             requestedQuantity: item.requestedQuantity,
             issuedQuantity: item.requestedQuantity,
             pickLocationSuggestion: findLocationForMaterial(item.materialId),
-            actualSerial: index % 2 === 0 ? `Lô ${2023 + index}` : `-`
+            actualSerial: index % 2 === 0 ? `Lô ${2023 + index}` : `-`,
+            pickLocations: status === 'Đã xuất' && item.requestedQuantity > 1 ?
+            [
+                { location: findLocationForMaterial(item.materialId), quantity: item.requestedQuantity -1, serial: `BATCH-${id}-A`},
+                { location: 'A1-02-02', quantity: 1, serial: `BATCH-${id}-B`}
+            ] : undefined,
         })),
     };
 });

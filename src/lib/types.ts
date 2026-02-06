@@ -181,7 +181,11 @@ export interface BiddingPackage {
   items?: BiddingItem[]; // Phạm vi cung cấp
   result?: BiddingResult; // Kết quả lựa chọn
 }
-
+export interface OutboundVoucherPick {
+  location: string;
+  quantity: number;
+  serial: string;
+}
 export interface OutboundVoucherItem {
   id: string;
   materialId: string;
@@ -192,6 +196,7 @@ export interface OutboundVoucherItem {
   issuedQuantity: number;
   pickLocationSuggestion: string;
   actualSerial: string;
+  pickLocations?: OutboundVoucherPick[];
 }
 
 export interface OutboundVoucher {
