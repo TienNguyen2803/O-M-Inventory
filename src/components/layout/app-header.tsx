@@ -43,7 +43,7 @@ export function AppHeader() {
               <div className="h-full border-l border-border/70" />
               <div>
                   <h1 className="text-base font-semibold tracking-tight">Hệ Thống Quản Lý Kho Thông Minh</h1>
-                  <p className="text-xs text-muted-foreground">PhuMyTPC - Phân hệ M&O</p>
+                  <p className="text-xs text-muted-foreground">Smart Warehouse Management System</p>
               </div>
           </div>
         </div>
