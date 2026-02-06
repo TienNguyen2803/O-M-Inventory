@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import type { Material, WarehouseLocation } from "@/lib/types";
+import type { Material, WarehouseLocation, InboundReceipt } from "@/lib/types";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,6 +22,7 @@ const Breadcrumbs = () => (
 type QuickStoreClientProps = {
   materials: Material[];
   locations: WarehouseLocation[];
+  initialReceipts: InboundReceipt[];
 };
 
 type StoreLog = {
@@ -33,7 +34,7 @@ type StoreLog = {
   timestamp: Date;
 };
 
-export function QuickStoreClient({ materials, locations }: QuickStoreClientProps) {
+export function QuickStoreClient({ materials, locations, initialReceipts }: QuickStoreClientProps) {
   const [itemScanInput, setItemScanInput] = useState("");
   const [locationScanInput, setLocationScanInput] = useState("");
   const [quantity, setQuantity] = useState(1);
@@ -52,11 +53,25 @@ export function QuickStoreClient({ materials, locations }: QuickStoreClientProps
 
     setTimeout(() => {
       const query = itemScanInput.toLowerCase().trim();
-      const material = materials.find(m => 
+      
+      // First, try to find by master data (code, partNo, serialNumber in master)
+      let material = materials.find(m => 
         m.code.toLowerCase() === query || 
         m.partNo.toLowerCase() === query || 
         m.serialNumber?.toLowerCase() === query
       );
+
+      // If not found, search through inbound receipts by serialBatch
+      if (!material) {
+        for (const receipt of initialReceipts) {
+          const foundItem = receipt.items?.find(item => item.serialBatch.toLowerCase() === query);
+          if (foundItem) {
+            // Found the item in a receipt, now find the master material
+            material = materials.find(m => m.code === foundItem.materialCode);
+            break; // Exit the loop once found
+          }
+        }
+      }
 
       if (material) {
         setFoundMaterial(material);
@@ -68,7 +83,7 @@ export function QuickStoreClient({ materials, locations }: QuickStoreClientProps
       }
       setIsLoading(false);
     }, 500);
-  }, [itemScanInput, materials, toast]);
+  }, [itemScanInput, materials, initialReceipts, toast]);
 
   const handleConfirmStore = () => {
     if (!foundMaterial) return;
