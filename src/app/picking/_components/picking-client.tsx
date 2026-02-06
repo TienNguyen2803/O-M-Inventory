@@ -30,8 +30,13 @@ export function PickingClient({ initialVouchers, allLocations }: { initialVouche
     const { toast } = useToast();
     const searchParams = useSearchParams();
 
+    const [isClient, setIsClient] = useState(false);
     const [mapDialogOpen, setMapDialogOpen] = useState(false);
     const [mapViewItem, setMapViewItem] = useState<OutboundVoucherItem | null>(null);
+
+    useEffect(() => {
+        setIsClient(true);
+    }, []);
 
     const handleSearch = useCallback((query: string) => {
         if (!query) {
@@ -236,6 +241,10 @@ export function PickingClient({ initialVouchers, allLocations }: { initialVouche
     };
 
 
+    if (!isClient) {
+        return null;
+    }
+
     return (
         <div className="space-y-4">
             <PageHeader
@@ -337,6 +346,7 @@ export function PickingClient({ initialVouchers, allLocations }: { initialVouche
                                             <div className="flex items-center justify-between mt-4">
                                                 <Button 
                                                     size="sm" 
+                                                    variant="default"
                                                     onClick={() => handleAddSplit(item.id)}
                                                     disabled={item.requestedQuantity <= 1}
                                                 >
