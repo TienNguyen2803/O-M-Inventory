@@ -89,20 +89,35 @@ export function PickingClient({ initialVouchers, allLocations }: { initialVouche
         if (!itemToUpdate) return;
         
         const newPicks = [...(itemToUpdate.pickLocations || [])];
-        const newPick = { ...newPicks[splitIndex], [field]: field === 'quantity' ? Number(value) : value };
-        newPicks[splitIndex] = newPick;
+        const updatedPick = { ...newPicks[splitIndex], [field]: field === 'quantity' ? Number(value) : value };
 
         if (field === 'quantity') {
-            const totalSplitQuantity = newPicks.reduce((sum, split) => sum + split.quantity, 0);
+            const numValue = Number(value);
+            if (numValue < 0) {
+                 toast({
+                    variant: "destructive",
+                    title: "Số lượng không hợp lệ",
+                    description: "Số lượng lấy không được là số âm.",
+                });
+                return; // Do not update state if invalid
+            }
+
+            // Create a temporary copy to calculate the new total
+            const tempPicks = [...newPicks];
+            tempPicks[splitIndex] = updatedPick;
+            const totalSplitQuantity = tempPicks.reduce((sum, split) => sum + split.quantity, 0);
+            
             if (totalSplitQuantity > itemToUpdate.requestedQuantity) {
                 toast({
                     variant: "destructive",
                     title: "Số lượng không hợp lệ",
                     description: `Tổng số lượng lấy (${totalSplitQuantity}) không thể vượt quá số lượng yêu cầu (${itemToUpdate.requestedQuantity}).`,
                 });
-                return;
+                return; // Do not update state if invalid
             }
         }
+        
+        newPicks[splitIndex] = updatedPick;
 
         const updatedItems = currentVoucher.items.map(item => 
             item.id === itemId ? { ...item, pickLocations: newPicks } : item
