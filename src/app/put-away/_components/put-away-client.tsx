@@ -194,7 +194,7 @@ export function PutAwayClient({ initialReceipts }: { initialReceipts: InboundRec
 
             <Card>
                 <CardContent className="pt-6">
-                    <div className="flex w-full max-w-md items-center space-x-2">
+                    <div className="flex w-full items-center space-x-2">
                         <div className="relative flex-grow">
                             <ScanLine className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                             <Input

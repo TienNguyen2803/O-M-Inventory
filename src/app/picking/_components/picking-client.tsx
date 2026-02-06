@@ -255,14 +255,18 @@ export function PickingClient({ initialVouchers, allLocations }: { initialVouche
 
             <Card>
                 <CardContent className="pt-6">
-                    <div className="flex w-full max-w-md items-center space-x-2">
-                        <Input
-                            type="text"
-                            placeholder="Nhập hoặc quét mã Phiếu xuất kho (PXK)..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            onKeyDown={(e) => e.key === 'Enter' && handleSearchButtonClick()}
-                        />
+                    <div className="flex w-full items-center space-x-2">
+                        <div className="relative flex-grow">
+                            <ScanLine className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                            <Input
+                                type="text"
+                                placeholder="Nhập hoặc quét mã Phiếu xuất kho (PXK)..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                onKeyDown={(e) => e.key === 'Enter' && handleSearchButtonClick()}
+                                className="pl-10"
+                            />
+                        </div>
                         <Button onClick={handleSearchButtonClick} disabled={isLoading}>
                             {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Search className="mr-2 h-4 w-4" />}
                             Tìm phiếu
@@ -297,7 +301,7 @@ export function PickingClient({ initialVouchers, allLocations }: { initialVouche
                     </CardHeader>
                     <CardContent>
                         <div className="space-y-4">
-                            {currentVoucher.items?.map((item) => (
+                            {currentVoucher.items?.map((item, itemIndex) => (
                                 <Card key={item.id} className="overflow-hidden">
                                     <CardHeader className="bg-muted/50 p-4">
                                         <div className="flex justify-between items-start">
@@ -309,39 +313,45 @@ export function PickingClient({ initialVouchers, allLocations }: { initialVouche
                                             </div>
                                         </div>
                                     </CardHeader>
-                                    <CardContent className="p-4 space-y-2">
-                                        <div className="flex flex-col gap-4">
-                                            {item.pickLocations?.map((pick, index) => (
-                                                <div key={index} className="grid grid-cols-[1fr_120px_1fr_auto] items-end gap-2">
-                                                    <div className="relative">
-                                                        <Input 
-                                                            id={`loc-${item.id}-${index}`} 
-                                                            value={pick.location} 
-                                                            onChange={(e) => handleSplitChange(item.id, index, 'location', e.target.value)} 
-                                                            placeholder="Quét hoặc nhập vị trí..."
-                                                            className="pr-10"
-                                                        />
-                                                        <Button 
-                                                            type="button" 
-                                                            variant="ghost" 
-                                                            size="icon" 
-                                                            className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 text-muted-foreground hover:text-primary"
-                                                            onClick={() => handleOpenMap(item)}
-                                                        >
-                                                            <MapPin className="h-4 w-4" />
-                                                        </Button>
-                                                    </div>
-                                                    <Input id={`qty-${item.id}-${index}`} type="number" value={pick.quantity}  onChange={(e) => handleSplitChange(item.id, index, 'quantity', e.target.value)} />
-                                                    <div className="relative">
-                                                        <Input id={`ser-${item.id}-${index}`} value={pick.serial} onChange={(e) => handleSplitChange(item.id, index, 'serial', e.target.value)} placeholder="Quét hoặc nhập serial..." className="pl-8"/>
-                                                        <ScanLine className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                                                    </div>
-                                                    <Button variant="ghost" size="icon" onClick={() => handleRemoveSplit(item.id, index)} disabled={currentVoucher.status === 'Đã xuất' || (item.pickLocations && item.pickLocations.length <= 1)}>
-                                                        <Trash2 className="h-4 w-4 text-destructive"/>
+                                    <CardContent className="p-4 space-y-3">
+                                        {itemIndex === 0 && (
+                                           <div className="grid grid-cols-[1fr_120px_1fr_auto] items-end gap-2 text-xs font-medium text-muted-foreground px-1">
+                                                <Label>Vị trí lấy</Label>
+                                                <Label>Số lượng</Label>
+                                                <Label>Serial/Batch</Label>
+                                                <div />
+                                           </div>
+                                        )}
+                                        {item.pickLocations?.map((pick, index) => (
+                                             <div key={index} className="grid grid-cols-[1fr_120px_1fr_auto] items-end gap-2 pt-3 border-t">
+                                                <div className="relative">
+                                                    <Input 
+                                                        id={`loc-${item.id}-${index}`} 
+                                                        value={pick.location} 
+                                                        onChange={(e) => handleSplitChange(item.id, index, 'location', e.target.value)} 
+                                                        placeholder="Quét hoặc nhập vị trí..."
+                                                        className="pr-10"
+                                                    />
+                                                    <Button 
+                                                        type="button" 
+                                                        variant="ghost" 
+                                                        size="icon" 
+                                                        className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 text-muted-foreground hover:text-primary"
+                                                        onClick={() => handleOpenMap(item)}
+                                                    >
+                                                        <MapPin className="h-4 w-4" />
                                                     </Button>
                                                 </div>
-                                            ))}
-                                        </div>
+                                                <Input id={`qty-${item.id}-${index}`} type="number" value={pick.quantity}  onChange={(e) => handleSplitChange(item.id, index, 'quantity', e.target.value)} />
+                                                <div className="relative">
+                                                    <Input id={`ser-${item.id}-${index}`} value={pick.serial} onChange={(e) => handleSplitChange(item.id, index, 'serial', e.target.value)} placeholder="Quét hoặc nhập serial..." className="pl-8"/>
+                                                    <ScanLine className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                                                </div>
+                                                <Button variant="ghost" size="icon" onClick={() => handleRemoveSplit(item.id, index)} disabled={currentVoucher.status === 'Đã xuất' || (item.pickLocations && item.pickLocations.length <= 1)}>
+                                                    <Trash2 className="h-4 w-4 text-destructive"/>
+                                                </Button>
+                                            </div>
+                                        ))}
                                         {currentVoucher.status !== 'Đã xuất' && (
                                             <div className="flex items-center justify-between mt-4">
                                                 <Button 
