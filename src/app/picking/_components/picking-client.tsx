@@ -289,7 +289,7 @@ export function PickingClient({ initialVouchers, allLocations }: { initialVouche
                     <CardContent>
                         <div className="space-y-4">
                             {currentVoucher.items?.map((item) => (
-                                <Card key={item.id} className="overflow-hidden bg-card">
+                                <Card key={item.id} className="overflow-hidden">
                                     <CardHeader className="bg-muted/50 p-4">
                                         <div className="flex justify-between items-start">
                                             <div>
