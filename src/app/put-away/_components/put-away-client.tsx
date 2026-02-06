@@ -6,7 +6,7 @@ import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Search, Loader2, Save, Plus, Trash2 } from "lucide-react";
+import { Search, Loader2, Save, Plus, Trash2, ScanLine } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { useSearchParams } from "next/navigation";
@@ -195,13 +195,17 @@ export function PutAwayClient({ initialReceipts }: { initialReceipts: InboundRec
             <Card>
                 <CardContent className="pt-6">
                     <div className="flex w-full max-w-md items-center space-x-2">
-                        <Input
-                            type="text"
-                            placeholder="Nhập hoặc quét mã Phiếu nhập kho (PNK)..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            onKeyDown={(e) => e.key === 'Enter' && handleSearchButtonClick()}
-                        />
+                        <div className="relative flex-grow">
+                            <ScanLine className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                            <Input
+                                type="text"
+                                placeholder="Nhập hoặc quét mã Phiếu nhập kho (PNK)..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                onKeyDown={(e) => e.key === 'Enter' && handleSearchButtonClick()}
+                                className="pl-10"
+                            />
+                        </div>
                         <Button onClick={handleSearchButtonClick} disabled={isLoading}>
                             {isLoading ? (
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
