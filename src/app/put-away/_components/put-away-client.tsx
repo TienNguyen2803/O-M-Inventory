@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import type { InboundReceipt } from "@/lib/types";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Search, Loader2, QrCode, Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { useSearchParams } from "next/navigation";
 
 const Breadcrumbs = () => (
   <div className="text-sm text-muted-foreground mb-1">
@@ -25,15 +26,16 @@ export function PutAwayClient({ initialReceipts }: { initialReceipts: InboundRec
     const [currentTask, setCurrentTask] = useState<InboundReceipt | null>(null);
     const [receipts, setReceipts] = useState<InboundReceipt[]>(initialReceipts);
     const { toast } = useToast();
+    const searchParams = useSearchParams();
 
-    const handleSearch = () => {
-        if (!searchQuery) {
+    const handleSearch = useCallback((query: string) => {
+        if (!query) {
             setCurrentTask(null);
             return;
         }
         setIsLoading(true);
         setTimeout(() => {
-            const foundTask = receipts.find(t => t.id.toLowerCase() === searchQuery.toLowerCase());
+            const foundTask = receipts.find(t => t.id.toLowerCase() === query.toLowerCase());
             if (foundTask) {
                 if (['Chờ xếp hàng', 'Hoàn thành'].includes(foundTask.status)) {
                     setCurrentTask(foundTask);
@@ -42,7 +44,7 @@ export function PutAwayClient({ initialReceipts }: { initialReceipts: InboundRec
                     toast({
                         variant: "destructive",
                         title: "Không hợp lệ",
-                        description: `Phiếu nhập kho "${searchQuery}" không ở trạng thái "Chờ xếp hàng".`,
+                        description: `Phiếu nhập kho "${query}" không ở trạng thái "Chờ xếp hàng".`,
                     });
                 }
             } else {
@@ -50,12 +52,25 @@ export function PutAwayClient({ initialReceipts }: { initialReceipts: InboundRec
                 toast({
                     variant: "destructive",
                     title: "Không tìm thấy",
-                    description: `Không tìm thấy phiếu nhập kho với mã "${searchQuery}".`,
+                    description: `Không tìm thấy phiếu nhập kho với mã "${query}".`,
                 });
             }
             setIsLoading(false);
         }, 500);
-    };
+    }, [receipts, toast]);
+
+    const handleSearchButtonClick = () => {
+        handleSearch(searchQuery);
+    }
+    
+    useEffect(() => {
+        const receiptId = searchParams.get('receiptId');
+        if (receiptId) {
+            setSearchQuery(receiptId);
+            handleSearch(receiptId);
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [searchParams]);
 
     const handleLocationChange = (itemId: string, newLocation: string) => {
         if (!currentTask || !currentTask.items) return;
@@ -106,9 +121,9 @@ export function PutAwayClient({ initialReceipts }: { initialReceipts: InboundRec
                             placeholder="Nhập hoặc quét mã Phiếu nhập kho (PNK)..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                            onKeyDown={(e) => e.key === 'Enter' && handleSearchButtonClick()}
                         />
-                        <Button onClick={handleSearch} disabled={isLoading}>
+                        <Button onClick={handleSearchButtonClick} disabled={isLoading}>
                             {isLoading ? (
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                             ) : (
