@@ -86,6 +86,12 @@ export function InboundClient({ initialReceipts }: InboundClientProps) {
   const [typeFilter, setTypeFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
 
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
   const filteredReceipts = useMemo(() => {
     return receipts.filter((receipt) => {
       const searchLower = searchQuery.toLowerCase();
@@ -224,6 +230,10 @@ export function InboundClient({ initialReceipts }: InboundClientProps) {
         return "bg-gray-100 text-gray-800";
     }
   };
+  
+  if (!isClient) {
+    return null;
+  }
 
   return (
     <TooltipProvider>
