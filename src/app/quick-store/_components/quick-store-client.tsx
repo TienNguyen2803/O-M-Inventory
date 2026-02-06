@@ -77,7 +77,8 @@ export function QuickStoreClient({ materials, locations, initialReceipts }: Quic
         setFoundMaterial(material);
         setLocationScanInput("");
         setQuantity(1);
-        toast({ title: "Thành công", description: `Đã tìm thấy vật tư: ${material.name}` });
+        toast({ title: "Thành công", description: `Đã tìm thấy vật tư: ${'\'\'\''}
+${material.name}` });
       } else {
         toast({ variant: "destructive", title: "Không tìm thấy", description: `Không có vật tư nào khớp với mã "${itemScanInput}".` });
       }
@@ -193,7 +194,7 @@ export function QuickStoreClient({ materials, locations, initialReceipts }: Quic
                       <div className="relative">
                         <Input
                             type="text"
-                            placeholder="Quét hoặc nhập mã vị trí"
+                            placeholder="Quét, nhập hoặc chọn mã vị trí"
                             value={locationScanInput}
                             onChange={(e) => setLocationScanInput(e.target.value)}
                             className="pl-3 pr-10"
