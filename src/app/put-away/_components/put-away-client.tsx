@@ -6,8 +6,7 @@ import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Search, Loader2, QrCode, Save, Plus, Trash2 } from "lucide-react";
+import { Search, Loader2, Save, Plus, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { useSearchParams } from "next/navigation";
@@ -224,7 +223,7 @@ export function PutAwayClient({ initialReceipts }: { initialReceipts: InboundRec
             {currentTask && (
                 <Card>
                     <CardHeader>
-                        <div className="flex justify-between items-start">
+                        <div className="flex flex-col md:flex-row justify-between md:items-start gap-2">
                             <div>
                                 <CardTitle>Phiếu nhập kho: {currentTask.id}</CardTitle>
                                 <CardDescription>
@@ -232,7 +231,7 @@ export function PutAwayClient({ initialReceipts }: { initialReceipts: InboundRec
                                 </CardDescription>
                             </div>
                             <div className={cn(
-                                "rounded-md px-3 py-1 text-sm font-semibold border",
+                                "rounded-md px-3 py-1 text-sm font-semibold border w-fit",
                                 currentTask.status === 'Hoàn thành' ? 'bg-green-100 text-green-800 border-green-200' : 'bg-yellow-100 text-yellow-800 border-yellow-200'
                             )}>
                                 {currentTask.status}
@@ -240,78 +239,82 @@ export function PutAwayClient({ initialReceipts }: { initialReceipts: InboundRec
                         </div>
                     </CardHeader>
                     <CardContent>
-                        <div className="rounded-md border">
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead>Vật tư</TableHead>
-                                        <TableHead>Serial/Batch</TableHead>
-                                        <TableHead>Vị trí gợi ý</TableHead>
-                                        <TableHead className="w-[50%]">Vị trí thực tế (Quét)</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {currentTask.items?.map((item) => (
-                                        <TableRow key={item.id} className="align-top">
-                                            <TableCell>
-                                                <div className="font-medium">{item.materialName}</div>
-                                                <div className="text-xs text-muted-foreground">{item.materialCode}</div>
-                                                 <div className="text-sm font-bold mt-2">{item.receivingQuantity} {item.unit}</div>
-                                            </TableCell>
-                                            <TableCell className="text-muted-foreground">{item.serialBatch}</TableCell>
-                                            <TableCell className="font-semibold text-primary">{item.location}</TableCell>
-                                            <TableCell>
-                                                <div className="flex flex-col gap-2">
-                                                    {item.putAwayLocations?.map((split, index) => (
-                                                        <div key={index} className="flex items-center gap-2">
-                                                            <Input 
-                                                                value={split.location} 
-                                                                onChange={(e) => handleSplitChange(item.id, index, 'location', e.target.value)}
-                                                                placeholder="Quét vị trí..."
-                                                                disabled={currentTask.status === 'Hoàn thành'}
-                                                            />
-                                                            <Input 
-                                                                type="number"
-                                                                value={split.quantity}
-                                                                onChange={(e) => handleSplitChange(item.id, index, 'quantity', e.target.value)}
-                                                                disabled={currentTask.status === 'Hoàn thành'}
-                                                                className="w-24 text-right"
-                                                            />
-                                                            <Button 
-                                                                variant="ghost" 
-                                                                size="icon" 
-                                                                onClick={() => handleRemoveSplit(item.id, index)}
-                                                                disabled={currentTask.status === 'Hoàn thành' || (item.putAwayLocations && item.putAwayLocations.length <= 1)}
-                                                                className="h-9 w-9"
-                                                            >
-                                                                <Trash2 className="h-4 w-4 text-destructive" />
-                                                            </Button>
-                                                        </div>
-                                                    ))}
-                                                    {currentTask.status !== 'Hoàn thành' && (
-                                                        <div className="flex items-center justify-between">
-                                                            <Button 
-                                                                variant="outline" 
-                                                                size="sm" 
-                                                                onClick={() => handleAddSplit(item.id)}
-                                                            >
-                                                                <Plus className="mr-2 h-3 w-3" /> Tách dòng
-                                                            </Button>
-                                                             <AllocatedSummary item={item} />
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </TableCell>
-                                        </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
+                        <div className="space-y-4">
+                            {currentTask.items?.map((item) => (
+                                <Card key={item.id} className="overflow-hidden">
+                                    <CardHeader className="bg-muted/50 p-4">
+                                        <CardTitle className="text-base">{item.materialName}</CardTitle>
+                                        <CardDescription>
+                                            {item.materialCode} | SL Nhập: <span className="font-bold text-foreground">{item.receivingQuantity} {item.unit}</span>
+                                        </CardDescription>
+                                    </CardHeader>
+                                    <CardContent className="p-4 space-y-4">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div>
+                                                 <label className="text-xs font-semibold text-muted-foreground">Serial/Batch</label>
+                                                <p>{item.serialBatch || 'N/A'}</p>
+                                            </div>
+                                             <div>
+                                                 <label className="text-xs font-semibold text-muted-foreground">Vị trí gợi ý</label>
+                                                <p className="font-semibold text-primary">{item.location}</p>
+                                            </div>
+                                        </div>
+                                        
+                                        <div>
+                                            <label className="text-sm font-medium">Vị trí thực tế & Số lượng</label>
+                                            <div className="flex flex-col gap-2 mt-2">
+                                                {item.putAwayLocations?.map((split, index) => (
+                                                    <div key={index} className="grid grid-cols-[1fr_auto_auto] md:grid-cols-[1fr_100px_auto] items-center gap-2">
+                                                        <Input 
+                                                            value={split.location} 
+                                                            onChange={(e) => handleSplitChange(item.id, index, 'location', e.target.value)}
+                                                            placeholder="Quét hoặc nhập vị trí..."
+                                                            disabled={currentTask.status === 'Hoàn thành'}
+                                                        />
+                                                        <Input 
+                                                            type="number"
+                                                            value={split.quantity}
+                                                            onChange={(e) => handleSplitChange(item.id, index, 'quantity', e.target.value)}
+                                                            disabled={currentTask.status === 'Hoàn thành'}
+                                                            className="text-right"
+                                                        />
+                                                        <Button 
+                                                            variant="ghost" 
+                                                            size="icon" 
+                                                            onClick={() => handleRemoveSplit(item.id, index)}
+                                                            disabled={currentTask.status === 'Hoàn thành' || (item.putAwayLocations && item.putAwayLocations.length <= 1)}
+                                                            className="h-9 w-9"
+                                                        >
+                                                            <Trash2 className="h-4 w-4 text-destructive" />
+                                                        </Button>
+                                                    </div>
+                                                ))}
+                                                {currentTask.status !== 'Hoàn thành' && (
+                                                    <div className="flex items-center justify-between mt-2">
+                                                        <Button 
+                                                            variant="outline" 
+                                                            size="sm" 
+                                                            onClick={() => handleAddSplit(item.id)}
+                                                        >
+                                                            <Plus className="mr-2 h-3 w-3" /> Tách vị trí
+                                                        </Button>
+                                                         <AllocatedSummary item={item} />
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            ))}
+                             {(!currentTask.items || currentTask.items.length === 0) && (
+                                <div className="text-center text-muted-foreground p-8">Không có mặt hàng nào trong phiếu nhập này.</div>
+                            )}
                         </div>
-                        {currentTask.status !== 'Hoàn thành' && (
-                            <div className="flex justify-end mt-4">
-                                <Button onClick={handleConfirmPutAway}>
+                        {currentTask.items && currentTask.items.length > 0 && currentTask.status !== 'Hoàn thành' && (
+                            <div className="flex justify-end mt-6">
+                                <Button onClick={handleConfirmPutAway} size="lg">
                                     <Save className="mr-2 h-4 w-4"/>
-                                    Xác nhận Xếp hàng
+                                    Xác nhận Xếp hàng Toàn bộ Phiếu
                                 </Button>
                             </div>
                         )}
