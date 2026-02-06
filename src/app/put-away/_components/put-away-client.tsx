@@ -292,7 +292,7 @@ export function PutAwayClient({ initialReceipts }: { initialReceipts: InboundRec
                                                 {currentTask.status !== 'Hoàn thành' && (
                                                     <div className="flex items-center justify-between mt-2">
                                                         <Button 
-                                                            variant="outline" 
+                                                            variant="default" 
                                                             size="sm" 
                                                             onClick={() => handleAddSplit(item.id)}
                                                         >
