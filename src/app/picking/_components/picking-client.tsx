@@ -352,6 +352,7 @@ export function PickingClient({ initialVouchers, allLocations }: { initialVouche
                                                     variant="outline" 
                                                     size="sm" 
                                                     onClick={() => handleAddSplit(item.id)}
+                                                    disabled={item.requestedQuantity <= 1}
                                                 >
                                                     <Plus className="mr-2 h-3 w-3" /> Tách vị trí
                                                 </Button>
