@@ -1,4 +1,4 @@
-import type { Material, InventoryLog, WarehouseLocation, WarehouseItem, Supplier, MaterialRequest, MaterialRequestItem, PurchaseRequest, PurchaseRequestItem, BiddingPackage, BiddingItem, BiddingResult, InboundReceipt, InboundReceiptItem, InboundReceiptDocument, OutboundVoucher, OutboundVoucherItem, StockTake, StockTakeResult, User, Role, ActivityLog, GoodsHistoryEvent } from "./types";
+import type { Material, InventoryLog, WarehouseLocation, WarehouseItem, Supplier, MaterialRequest, MaterialRequestItem, PurchaseRequest, PurchaseRequestItem, BiddingPackage, BiddingItem, BiddingResult, InboundReceipt, InboundReceiptItem, InboundReceiptDocument, OutboundVoucher, OutboundVoucherItem, StockTake, StockTakeResult, User, Role, ActivityLog, GoodsHistoryEvent, PutAwayTask } from "./types";
 
 export const materials: Material[] = [
   {
@@ -1366,6 +1366,42 @@ const goodsHistoryData: GoodsHistoryEvent[] = [
         ]
     }
 ];
+
+export const putAwayTasks: PutAwayTask[] = [
+    {
+        id: "PNK-2025-011",
+        inboundDate: "2025-03-15T00:00:00.000Z",
+        partner: "Siemens Energy Vietnam",
+        status: "Chờ xếp hàng",
+        items: [
+            { id: "put-1-1", materialId: "mat-001", materialCode: "PM-ELEC-GT-001", materialName: "Card điều khiển Tuabin khí Siemens SGT5-4000F", quantity: 2, unit: "Cái", batchSerial: "SN-CARD-001A, SN-CARD-001B", suggestedLocation: "A1-01-01" },
+            { id: "put-1-2", materialId: "mat-002", materialCode: "PM-INST-GT-002", materialName: "Cảm biến nhiệt độ ống khói (Thermocouple Type K)", quantity: 10, unit: "Cái", batchSerial: "BATCH-TC-202401", suggestedLocation: "A1-01-02" },
+        ]
+    },
+    {
+        id: "PNK-2025-012",
+        inboundDate: "2025-03-20T00:00:00.000Z",
+        partner: "Donaldson",
+        status: "Chờ xếp hàng",
+        items: [
+            { id: "put-2-1", materialId: "mat-005", materialCode: "PM-MECH-FIL-005", materialName: "Lọc khí đầu vào tuabin (Air Inlet Filter)", quantity: 5, unit: "Bộ", batchSerial: "BATCH-FIL-20250320", suggestedLocation: "A2-03-01" },
+        ]
+    },
+    {
+        id: "PNK-2025-013",
+        inboundDate: "2025-04-01T00:00:00.000Z",
+        partner: "KSB",
+        status: "Hoàn thành",
+        items: [
+            { id: "put-3-1", materialId: "mat-008", materialCode: "PM-MECH-PMP-008", materialName: "Bơm dầu bôi trơn (Lube Oil Pump)", quantity: 1, unit: "Cái", batchSerial: "SN-PUMP-KSB-03", suggestedLocation: "C1-01-01", actualLocation: "C1-01-01" },
+        ]
+    }
+];
+
+export const getPutAwayTasks = async (): Promise<PutAwayTask[]> => {
+    await new Promise(resolve => setTimeout(resolve, 100));
+    return putAwayTasks;
+};
 
 export const getMaterials = async (): Promise<Material[]> => {
   // Simulate API delay

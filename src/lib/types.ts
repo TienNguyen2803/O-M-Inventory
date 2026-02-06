@@ -150,7 +150,7 @@ export interface PurchaseRequest {
   totalAmount: number; // TỔNG TIỀN
   status: 'Approved' | 'Pending' | 'Rejected' | 'Completed'; // TRẠNG THÁI
   items: PurchaseRequestItem[];
-  step?: number;
+  step: number;
 }
 
 export interface BiddingItem {
@@ -303,4 +303,24 @@ export interface ActivityLog {
     id: string; // e.g., "YCVT-2025-001", "PNK-2025-003"
   };
   details: string;
+}
+
+export interface PutAwayItem {
+  id: string;
+  materialId: string;
+  materialCode: string;
+  materialName: string;
+  quantity: number;
+  unit: string;
+  batchSerial: string;
+  suggestedLocation: string;
+  actualLocation?: string;
+}
+
+export interface PutAwayTask {
+  id: string; // e.g., PNK-2025-001
+  inboundDate: string;
+  partner: string;
+  status: 'Chờ xếp hàng' | 'Hoàn thành';
+  items: PutAwayItem[];
 }
