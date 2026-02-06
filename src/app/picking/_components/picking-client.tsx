@@ -6,7 +6,7 @@ import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Search, Loader2, Save, MapPin } from "lucide-react";
+import { Search, Loader2, Save, MapPin, ScanLine } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { useSearchParams } from "next/navigation";
@@ -208,13 +208,17 @@ export function PickingClient({ initialVouchers, allLocations }: { initialVouche
                                             </div>
                                             <div className="md:col-span-2">
                                                  <label className="text-sm font-medium" htmlFor={`serial-${item.id}`}>Serial/Batch thực tế</label>
-                                                 <Input
-                                                    id={`serial-${item.id}`}
-                                                    value={item.actualSerial}
-                                                    onChange={(e) => handleValueChange(item.id, 'actualSerial', e.target.value)}
-                                                    placeholder="Quét hoặc nhập serial/batch"
-                                                    disabled={currentVoucher.status === 'Đã xuất'}
-                                                />
+                                                  <div className="relative">
+                                                    <Input
+                                                        id={`serial-${item.id}`}
+                                                        value={item.actualSerial}
+                                                        onChange={(e) => handleValueChange(item.id, 'actualSerial', e.target.value)}
+                                                        placeholder="Quét hoặc nhập serial/batch"
+                                                        disabled={currentVoucher.status === 'Đã xuất'}
+                                                        className="pl-10"
+                                                    />
+                                                     <ScanLine className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+                                                </div>
                                             </div>
                                         </div>
                                     </CardContent>
