@@ -371,40 +371,39 @@ export function OutboundClient({ initialVouchers }: OutboundClientProps) {
                           </Tooltip>
                           <AlertDialog>
                             <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <AlertDialogTrigger asChild>
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      className="h-8 w-8 text-destructive/80 hover:text-destructive"
-                                    >
-                                      <Trash2 className="h-4 w-4" />
-                                    </Button>
-                                  </AlertDialogTrigger>
-                                </TooltipTrigger>
-                                <TooltipContent><p>Xóa</p></TooltipContent>
-                              </Tooltip>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>
-                                    Bạn có chắc chắn muốn xóa?
-                                  </AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    Hành động này không thể được hoàn tác. Phiếu xuất "
-                                    {voucher.id}" sẽ bị xóa vĩnh viễn.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Hủy</AlertDialogCancel>
-                                  <AlertDialogAction
-                                    onClick={() => handleDelete(voucher.id)}
-                                    className="bg-destructive hover:bg-destructive/90"
+                              <TooltipTrigger asChild>
+                                <AlertDialogTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8 text-destructive/80 hover:text-destructive"
                                   >
-                                    Xóa
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </AlertDialogTrigger>
+                              </TooltipTrigger>
+                              <TooltipContent><p>Xóa</p></TooltipContent>
                             </Tooltip>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>
+                                  Bạn có chắc chắn muốn xóa?
+                                </AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Hành động này không thể được hoàn tác. Phiếu xuất "
+                                  {voucher.id}" sẽ bị xóa vĩnh viễn.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Hủy</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => handleDelete(voucher.id)}
+                                  className="bg-destructive hover:bg-destructive/90"
+                                >
+                                  Xóa
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
                           </AlertDialog>
                         </div>
                       </TableCell>
