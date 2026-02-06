@@ -82,18 +82,28 @@ export function PutAwayClient({ initialReceipts }: { initialReceipts: InboundRec
     const handleSplitChange = (itemId: string, splitIndex: number, field: 'location' | 'quantity', value: string | number) => {
         if (!currentTask || !currentTask.items) return;
 
-        const updatedItems = currentTask.items.map(item => {
-            if (item.id === itemId) {
-                const updatedSplits = item.putAwayLocations?.map((split, index) => {
-                    if (index === splitIndex) {
-                        return { ...split, [field]: field === 'quantity' ? Number(value) : value };
-                    }
-                    return split;
+        const itemToUpdate = currentTask.items.find(item => item.id === itemId);
+        if (!itemToUpdate) return;
+        
+        const newSplits = [...(itemToUpdate.putAwayLocations || [])];
+        const newSplit = { ...newSplits[splitIndex], [field]: field === 'quantity' ? Number(value) : value };
+        newSplits[splitIndex] = newSplit;
+        
+        if (field === 'quantity') {
+            const totalSplitQuantity = newSplits.reduce((sum, split) => sum + split.quantity, 0);
+            if (totalSplitQuantity > itemToUpdate.receivingQuantity) {
+                toast({
+                    variant: "destructive",
+                    title: "Số lượng không hợp lệ",
+                    description: `Tổng số lượng xếp (${totalSplitQuantity}) không thể vượt quá số lượng nhập (${itemToUpdate.receivingQuantity}).`,
                 });
-                return { ...item, putAwayLocations: updatedSplits };
+                return; // Abort update
             }
-            return item;
-        });
+        }
+
+        const updatedItems = currentTask.items.map(item => 
+            item.id === itemId ? { ...item, putAwayLocations: newSplits } : item
+        );
 
         setCurrentTask({ ...currentTask, items: updatedItems });
     };
@@ -160,11 +170,17 @@ export function PutAwayClient({ initialReceipts }: { initialReceipts: InboundRec
         const allocated = item.putAwayLocations?.reduce((sum, s) => sum + s.quantity, 0) || 0;
         const remaining = item.receivingQuantity - allocated;
         
+        const remainingColor = () => {
+            if (remaining < 0) return "text-red-600 font-bold";
+            if (remaining > 0) return "text-blue-600";
+            return "text-green-600 font-bold";
+        }
+
         return (
             <div className="text-xs text-muted-foreground mt-1">
                 <span>Tổng: {item.receivingQuantity}</span> | 
                 <span className="text-green-600"> Đã xếp: {allocated}</span> | 
-                <span className={cn(remaining > 0 ? "text-red-600" : "")}> Còn lại: {remaining}</span>
+                <span className={cn("transition-colors", remainingColor())}> Còn lại: {remaining}</span>
             </div>
         )
     };
