@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import type { Material, WarehouseLocation, InboundReceipt } from "@/lib/types";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Search, Loader2, QrCode, Save, MapPin, XCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { WarehouseMap } from "./warehouse-map";
 
 const Breadcrumbs = () => (
   <div className="text-sm text-muted-foreground mb-1">
@@ -42,6 +44,7 @@ export function QuickStoreClient({ materials, locations, initialReceipts }: Quic
   const [isLoading, setIsLoading] = useState(false);
   const [foundMaterial, setFoundMaterial] = useState<Material | null>(null);
   const [storeLog, setStoreLog] = useState<StoreLog[]>([]);
+  const [isMapOpen, setMapOpen] = useState(false);
 
   const { toast } = useToast();
 
@@ -54,21 +57,18 @@ export function QuickStoreClient({ materials, locations, initialReceipts }: Quic
     setTimeout(() => {
       const query = itemScanInput.toLowerCase().trim();
       
-      // First, try to find by master data (code, partNo, serialNumber in master)
       let material = materials.find(m => 
         m.code.toLowerCase() === query || 
         m.partNo.toLowerCase() === query || 
         m.serialNumber?.toLowerCase() === query
       );
 
-      // If not found, search through inbound receipts by serialBatch
       if (!material) {
         for (const receipt of initialReceipts) {
           const foundItem = receipt.items?.find(item => item.serialBatch.toLowerCase() === query);
           if (foundItem) {
-            // Found the item in a receipt, now find the master material
             material = materials.find(m => m.code === foundItem.materialCode);
-            break; // Exit the loop once found
+            break;
           }
         }
       }
@@ -116,7 +116,6 @@ export function QuickStoreClient({ materials, locations, initialReceipts }: Quic
     setStoreLog([newLogEntry, ...storeLog]);
     toast({ title: "Thành công!", description: `Đã cất ${quantity} ${foundMaterial.unit} ${foundMaterial.name} vào vị trí ${newLogEntry.location}.` });
 
-    // Reset for next scan
     setFoundMaterial(null);
     setItemScanInput("");
     setLocationScanInput("");
@@ -128,7 +127,20 @@ export function QuickStoreClient({ materials, locations, initialReceipts }: Quic
       setItemScanInput("");
       setLocationScanInput("");
       setQuantity(1);
-  }
+  };
+
+  const handleOpenMap = () => {
+    setMapOpen(true);
+  };
+
+  const handleLocationSelect = (locationCode: string) => {
+    setLocationScanInput(locationCode);
+    setMapOpen(false);
+  };
+
+  const availableLocations = useMemo(() => {
+    return locations.filter(loc => loc.status === 'Active').map(loc => loc.code);
+  }, [locations]);
 
   return (
     <div className="space-y-4 max-w-4xl mx-auto">
@@ -182,11 +194,19 @@ export function QuickStoreClient({ materials, locations, initialReceipts }: Quic
                         <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                         <Input
                             type="text"
-                            placeholder="Quét hoặc nhập mã vị trí (bin code)..."
+                            placeholder="Quét hoặc nhập mã vị trí..."
                             value={locationScanInput}
                             onChange={(e) => setLocationScanInput(e.target.value)}
-                            className="pl-10"
+                            className="pl-10 pr-28"
                         />
+                         <Button
+                            type="button"
+                            variant="link"
+                            className="absolute right-1 top-1/2 -translate-y-1/2 h-8 px-2 text-primary"
+                            onClick={handleOpenMap}
+                         >
+                            Chọn từ bản đồ
+                         </Button>
                       </div>
                   </div>
                   <div className="space-y-2">
@@ -248,6 +268,20 @@ export function QuickStoreClient({ materials, locations, initialReceipts }: Quic
             </Table>
         </CardContent>
       </Card>
+      
+      <Dialog open={isMapOpen} onOpenChange={setMapOpen}>
+        <DialogContent className="max-w-4xl">
+            <DialogHeader>
+                <DialogTitle>Chọn vị trí cất hàng</DialogTitle>
+                <DialogDescription>Các vị trí không khả dụng (đã đầy hoặc không hoạt động) sẽ bị làm mờ.</DialogDescription>
+            </DialogHeader>
+            <WarehouseMap
+                locations={locations}
+                availableCodes={availableLocations}
+                onSelect={handleLocationSelect}
+            />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
