@@ -191,21 +191,21 @@ export function QuickStoreClient({ materials, locations, initialReceipts }: Quic
                   <div className="space-y-2">
                       <label className="text-sm font-medium">Bước 2: Quét vị trí cất hàng</label>
                       <div className="relative">
-                        <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                         <Input
                             type="text"
-                            placeholder="Quét hoặc nhập mã vị trí..."
+                            placeholder="Quét hoặc nhập mã vị trí"
                             value={locationScanInput}
                             onChange={(e) => setLocationScanInput(e.target.value)}
-                            className="pl-10 pr-28"
+                            className="pl-3 pr-10"
                         />
                          <Button
                             type="button"
-                            variant="link"
-                            className="absolute right-1 top-1/2 -translate-y-1/2 h-8 px-2 text-primary"
+                            variant="ghost"
+                            size="icon"
+                            className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 text-muted-foreground hover:text-primary"
                             onClick={handleOpenMap}
                          >
-                            Chọn từ bản đồ
+                            <MapPin className="h-4 w-4" />
                          </Button>
                       </div>
                   </div>
