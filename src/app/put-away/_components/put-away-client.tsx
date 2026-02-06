@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import type { PutAwayTask, PutAwayItem } from "@/lib/types";
+import { useState } from "react";
+import type { InboundReceipt } from "@/lib/types";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Search, Loader2, Check, QrCode, Save } from "lucide-react";
+import { Search, Loader2, QrCode, Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
@@ -19,11 +19,11 @@ const Breadcrumbs = () => (
   </div>
 );
 
-export function PutAwayClient({ initialTasks }: { initialTasks: PutAwayTask[] }) {
+export function PutAwayClient({ initialReceipts }: { initialReceipts: InboundReceipt[] }) {
     const [searchQuery, setSearchQuery] = useState("");
     const [isLoading, setIsLoading] = useState(false);
-    const [currentTask, setCurrentTask] = useState<PutAwayTask | null>(null);
-    const [tasks, setTasks] = useState<PutAwayTask[]>(initialTasks);
+    const [currentTask, setCurrentTask] = useState<InboundReceipt | null>(null);
+    const [receipts, setReceipts] = useState<InboundReceipt[]>(initialReceipts);
     const { toast } = useToast();
 
     const handleSearch = () => {
@@ -33,9 +33,20 @@ export function PutAwayClient({ initialTasks }: { initialTasks: PutAwayTask[] })
         }
         setIsLoading(true);
         setTimeout(() => {
-            const foundTask = tasks.find(t => t.id.toLowerCase() === searchQuery.toLowerCase());
-            setCurrentTask(foundTask || null);
-            if (!foundTask) {
+            const foundTask = receipts.find(t => t.id.toLowerCase() === searchQuery.toLowerCase());
+            if (foundTask) {
+                if (['Chờ xếp hàng', 'Hoàn thành'].includes(foundTask.status)) {
+                    setCurrentTask(foundTask);
+                } else {
+                    setCurrentTask(null);
+                    toast({
+                        variant: "destructive",
+                        title: "Không hợp lệ",
+                        description: `Phiếu nhập kho "${searchQuery}" không ở trạng thái "Chờ xếp hàng".`,
+                    });
+                }
+            } else {
+                 setCurrentTask(null);
                 toast({
                     variant: "destructive",
                     title: "Không tìm thấy",
@@ -47,7 +58,7 @@ export function PutAwayClient({ initialTasks }: { initialTasks: PutAwayTask[] })
     };
 
     const handleLocationChange = (itemId: string, newLocation: string) => {
-        if (!currentTask) return;
+        if (!currentTask || !currentTask.items) return;
         
         const updatedItems = currentTask.items.map(item => 
             item.id === itemId ? { ...item, actualLocation: newLocation } : item
@@ -56,7 +67,7 @@ export function PutAwayClient({ initialTasks }: { initialTasks: PutAwayTask[] })
     };
 
     const handleConfirmPutAway = () => {
-        if (!currentTask) return;
+        if (!currentTask || !currentTask.items) return;
         
         const isAllLocated = currentTask.items.every(item => item.actualLocation && item.actualLocation.trim() !== '');
 
@@ -70,7 +81,7 @@ export function PutAwayClient({ initialTasks }: { initialTasks: PutAwayTask[] })
         }
 
         const updatedTask = { ...currentTask, status: 'Hoàn thành' as const };
-        setTasks(tasks.map(t => t.id === updatedTask.id ? updatedTask : t));
+        setReceipts(receipts.map(t => t.id === updatedTask.id ? updatedTask : t));
         setCurrentTask(updatedTask);
         
         toast({
@@ -146,15 +157,15 @@ export function PutAwayClient({ initialTasks }: { initialTasks: PutAwayTask[] })
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {currentTask.items.map((item) => (
+                                    {currentTask.items?.map((item) => (
                                         <TableRow key={item.id}>
                                             <TableCell>
                                                 <div className="font-medium">{item.materialName}</div>
                                                 <div className="text-xs text-muted-foreground">{item.materialCode}</div>
                                             </TableCell>
-                                            <TableCell className="text-muted-foreground">{item.batchSerial}</TableCell>
-                                            <TableCell className="text-right font-medium">{item.quantity} {item.unit}</TableCell>
-                                            <TableCell className="font-semibold text-primary">{item.suggestedLocation}</TableCell>
+                                            <TableCell className="text-muted-foreground">{item.serialBatch}</TableCell>
+                                            <TableCell className="text-right font-medium">{item.receivingQuantity} {item.unit}</TableCell>
+                                            <TableCell className="font-semibold text-primary">{item.location}</TableCell>
                                             <TableCell>
                                                 <div className="flex items-center gap-2">
                                                     <Input 

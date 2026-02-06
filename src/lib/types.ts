@@ -212,11 +212,13 @@ export interface InboundReceiptItem {
   id: string;
   materialCode: string;
   materialName: string;
+  unit: string;
   orderedQuantity: number;
   receivedQuantity: number;
   receivingQuantity: number;
   serialBatch: string;
   location: string;
+  actualLocation?: string;
   kcs: boolean;
 }
 
@@ -232,7 +234,7 @@ export interface InboundReceipt {
   reference: string; // THAM CHIẾU
   inboundDate: string; // NGÀY NHẬP
   partner: string; // ĐỐI TÁC
-  status: 'Hoàn thành' | 'Đang nhập' | 'KCS & Hồ sơ' | 'Yêu cầu nhập'; // TRẠNG THÁI
+  status: 'Hoàn thành' | 'Đang nhập' | 'KCS & Hồ sơ' | 'Yêu cầu nhập' | 'Chờ xếp hàng'; // TRẠNG THÁI
   step: number;
   items?: InboundReceiptItem[];
   documents?: InboundReceiptDocument[];
@@ -303,24 +305,4 @@ export interface ActivityLog {
     id: string; // e.g., "YCVT-2025-001", "PNK-2025-003"
   };
   details: string;
-}
-
-export interface PutAwayItem {
-  id: string;
-  materialId: string;
-  materialCode: string;
-  materialName: string;
-  quantity: number;
-  unit: string;
-  batchSerial: string;
-  suggestedLocation: string;
-  actualLocation?: string;
-}
-
-export interface PutAwayTask {
-  id: string; // e.g., PNK-2025-001
-  inboundDate: string;
-  partner: string;
-  status: 'Chờ xếp hàng' | 'Hoàn thành';
-  items: PutAwayItem[];
 }
