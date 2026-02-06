@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import type { OutboundVoucher } from "@/lib/types";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Search, Loader2, Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { useSearchParams } from "next/navigation";
 
 const Breadcrumbs = () => (
   <div className="text-sm text-muted-foreground mb-1">
@@ -24,15 +25,16 @@ export function PickingClient({ initialVouchers }: { initialVouchers: OutboundVo
     const [currentVoucher, setCurrentVoucher] = useState<OutboundVoucher | null>(null);
     const [vouchers, setVouchers] = useState<OutboundVoucher[]>(initialVouchers);
     const { toast } = useToast();
+    const searchParams = useSearchParams();
 
-    const handleSearch = useCallback(() => {
-        if (!searchQuery) {
+    const handleSearch = useCallback((query: string) => {
+        if (!query) {
             setCurrentVoucher(null);
             return;
         }
         setIsLoading(true);
         setTimeout(() => {
-            const foundVoucher = vouchers.find(v => v.id.toLowerCase() === searchQuery.toLowerCase());
+            const foundVoucher = vouchers.find(v => v.id.toLowerCase() === query.toLowerCase());
             if (foundVoucher) {
                 if (['Chờ xuất', 'Đang soạn hàng', 'Đã xuất'].includes(foundVoucher.status)) {
                     setCurrentVoucher(foundVoucher);
@@ -41,7 +43,7 @@ export function PickingClient({ initialVouchers }: { initialVouchers: OutboundVo
                     toast({
                         variant: "destructive",
                         title: "Không hợp lệ",
-                        description: `Phiếu xuất kho "${searchQuery}" không ở trạng thái có thể lấy hàng.`,
+                        description: `Phiếu xuất kho "${query}" không ở trạng thái có thể lấy hàng.`,
                     });
                 }
             } else {
@@ -49,12 +51,24 @@ export function PickingClient({ initialVouchers }: { initialVouchers: OutboundVo
                 toast({
                     variant: "destructive",
                     title: "Không tìm thấy",
-                    description: `Không tìm thấy phiếu xuất kho với mã "${searchQuery}".`,
+                    description: `Không tìm thấy phiếu xuất kho với mã "${query}".`,
                 });
             }
             setIsLoading(false);
         }, 500);
-    }, [searchQuery, vouchers, toast]);
+    }, [vouchers, toast]);
+
+    const handleSearchButtonClick = () => {
+        handleSearch(searchQuery);
+    }
+    
+    useEffect(() => {
+        const voucherId = searchParams.get('voucherId');
+        if (voucherId) {
+            setSearchQuery(voucherId);
+            handleSearch(voucherId);
+        }
+    }, [searchParams, handleSearch]);
     
     const handleValueChange = (itemId: string, field: 'issuedQuantity' | 'actualSerial', value: string | number) => {
         if (!currentVoucher || !currentVoucher.items) return;
@@ -98,9 +112,9 @@ export function PickingClient({ initialVouchers }: { initialVouchers: OutboundVo
                             placeholder="Nhập hoặc quét mã Phiếu xuất kho (PXK)..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                            onKeyDown={(e) => e.key === 'Enter' && handleSearchButtonClick()}
                         />
-                        <Button onClick={handleSearch} disabled={isLoading}>
+                        <Button onClick={handleSearchButtonClick} disabled={isLoading}>
                             {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Search className="mr-2 h-4 w-4" />}
                             Tìm phiếu
                         </Button>

@@ -12,6 +12,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Filter,
+  PackageSearch,
 } from "lucide-react";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import {
@@ -39,6 +40,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
 import {
@@ -50,6 +57,7 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { OutboundForm, type OutboundFormValues } from "./outbound-form";
+import Link from "next/link";
 
 type OutboundClientProps = {
   initialVouchers: OutboundVoucher[];
@@ -212,241 +220,271 @@ export function OutboundClient({ initialVouchers }: OutboundClientProps) {
   };
 
   return (
-    <div className="w-full space-y-2">
-      <PageHeader title="Xuất kho" breadcrumbs={<Breadcrumbs />}>
-        <Button onClick={handleAdd}>
-          <Plus className="mr-2 h-4 w-4" />
-          Thêm mới
-        </Button>
-      </PageHeader>
+    <TooltipProvider>
+      <div className="w-full space-y-2">
+        <PageHeader title="Xuất kho" breadcrumbs={<Breadcrumbs />}>
+          <Button onClick={handleAdd}>
+            <Plus className="mr-2 h-4 w-4" />
+            Thêm mới
+          </Button>
+        </PageHeader>
 
-      <Card>
-        <CardContent className="pt-6">
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4 items-end">
-            <div className="space-y-1">
-                <label className="text-sm font-medium">Mục đích xuất</label>
-                <Select value={purposeFilter} onValueChange={setPurposeFilter}>
-                <SelectTrigger>
-                    <SelectValue placeholder="-- Tất cả --" />
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectItem value="all">-- Tất cả --</SelectItem>
-                    <SelectItem value="Cấp O&M">Cấp O&M</SelectItem>
-                    <SelectItem value="Khẩn cấp">Khẩn cấp</SelectItem>
-                    <SelectItem value="Cho mượn">Cho mượn</SelectItem>
-                    <SelectItem value="Đi Sửa chữa">Đi Sửa chữa</SelectItem>
-                </SelectContent>
-                </Select>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4 items-end">
+              <div className="space-y-1">
+                  <label className="text-sm font-medium">Mục đích xuất</label>
+                  <Select value={purposeFilter} onValueChange={setPurposeFilter}>
+                  <SelectTrigger>
+                      <SelectValue placeholder="-- Tất cả --" />
+                  </SelectTrigger>
+                  <SelectContent>
+                      <SelectItem value="all">-- Tất cả --</SelectItem>
+                      <SelectItem value="Cấp O&M">Cấp O&M</SelectItem>
+                      <SelectItem value="Khẩn cấp">Khẩn cấp</SelectItem>
+                      <SelectItem value="Cho mượn">Cho mượn</SelectItem>
+                      <SelectItem value="Đi Sửa chữa">Đi Sửa chữa</SelectItem>
+                  </SelectContent>
+                  </Select>
+              </div>
+              <div className="space-y-1">
+                  <label className="text-sm font-medium">Tìm kiếm</label>
+                  <Input
+                  placeholder="Số Phiếu, Yêu cầu, Bộ phận..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+              </div>
+              <div className="space-y-1">
+                  <label className="text-sm font-medium">Trạng thái</label>
+                  <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger>
+                      <SelectValue placeholder="-- Tất cả --" />
+                  </SelectTrigger>
+                  <SelectContent>
+                      <SelectItem value="all">Tất cả</SelectItem>
+                      <SelectItem value="Đã xuất">Đã xuất</SelectItem>
+                      <SelectItem value="Chờ xuất">Chờ xuất</SelectItem>
+                      <SelectItem value="Đang soạn hàng">Đang soạn hàng</SelectItem>
+                      <SelectItem value="Đã hủy">Đã hủy</SelectItem>
+                  </SelectContent>
+                  </Select>
+              </div>
+              <Button variant="outline">
+                  <Filter className="mr-2 h-4 w-4" />
+                  Lọc
+              </Button>
             </div>
-            <div className="space-y-1">
-                <label className="text-sm font-medium">Tìm kiếm</label>
-                <Input
-                placeholder="Số Phiếu, Yêu cầu, Bộ phận..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                />
-            </div>
-            <div className="space-y-1">
-                <label className="text-sm font-medium">Trạng thái</label>
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger>
-                    <SelectValue placeholder="-- Tất cả --" />
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectItem value="all">Tất cả</SelectItem>
-                    <SelectItem value="Đã xuất">Đã xuất</SelectItem>
-                    <SelectItem value="Chờ xuất">Chờ xuất</SelectItem>
-                    <SelectItem value="Đang soạn hàng">Đang soạn hàng</SelectItem>
-                    <SelectItem value="Đã hủy">Đã hủy</SelectItem>
-                </SelectContent>
-                </Select>
-            </div>
-            <Button variant="outline">
-                <Filter className="mr-2 h-4 w-4" />
-                Lọc
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
 
-      <Card>
-        <CardContent className="pt-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>SỐ PHIẾU</TableHead>
-                <TableHead>MỤC ĐÍCH XUẤT</TableHead>
-                <TableHead>YÊU CẦU SỐ</TableHead>
-                <TableHead>BỘ PHẬN</TableHead>
-                <TableHead>LÝ DO</TableHead>
-                <TableHead>TRẠNG THÁI</TableHead>
-                <TableHead className="w-[120px]">THAO TÁC</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {paginatedVouchers.length > 0 ? (
-                paginatedVouchers.map((voucher) => (
-                  <TableRow key={voucher.id}>
-                    <TableCell
-                      className="font-medium text-primary hover:underline cursor-pointer"
-                      onClick={() => handleView(voucher)}
-                    >
-                      {voucher.id}
-                    </TableCell>
-                    <TableCell>
-                      <span
-                        className={cn(
-                          "rounded-md px-2.5 py-1 text-xs font-semibold",
-                          getPurposeBadgeClass(voucher.purpose)
-                        )}
+        <Card>
+          <CardContent className="pt-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>SỐ PHIẾU</TableHead>
+                  <TableHead>MỤC ĐÍCH XUẤT</TableHead>
+                  <TableHead>YÊU CẦU SỐ</TableHead>
+                  <TableHead>BỘ PHẬN</TableHead>
+                  <TableHead>LÝ DO</TableHead>
+                  <TableHead>TRẠNG THÁI</TableHead>
+                  <TableHead className="w-[120px]">THAO TÁC</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {paginatedVouchers.length > 0 ? (
+                  paginatedVouchers.map((voucher) => (
+                    <TableRow key={voucher.id}>
+                      <TableCell
+                        className="font-medium text-primary hover:underline cursor-pointer"
+                        onClick={() => handleView(voucher)}
                       >
-                        {voucher.purpose}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {voucher.materialRequestId}
-                    </TableCell>
-                    <TableCell>{voucher.department}</TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {voucher.reason}
-                    </TableCell>
-                    <TableCell>
-                      <span
-                        className={cn(
-                          "rounded-md px-2.5 py-1 text-xs font-semibold",
-                          getStatusBadgeClass(voucher.status)
-                        )}
-                      >
-                        {voucher.status}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center space-x-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-muted-foreground"
-                          onClick={() => handleView(voucher)}
+                        {voucher.id}
+                      </TableCell>
+                      <TableCell>
+                        <span
+                          className={cn(
+                            "rounded-md px-2.5 py-1 text-xs font-semibold",
+                            getPurposeBadgeClass(voucher.purpose)
+                          )}
                         >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-muted-foreground"
-                          onClick={() => handleEdit(voucher)}
+                          {voucher.purpose}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {voucher.materialRequestId}
+                      </TableCell>
+                      <TableCell>{voucher.department}</TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {voucher.reason}
+                      </TableCell>
+                      <TableCell>
+                        <span
+                          className={cn(
+                            "rounded-md px-2.5 py-1 text-xs font-semibold",
+                            getStatusBadgeClass(voucher.status)
+                          )}
                         >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-destructive/80 hover:text-destructive"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>
-                                Bạn có chắc chắn muốn xóa?
-                              </AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Hành động này không thể được hoàn tác. Phiếu xuất "
-                                {voucher.id}" sẽ bị xóa vĩnh viễn.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Hủy</AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() => handleDelete(voucher.id)}
-                                className="bg-destructive hover:bg-destructive/90"
+                          {voucher.status}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center space-x-1">
+                          {(voucher.status === 'Chờ xuất' || voucher.status === 'Đang soạn hàng') && (
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Link href={`/picking?voucherId=${voucher.id}`}>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-primary">
+                                      <PackageSearch className="h-4 w-4" />
+                                    </Button>
+                                  </Link>
+                                </TooltipTrigger>
+                                <TooltipContent><p>Lấy hàng</p></TooltipContent>
+                              </Tooltip>
+                          )}
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-muted-foreground"
+                                onClick={() => handleView(voucher)}
                               >
-                                Xóa
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </div>
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent><p>Xem chi tiết</p></TooltipContent>
+                          </Tooltip>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 text-muted-foreground"
+                                  onClick={() => handleEdit(voucher)}
+                                >
+                                  <Pencil className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                            <TooltipContent><p>Chỉnh sửa</p></TooltipContent>
+                          </Tooltip>
+                          <AlertDialog>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <AlertDialogTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-8 w-8 text-destructive/80 hover:text-destructive"
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  </AlertDialogTrigger>
+                                </TooltipTrigger>
+                                <TooltipContent><p>Xóa</p></TooltipContent>
+                              </Tooltip>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>
+                                    Bạn có chắc chắn muốn xóa?
+                                  </AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Hành động này không thể được hoàn tác. Phiếu xuất "
+                                    {voucher.id}" sẽ bị xóa vĩnh viễn.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Hủy</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => handleDelete(voucher.id)}
+                                    className="bg-destructive hover:bg-destructive/90"
+                                  >
+                                    Xóa
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </Tooltip>
+                          </AlertDialog>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell
+                      colSpan={7}
+                      className="h-24 text-center text-muted-foreground"
+                    >
+                      Không tìm thấy phiếu xuất nào.
                     </TableCell>
                   </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell
-                    colSpan={7}
-                    className="h-24 text-center text-muted-foreground"
+                )}
+              </TableBody>
+            </Table>
+          </CardContent>
+          <CardFooter className="flex items-center justify-between pt-4">
+            <div className="text-sm text-muted-foreground">
+              Hiển thị {filteredVouchers.length > 0 ? startItem : 0}-{endItem} trên {filteredVouchers.length} bản ghi
+            </div>
+            <div className="flex items-center space-x-1">
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                (page) => (
+                  <Button
+                    key={page}
+                    variant={currentPage === page ? "default" : "outline"}
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => setCurrentPage(page)}
                   >
-                    Không tìm thấy phiếu xuất nào.
-                  </TableCell>
-                </TableRow>
+                    {page}
+                  </Button>
+                )
               )}
-            </TableBody>
-          </Table>
-        </CardContent>
-        <CardFooter className="flex items-center justify-between pt-4">
-          <div className="text-sm text-muted-foreground">
-            Hiển thị {filteredVouchers.length > 0 ? startItem : 0}-{endItem} trên {filteredVouchers.length} bản ghi
-          </div>
-          <div className="flex items-center space-x-1">
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-8 w-8"
-              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-              disabled={currentPage === 1}
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-              (page) => (
-                <Button
-                  key={page}
-                  variant={currentPage === page ? "default" : "outline"}
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={() => setCurrentPage(page)}
-                >
-                  {page}
-                </Button>
-              )
-            )}
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-8 w-8"
-              onClick={() =>
-                setCurrentPage((p) => Math.min(totalPages, p + 1))
-              }
-              disabled={currentPage === totalPages}
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
-        </CardFooter>
-      </Card>
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() =>
+                  setCurrentPage((p) => Math.min(totalPages, p + 1))
+                }
+                disabled={currentPage === totalPages}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </CardFooter>
+        </Card>
 
-      <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-        <DialogContent className="max-w-6xl">
-          <DialogHeader>
-            <DialogTitle>
-              {viewMode
-                ? `Chi tiết Phiếu xuất: ${selectedVoucher?.id}`
-                : vouchers.some(v => v.id === selectedVoucher?.id)
-                ? "Cập nhật Phiếu xuất"
-                : "Tạo Phiếu xuất mới"}
-            </DialogTitle>
-          </DialogHeader>
-          <OutboundForm
-            voucher={selectedVoucher}
-            onSubmit={handleFormSubmit}
-            onCancel={() => setIsFormOpen(false)}
-            viewMode={viewMode}
-          />
-        </DialogContent>
-      </Dialog>
-    </div>
+        <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+          <DialogContent className="max-w-6xl">
+            <DialogHeader>
+              <DialogTitle>
+                {viewMode
+                  ? `Chi tiết Phiếu xuất: ${selectedVoucher?.id}`
+                  : vouchers.some(v => v.id === selectedVoucher?.id)
+                  ? "Cập nhật Phiếu xuất"
+                  : "Tạo Phiếu xuất mới"}
+              </DialogTitle>
+            </DialogHeader>
+            <OutboundForm
+              voucher={selectedVoucher}
+              onSubmit={handleFormSubmit}
+              onCancel={() => setIsFormOpen(false)}
+              viewMode={viewMode}
+            />
+          </DialogContent>
+        </Dialog>
+      </div>
+    </TooltipProvider>
   );
 }
