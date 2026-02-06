@@ -1052,44 +1052,82 @@ export const biddingPackages: BiddingPackage[] = Array.from({ length: 25 }, (_, 
 });
 
 export const inboundReceipts: InboundReceipt[] = Array.from({ length: 25 }, (_, i) => {
-  const id = i + 1;
-  const types: InboundReceipt['inboundType'][] = ['Theo PO', 'Sau Sửa chữa', 'Hàng Mượn', 'Hoàn trả'];
-  const statuses: InboundReceipt['status'][] = ['Hoàn thành', 'Đang nhập', 'KCS & Hồ sơ', 'Yêu cầu nhập', 'Chờ xếp hàng'];
-  const material = materials[i % materials.length];
-  const status = statuses[i % statuses.length];
-  
-  const items: InboundReceiptItem[] = [
-      { 
-        id: `item-${id}-1`, 
-        materialCode: material.code, 
-        materialName: material.name, 
-        unit: material.unit,
-        orderedQuantity: 20, 
-        receivedQuantity: 0, 
-        receivingQuantity: 20, 
-        serialBatch: `SN-2025-${i}`, 
-        location: `A${id%5+1}-01-01`, 
+    const id = i + 1;
+    const types: InboundReceipt['inboundType'][] = ['Theo PO', 'Sau Sửa chữa', 'Hàng Mượn', 'Hoàn trả'];
+    const statuses: InboundReceipt['status'][] = ['Hoàn thành', 'Đang nhập', 'KCS & Hồ sơ', 'Yêu cầu nhập', 'Chờ xếp hàng'];
+    const status = statuses[i % statuses.length];
+
+    // Create a list of items for the receipt
+    const items: InboundReceiptItem[] = [];
+
+    // Add the first item
+    const material1 = materials[i % materials.length];
+    items.push({
+        id: `item-${id}-1`,
+        materialCode: material1.code,
+        materialName: material1.name,
+        unit: material1.unit,
+        orderedQuantity: 20,
+        receivedQuantity: 0,
+        receivingQuantity: 20,
+        serialBatch: `SN-2025-${id}-1`,
+        location: `A${id % 5 + 1}-01-01`,
         kcs: true,
-        actualLocation: status === 'Hoàn thành' ? `A${id%5+1}-01-01` : undefined,
-      },
-  ];
+        actualLocation: status === 'Hoàn thành' ? `A${id % 5 + 1}-01-01` : undefined,
+    });
 
-  const documents: InboundReceiptDocument[] = [
-      { id: `doc-${id}-1`, type: 'CO (Certificate of Origin)', fileName: `CO_NCC_${id}.pdf` },
-      { id: `doc-${id}-2`, type: 'CQ (Certificate of Quality)', fileName: `CQ_NCC_${id}.pdf` },
-  ];
+    // Add a second item for even-numbered receipts
+    if (i % 2 === 0) {
+        const material2 = materials[(i + 5) % materials.length];
+        items.push({
+            id: `item-${id}-2`,
+            materialCode: material2.code,
+            materialName: material2.name,
+            unit: material2.unit,
+            orderedQuantity: 15,
+            receivedQuantity: 0,
+            receivingQuantity: 15,
+            serialBatch: `BATCH-2025-${id}-2`,
+            location: `B${id % 3 + 1}-02-03`,
+            kcs: true,
+            actualLocation: status === 'Hoàn thành' ? `B${id % 3 + 1}-02-03` : undefined,
+        });
+    }
 
-  return {
-      id: `PNK-2025-${String(id).padStart(3, '0')}`,
-      inboundType: types[i % types.length],
-      reference: `PO-2025-${String(id + 9).padStart(2, '0')}`,
-      inboundDate: new Date(2025, i%6, id%28 + 1).toISOString(),
-      partner: suppliers[i % suppliers.length].name,
-      status: status,
-      step: (i % 4) + 1,
-      items: items,
-      documents: documents,
-  };
+    // Add a third item for receipts divisible by 5
+    if (i % 5 === 0) {
+        const material3 = materials[(i + 10) % materials.length];
+        items.push({
+            id: `item-${id}-3`,
+            materialCode: material3.code,
+            materialName: material3.name,
+            unit: material3.unit,
+            orderedQuantity: 5,
+            receivedQuantity: 0,
+            receivingQuantity: 5,
+            serialBatch: `SN-2025-${id}-3`,
+            location: `C1-01-05`,
+            kcs: true,
+            actualLocation: status === 'Hoàn thành' ? `C1-01-05` : undefined,
+        });
+    }
+
+    const documents: InboundReceiptDocument[] = [
+        { id: `doc-${id}-1`, type: 'CO (Certificate of Origin)', fileName: `CO_NCC_${id}.pdf` },
+        { id: `doc-${id}-2`, type: 'CQ (Certificate of Quality)', fileName: `CQ_NCC_${id}.pdf` },
+    ];
+
+    return {
+        id: `PNK-2025-${String(id).padStart(3, '0')}`,
+        inboundType: types[i % types.length],
+        reference: `PO-2025-${String(id + 9).padStart(2, '0')}`,
+        inboundDate: new Date(2025, i % 6, id % 28 + 1).toISOString(),
+        partner: suppliers[i % suppliers.length].name,
+        status: status,
+        step: (i % 4) + 1,
+        items: items,
+        documents: documents,
+    };
 });
 
 export const outboundVouchers: OutboundVoucher[] = Array.from({ length: 25 }, (_, i) => {
