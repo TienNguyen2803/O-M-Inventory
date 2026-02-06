@@ -218,7 +218,7 @@ export interface InboundReceiptItem {
   receivingQuantity: number;
   serialBatch: string;
   location: string;
-  actualLocation?: string;
+  putAwayLocations?: { location: string; quantity: number }[];
   kcs: boolean;
 }
 

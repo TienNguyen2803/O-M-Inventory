@@ -1073,7 +1073,10 @@ export const inboundReceipts: InboundReceipt[] = Array.from({ length: 25 }, (_, 
         serialBatch: `SN-2025-${id}-1`,
         location: `A${id % 5 + 1}-01-01`,
         kcs: true,
-        actualLocation: status === 'Hoàn thành' ? `A${id % 5 + 1}-01-01` : undefined,
+        putAwayLocations: status === 'Hoàn thành' ? [
+            { location: `A${id % 5 + 1}-01-01`, quantity: 15 },
+            { location: `A${id % 5 + 1}-01-02`, quantity: 5 }
+        ] : undefined,
     });
 
     // Add a second item for even-numbered receipts
@@ -1090,7 +1093,7 @@ export const inboundReceipts: InboundReceipt[] = Array.from({ length: 25 }, (_, 
             serialBatch: `BATCH-2025-${id}-2`,
             location: `B${id % 3 + 1}-02-03`,
             kcs: true,
-            actualLocation: status === 'Hoàn thành' ? `B${id % 3 + 1}-02-03` : undefined,
+            putAwayLocations: status === 'Hoàn thành' ? [{ location: `B${id % 3 + 1}-02-03`, quantity: 15 }] : undefined,
         });
     }
 
@@ -1108,7 +1111,7 @@ export const inboundReceipts: InboundReceipt[] = Array.from({ length: 25 }, (_, 
             serialBatch: `SN-2025-${id}-3`,
             location: `C1-01-05`,
             kcs: true,
-            actualLocation: status === 'Hoàn thành' ? `C1-01-05` : undefined,
+            putAwayLocations: status === 'Hoàn thành' ? [{ location: `C1-01-05`, quantity: 5 }] : undefined,
         });
     }
 
