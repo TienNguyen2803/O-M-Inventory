@@ -28,6 +28,8 @@ import {
   ClipboardPaste,
   Archive,
   ScanLine,
+  PackageSearch,
+  Truck,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -77,6 +79,8 @@ const navItems = [
       { href: "/put-away", label: "Xếp hàng vào kho", icon: Archive },
       { href: "/quick-store", label: "Cất hàng nhanh", icon: ScanLine },
       { href: "/outbound", label: "Xuất kho (Outbound)", icon: ArrowUpFromLine },
+      { href: "/picking", label: "Lấy hàng (Picking)", icon: PackageSearch },
+      { href: "/quick-issue", label: "Xuất khẩn cấp", icon: Truck },
       { href: "/stock-take", label: "Kiểm kê (Stock Take)", icon: ClipboardList },
       { href: "/lifecycle", label: "Truy vết Vòng đời", icon: History },
       { href: "/goods-history", label: "Lịch sử hàng hóa", icon: ClipboardPaste },
