@@ -1,15 +1,17 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
-import type { OutboundVoucher } from "@/lib/types";
+import { useState, useCallback, useEffect, useMemo } from "react";
+import type { OutboundVoucher, OutboundVoucherItem, WarehouseLocation } from "@/lib/types";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Search, Loader2, Save } from "lucide-react";
+import { Search, Loader2, Save, MapPin } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { useSearchParams } from "next/navigation";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { WarehouseMap } from "./warehouse-map";
 
 const Breadcrumbs = () => (
   <div className="text-sm text-muted-foreground mb-1">
@@ -19,13 +21,16 @@ const Breadcrumbs = () => (
   </div>
 );
 
-export function PickingClient({ initialVouchers }: { initialVouchers: OutboundVoucher[] }) {
+export function PickingClient({ initialVouchers, allLocations }: { initialVouchers: OutboundVoucher[], allLocations: WarehouseLocation[] }) {
     const [searchQuery, setSearchQuery] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [currentVoucher, setCurrentVoucher] = useState<OutboundVoucher | null>(null);
     const [vouchers, setVouchers] = useState<OutboundVoucher[]>(initialVouchers);
     const { toast } = useToast();
     const searchParams = useSearchParams();
+
+    const [mapDialogOpen, setMapDialogOpen] = useState(false);
+    const [mapViewItem, setMapViewItem] = useState<OutboundVoucherItem | null>(null);
 
     const handleSearch = useCallback((query: string) => {
         if (!query) {
@@ -96,6 +101,32 @@ export function PickingClient({ initialVouchers }: { initialVouchers: OutboundVo
         });
     };
 
+    const handleOpenMap = (item: OutboundVoucherItem) => {
+        setMapViewItem(item);
+        setMapDialogOpen(true);
+    };
+
+    const handleLocationSelect = (locationCode: string) => {
+        if (!currentVoucher || !mapViewItem) return;
+
+        const updatedItems = currentVoucher.items?.map(item =>
+        item.id === mapViewItem.id
+            ? { ...item, pickLocationSuggestion: locationCode }
+            : item
+        );
+
+        setCurrentVoucher({ ...currentVoucher, items: updatedItems });
+        setMapDialogOpen(false);
+    };
+  
+    const highlightedCodes = useMemo(() => {
+        if (!mapViewItem) return [];
+        return allLocations
+        .filter(loc => loc.items?.some(item => item.materialCode === mapViewItem.materialCode))
+        .map(loc => loc.code);
+    }, [allLocations, mapViewItem]);
+
+
     return (
         <div className="space-y-4">
             <PageHeader
@@ -160,7 +191,10 @@ export function PickingClient({ initialVouchers }: { initialVouchers: OutboundVo
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             <div>
                                                 <label className="text-xs font-semibold text-muted-foreground">Vị trí lấy hàng (gợi ý)</label>
-                                                <p className="font-semibold text-primary">{item.pickLocationSuggestion}</p>
+                                                 <Button variant="link" className="font-semibold text-primary p-0 h-auto text-base flex justify-start w-full" onClick={() => handleOpenMap(item)}>
+                                                    {item.pickLocationSuggestion}
+                                                    <MapPin className="ml-2 h-4 w-4" />
+                                                </Button>
                                             </div>
                                             <div>
                                                  <label className="text-sm font-medium" htmlFor={`issued-qty-${item.id}`}>Số lượng thực tế</label>
@@ -201,6 +235,21 @@ export function PickingClient({ initialVouchers }: { initialVouchers: OutboundVo
                     </CardContent>
                 </Card>
             )}
+             <Dialog open={mapDialogOpen} onOpenChange={setMapDialogOpen}>
+                <DialogContent className="max-w-4xl">
+                    <DialogHeader>
+                        <DialogTitle>Chọn vị trí lấy hàng cho: {mapViewItem?.materialName}</DialogTitle>
+                    </DialogHeader>
+                    {mapViewItem && (
+                         <WarehouseMap
+                            locations={allLocations}
+                            highlightedCodes={highlightedCodes}
+                            selectedCode={mapViewItem.pickLocationSuggestion}
+                            onSelect={handleLocationSelect}
+                        />
+                    )}
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

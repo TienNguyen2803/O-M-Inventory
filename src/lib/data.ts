@@ -549,7 +549,16 @@ export const warehouseLocations: WarehouseLocation[] = [
   { id: 'wh-2', code: 'A1-01-02', name: 'Kệ 01 - Tầng 2 - Dãy A', area: 'Khu A', type: 'Kệ Pallet', status: 'Active', items: warehouseItems2 },
   { id: 'wh-3', code: 'A1-01-03', name: 'Kệ 01 - Tầng 3 - Dãy A', area: 'Khu A', type: 'Kệ Pallet', status: 'Active', items: [] },
   { id: 'wh-4', code: 'A1-02-01', name: 'Kệ 02 - Tầng 1 - Dãy A', area: 'Khu A', type: 'Kệ Pallet', status: 'Inactive', items: [] },
-  { id: 'wh-5', code: 'A1-02-02', name: 'Kệ 02 - Tầng 2 - Dãy A', area: 'Khu A', type: 'Kệ Pallet', status: 'Active', items: [] },
+  { id: 'wh-5', code: 'A1-02-02', name: 'Kệ 02 - Tầng 2 - Dãy A', area: 'Khu A', type: 'Kệ Pallet', status: 'Active', items: [
+      {
+        materialId: "mat-001",
+        materialCode: "PM-ELEC-GT-001",
+        materialName: "Card điều khiển Tuabin khí Siemens SGT5-4000F",
+        quantity: 1,
+        unit: "Cái",
+        batchSerial: "SN-CARD-001C",
+      }
+  ] },
   { id: 'wh-6', code: 'B1-01-01', name: 'Kệ 01 - Tầng 1 - Dãy B', area: 'Khu B', type: 'Kệ Trung Tải', status: 'Active', items: [] },
   { id: 'wh-7', code: 'B1-01-02', name: 'Kệ 01 - Tầng 2 - Dãy B', area: 'Khu B', type: 'Kệ Trung Tải', status: 'Active', items: [] },
   { id: 'wh-8', code: 'B1-02-01', name: 'Kệ 02 - Tầng 1 - Dãy B', area: 'Khu B', type: 'Kệ Trung Tải', status: 'Active', items: [] },
@@ -1139,6 +1148,16 @@ export const outboundVouchers: OutboundVoucher[] = Array.from({ length: 25 }, (_
     const statuses: OutboundVoucher['status'][] = ['Đã xuất', 'Chờ xuất', 'Đã hủy', 'Đang soạn hàng'];
     const materialRequest = materialRequests[i];
 
+    const findLocationForMaterial = (materialId: string): string => {
+        for (const location of warehouseLocations) {
+            const itemInLocation = location.items?.find(item => item.materialId === materialId);
+            if (itemInLocation) {
+                return `${location.code}`;
+            }
+        }
+        return `N/A`;
+    }
+
     return {
         id: `PXK-2025-${String(id).padStart(3, '0')}`,
         purpose: purposes[i % purposes.length],
@@ -1157,7 +1176,7 @@ export const outboundVouchers: OutboundVoucher[] = Array.from({ length: 25 }, (_
             unit: item.unit,
             requestedQuantity: item.requestedQuantity,
             issuedQuantity: item.requestedQuantity,
-            pickLocationSuggestion: `Khu A-${index + 1} (Tồn: ${item.stock})`,
+            pickLocationSuggestion: findLocationForMaterial(item.materialId),
             actualSerial: index % 2 === 0 ? `Lô ${2023 + index}` : `-`
         })),
     };

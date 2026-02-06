@@ -1,7 +1,8 @@
-import { getOutboundVouchers } from "@/lib/data";
+import { getOutboundVouchers, getWarehouseLocations } from "@/lib/data";
 import { PickingClient } from "./_components/picking-client";
 
 export default async function PickingPage() {
     const vouchers = await getOutboundVouchers();
-    return <PickingClient initialVouchers={vouchers} />;
+    const locations = await getWarehouseLocations();
+    return <PickingClient initialVouchers={vouchers} allLocations={locations} />;
 }
