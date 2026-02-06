@@ -283,10 +283,6 @@ export function PickingClient({ initialVouchers, allLocations }: { initialVouche
                                                     {item.materialCode} | Y/C: <span className="font-bold text-foreground">{item.requestedQuantity} {item.unit}</span>
                                                 </CardDescription>
                                             </div>
-                                            <Button variant="link" className="font-semibold text-primary p-0 h-auto text-base flex items-center gap-1" onClick={() => handleOpenMap(item)}>
-                                                Xem vị trí
-                                                <MapPin className="h-4 w-4" />
-                                            </Button>
                                         </div>
                                     </CardHeader>
                                     <CardContent className="p-4 space-y-2">
@@ -296,7 +292,24 @@ export function PickingClient({ initialVouchers, allLocations }: { initialVouche
                                                     <div className="flex flex-wrap items-end gap-2">
                                                         <div className="flex-grow space-y-1" style={{minWidth: '150px'}}>
                                                             <Label htmlFor={`loc-${item.id}-${index}`} className="text-xs">Vị trí lấy</Label>
-                                                            <Input id={`loc-${item.id}-${index}`} value={pick.location} onChange={(e) => handleSplitChange(item.id, index, 'location', e.target.value)} placeholder="Quét hoặc nhập vị trí..."/>
+                                                            <div className="relative">
+                                                                <Input 
+                                                                    id={`loc-${item.id}-${index}`} 
+                                                                    value={pick.location} 
+                                                                    onChange={(e) => handleSplitChange(item.id, index, 'location', e.target.value)} 
+                                                                    placeholder="Quét hoặc nhập vị trí..."
+                                                                    className="pr-10"
+                                                                />
+                                                                <Button 
+                                                                    type="button" 
+                                                                    variant="ghost" 
+                                                                    size="icon" 
+                                                                    className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 text-muted-foreground hover:text-primary"
+                                                                    onClick={() => handleOpenMap(item)}
+                                                                >
+                                                                    <MapPin className="h-4 w-4" />
+                                                                </Button>
+                                                            </div>
                                                         </div>
                                                         <div className="space-y-1" style={{width: '90px'}}>
                                                             <Label htmlFor={`qty-${item.id}-${index}`} className="text-xs">Số lượng</Label>
