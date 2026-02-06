@@ -303,38 +303,29 @@ export function PickingClient({ initialVouchers, allLocations }: { initialVouche
                                     <CardContent className="p-4 space-y-2">
                                         <div className="flex flex-col gap-4">
                                             {item.pickLocations?.map((pick, index) => (
-                                                <div key={index} className="grid grid-cols-[1fr_120px_1fr_auto] items-end gap-2 border-t pt-4 first:border-t-0 first:pt-0">
-                                                    <div className="space-y-1">
-                                                        {index === 0 && <Label htmlFor={`loc-${item.id}-${index}`} className="text-xs">Vị trí lấy</Label>}
-                                                        <div className="relative">
-                                                            <Input 
-                                                                id={`loc-${item.id}-${index}`} 
-                                                                value={pick.location} 
-                                                                onChange={(e) => handleSplitChange(item.id, index, 'location', e.target.value)} 
-                                                                placeholder="Quét hoặc nhập vị trí..."
-                                                                className="pr-10"
-                                                            />
-                                                            <Button 
-                                                                type="button" 
-                                                                variant="ghost" 
-                                                                size="icon" 
-                                                                className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 text-muted-foreground hover:text-primary"
-                                                                onClick={() => handleOpenMap(item)}
-                                                            >
-                                                                <MapPin className="h-4 w-4" />
-                                                            </Button>
-                                                        </div>
+                                                <div key={index} className="grid grid-cols-[1fr_120px_1fr_auto] items-end gap-2">
+                                                    <div className="relative">
+                                                        <Input 
+                                                            id={`loc-${item.id}-${index}`} 
+                                                            value={pick.location} 
+                                                            onChange={(e) => handleSplitChange(item.id, index, 'location', e.target.value)} 
+                                                            placeholder="Quét hoặc nhập vị trí..."
+                                                            className="pr-10"
+                                                        />
+                                                        <Button 
+                                                            type="button" 
+                                                            variant="ghost" 
+                                                            size="icon" 
+                                                            className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 text-muted-foreground hover:text-primary"
+                                                            onClick={() => handleOpenMap(item)}
+                                                        >
+                                                            <MapPin className="h-4 w-4" />
+                                                        </Button>
                                                     </div>
-                                                    <div className="space-y-1">
-                                                        {index === 0 && <Label htmlFor={`qty-${item.id}-${index}`} className="text-xs">Số lượng</Label>}
-                                                        <Input id={`qty-${item.id}-${index}`} type="number" value={pick.quantity}  onChange={(e) => handleSplitChange(item.id, index, 'quantity', e.target.value)} />
-                                                    </div>
-                                                    <div className="space-y-1">
-                                                        {index === 0 && <Label htmlFor={`ser-${item.id}-${index}`} className="text-xs">Serial/Batch</Label>}
-                                                        <div className="relative">
-                                                            <Input id={`ser-${item.id}-${index}`} value={pick.serial} onChange={(e) => handleSplitChange(item.id, index, 'serial', e.target.value)} placeholder="Quét hoặc nhập serial..." className="pl-8"/>
-                                                            <ScanLine className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                                                        </div>
+                                                    <Input id={`qty-${item.id}-${index}`} type="number" value={pick.quantity}  onChange={(e) => handleSplitChange(item.id, index, 'quantity', e.target.value)} />
+                                                    <div className="relative">
+                                                        <Input id={`ser-${item.id}-${index}`} value={pick.serial} onChange={(e) => handleSplitChange(item.id, index, 'serial', e.target.value)} placeholder="Quét hoặc nhập serial..." className="pl-8"/>
+                                                        <ScanLine className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                                                     </div>
                                                     <Button variant="ghost" size="icon" onClick={() => handleRemoveSplit(item.id, index)} disabled={currentVoucher.status === 'Đã xuất' || (item.pickLocations && item.pickLocations.length <= 1)}>
                                                         <Trash2 className="h-4 w-4 text-destructive"/>
@@ -343,9 +334,8 @@ export function PickingClient({ initialVouchers, allLocations }: { initialVouche
                                             ))}
                                         </div>
                                         {currentVoucher.status !== 'Đã xuất' && (
-                                            <div className="flex items-center justify-between mt-4 border-t pt-4">
+                                            <div className="flex items-center justify-between mt-4">
                                                 <Button 
-                                                    variant="outline" 
                                                     size="sm" 
                                                     onClick={() => handleAddSplit(item.id)}
                                                     disabled={item.requestedQuantity <= 1}
