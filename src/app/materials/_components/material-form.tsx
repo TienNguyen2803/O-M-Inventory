@@ -4,7 +4,7 @@ import * as React from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { Globe, Pencil, QrCode, Save, Loader2 } from "lucide-react";
+import { Globe, Pencil, QrCode, Save, Loader2, ScanLine } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
