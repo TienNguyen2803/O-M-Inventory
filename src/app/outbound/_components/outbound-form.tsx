@@ -39,7 +39,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { DialogFooter } from "@/components/ui/dialog";
-import { CalendarIcon, Save, Check, Printer } from "lucide-react";
+import { CalendarIcon, Save, Check, Printer, ScanLine } from "lucide-react";
 import type { OutboundVoucher } from "@/lib/types";
 
 const formSchema = z.object({
@@ -270,7 +270,17 @@ export function OutboundForm({
                     <TableCell><Input type="number" {...form.register(`items.${index}.issuedQuantity`)} disabled={viewMode} className="w-20 text-right"/></TableCell>
                     <TableCell>{item.unit}</TableCell>
                     <TableCell>{item.pickLocationSuggestion}</TableCell>
-                    <TableCell><Input {...form.register(`items.${index}.actualSerial`)} disabled={viewMode} /></TableCell>
+                    <TableCell className="p-1">
+                      <div className="relative">
+                        <Input
+                          {...form.register(`items.${index}.actualSerial`)}
+                          disabled={viewMode}
+                          placeholder="Quét hoặc nhập..."
+                          className="pl-8"
+                        />
+                        <ScanLine className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      </div>
+                    </TableCell>
                   </TableRow>
                 ))}
                  {fields.length === 0 && (
