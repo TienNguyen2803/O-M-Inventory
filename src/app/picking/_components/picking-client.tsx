@@ -303,7 +303,7 @@ export function PickingClient({ initialVouchers, allLocations }: { initialVouche
                                     <CardContent className="p-4 space-y-2">
                                         <div className="flex flex-col gap-2">
                                             {item.pickLocations?.map((pick, index) => (
-                                                <div key={index} className="space-y-2 rounded-md border p-2 bg-background">
+                                                <div key={index} className="space-y-2 rounded-md border p-2">
                                                     <div className="flex flex-wrap items-end gap-2">
                                                         <div className="flex-grow space-y-1" style={{minWidth: '150px'}}>
                                                             <Label htmlFor={`loc-${item.id}-${index}`} className="text-xs">Vị trí lấy</Label>
@@ -349,7 +349,7 @@ export function PickingClient({ initialVouchers, allLocations }: { initialVouche
                                         {currentVoucher.status !== 'Đã xuất' && (
                                             <div className="flex items-center justify-between mt-2">
                                                 <Button 
-                                                    variant="outline" 
+                                                    variant="secondary" 
                                                     size="sm" 
                                                     onClick={() => handleAddSplit(item.id)}
                                                     disabled={item.requestedQuantity <= 1}
