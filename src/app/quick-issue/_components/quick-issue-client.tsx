@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import type { Material, WarehouseLocation } from "@/lib/types";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Search, Loader2, Save, MapPin, XCircle, Truck, ScanLine } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { WarehouseMap } from "./warehouse-map";
 
 const Breadcrumbs = () => (
   <div className="text-sm text-muted-foreground mb-1">
@@ -39,6 +41,7 @@ export function QuickIssueClient({ materials, locations }: { materials: Material
   const [isLoading, setIsLoading] = useState(false);
   const [foundMaterial, setFoundMaterial] = useState<Material | null>(null);
   const [issueLog, setIssueLog] = useState<QuickIssueLog[]>([]);
+  const [isMapOpen, setMapOpen] = useState(false);
 
   const { toast } = useToast();
 
@@ -111,6 +114,20 @@ export function QuickIssueClient({ materials, locations }: { materials: Material
       setQuantity(1);
       setReason("");
   }
+  
+  const handleLocationSelect = (locationCode: string) => {
+    setLocationScanInput(locationCode);
+    setMapOpen(false);
+  };
+  
+  const highlightedLocations = useMemo(() => {
+    if (!foundMaterial) {
+      return [];
+    }
+    return locations
+      .filter(loc => loc.items?.some(item => item.materialId === foundMaterial.id))
+      .map(loc => loc.code);
+  }, [foundMaterial, locations]);
 
   return (
     <div className="space-y-4 max-w-4xl mx-auto">
@@ -164,11 +181,20 @@ export function QuickIssueClient({ materials, locations }: { materials: Material
                         <ScanLine className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                         <Input
                             type="text"
-                            placeholder="Quét hoặc nhập mã vị trí (bin code)..."
+                            placeholder="Quét, nhập hoặc chọn vị trí..."
                             value={locationScanInput}
                             onChange={(e) => setLocationScanInput(e.target.value)}
-                            className="pl-10"
+                            className="pl-10 pr-10"
                         />
+                         <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 text-muted-foreground hover:text-primary"
+                            onClick={() => setMapOpen(true)}
+                         >
+                            <MapPin className="h-4 w-4" />
+                         </Button>
                       </div>
                   </div>
                   <div className="space-y-2">
@@ -240,6 +266,19 @@ export function QuickIssueClient({ materials, locations }: { materials: Material
             </Table>
         </CardContent>
       </Card>
+      <Dialog open={isMapOpen} onOpenChange={setMapOpen}>
+        <DialogContent className="max-w-4xl">
+            <DialogHeader>
+                <DialogTitle>Chọn vị trí lấy hàng cho: {foundMaterial?.name}</DialogTitle>
+                <DialogDescription>Các vị trí có chứa vật tư đang chọn sẽ được làm nổi bật.</DialogDescription>
+            </DialogHeader>
+            <WarehouseMap
+                locations={locations}
+                highlightedCodes={highlightedLocations}
+                onSelect={handleLocationSelect}
+            />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
