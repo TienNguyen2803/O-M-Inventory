@@ -1,15 +1,17 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import type { InboundReceipt, InboundReceiptItem } from "@/lib/types";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import type { InboundReceipt, InboundReceiptItem, WarehouseLocation } from "@/lib/types";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Search, Loader2, Save, Plus, Trash2, ScanLine } from "lucide-react";
+import { Search, Loader2, Save, Plus, Trash2, ScanLine, MapPin } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { useSearchParams } from "next/navigation";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { WarehouseMap } from "./warehouse-map";
 
 const Breadcrumbs = () => (
   <div className="text-sm text-muted-foreground mb-1">
@@ -19,13 +21,16 @@ const Breadcrumbs = () => (
   </div>
 );
 
-export function PutAwayClient({ initialReceipts }: { initialReceipts: InboundReceipt[] }) {
+export function PutAwayClient({ initialReceipts, allLocations }: { initialReceipts: InboundReceipt[], allLocations: WarehouseLocation[] }) {
     const [searchQuery, setSearchQuery] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [currentTask, setCurrentTask] = useState<InboundReceipt | null>(null);
     const [receipts, setReceipts] = useState<InboundReceipt[]>(initialReceipts);
     const { toast } = useToast();
     const searchParams = useSearchParams();
+
+    const [isMapOpen, setMapOpen] = useState(false);
+    const [mapViewContext, setMapViewContext] = useState<{ itemId: string; splitIndex: number } | null>(null);
 
     const handleSearch = useCallback((query: string) => {
         if (!query) {
@@ -131,6 +136,21 @@ export function PutAwayClient({ initialReceipts }: { initialReceipts: InboundRec
         setCurrentTask({ ...currentTask, items: updatedItems });
     };
 
+    const handleOpenMap = (itemId: string, splitIndex: number) => {
+        setMapViewContext({ itemId, splitIndex });
+        setMapOpen(true);
+    };
+
+    const handleLocationSelect = (locationCode: string) => {
+        if (!currentTask || !mapViewContext) return;
+
+        handleSplitChange(mapViewContext.itemId, mapViewContext.splitIndex, 'location', locationCode);
+        setMapOpen(false);
+    };
+
+    const availableCodes = useMemo(() => {
+        return allLocations.filter(loc => loc.status === 'Active').map(loc => loc.code);
+    }, [allLocations]);
 
     const handleConfirmPutAway = () => {
         if (!currentTask || !currentTask.items) return;
@@ -269,12 +289,25 @@ export function PutAwayClient({ initialReceipts }: { initialReceipts: InboundRec
                                             <div className="flex flex-col gap-2 mt-2">
                                                 {item.putAwayLocations?.map((split, index) => (
                                                     <div key={index} className="grid grid-cols-[1fr_auto_auto] md:grid-cols-[1fr_100px_auto] items-center gap-2">
-                                                        <Input 
-                                                            value={split.location} 
-                                                            onChange={(e) => handleSplitChange(item.id, index, 'location', e.target.value)}
-                                                            placeholder="Quét hoặc nhập vị trí..."
-                                                            disabled={currentTask.status === 'Hoàn thành'}
-                                                        />
+                                                        <div className="relative">
+                                                            <Input
+                                                                value={split.location}
+                                                                onChange={(e) => handleSplitChange(item.id, index, 'location', e.target.value)}
+                                                                placeholder="Quét, nhập hoặc chọn vị trí..."
+                                                                disabled={currentTask.status === 'Hoàn thành'}
+                                                                className="pr-10"
+                                                            />
+                                                            <Button
+                                                                type="button"
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 text-muted-foreground hover:text-primary"
+                                                                onClick={() => handleOpenMap(item.id, index)}
+                                                                disabled={currentTask.status === 'Hoàn thành'}
+                                                            >
+                                                                <MapPin className="h-4 w-4" />
+                                                            </Button>
+                                                        </div>
                                                         <Input 
                                                             type="number"
                                                             value={split.quantity}
@@ -325,6 +358,19 @@ export function PutAwayClient({ initialReceipts }: { initialReceipts: InboundRec
                     </CardContent>
                 </Card>
             )}
+             <Dialog open={isMapOpen} onOpenChange={setMapOpen}>
+                <DialogContent className="max-w-4xl">
+                    <DialogHeader>
+                        <DialogTitle>Chọn vị trí cất hàng</DialogTitle>
+                        <DialogDescription>Các vị trí không khả dụng (đã đầy hoặc không hoạt động) sẽ bị làm mờ.</DialogDescription>
+                    </DialogHeader>
+                    <WarehouseMap
+                        locations={allLocations}
+                        availableCodes={availableCodes}
+                        onSelect={handleLocationSelect}
+                    />
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }
