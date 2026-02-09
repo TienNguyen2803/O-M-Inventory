@@ -389,7 +389,7 @@ export function PutAwayClient({ initialReceipts, allLocations }: { initialReceip
                         </div>
                         {currentTask.items && currentTask.items.length > 0 && currentTask.status !== 'Hoàn thành' && (
                            <div className="flex justify-end gap-2 mt-6">
-                                <Button variant="outline" onClick={handleSave}>
+                                <Button onClick={handleSave}>
                                     <Save className="mr-2 h-4 w-4"/>
                                     Lưu
                                 </Button>
