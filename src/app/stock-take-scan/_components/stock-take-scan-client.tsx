@@ -7,12 +7,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Loader2, XCircle, ScanLine, QrCode, CheckCircle, Warehouse, Package, Hash, X, Plus, ClipboardCheck } from "lucide-react";
+import { Loader2, XCircle, ScanLine, QrCode, CheckCircle, Warehouse, Package, Hash, X, Plus, ClipboardCheck, MapPin } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { WarehouseMap } from "./warehouse-map";
 
 const Breadcrumbs = () => (
   <div className="text-sm text-muted-foreground mb-1">
@@ -55,6 +57,7 @@ export function StockTakeScanClient({ allMaterials, allLocations }: StockTakeSca
   
   const [isLoading, setIsLoading] = useState(false);
   const [scanLog, setScanLog] = useState<ScanLog[]>([]);
+  const [isMapOpen, setIsMapOpen] = useState(false);
 
   const { toast } = useToast();
 
@@ -154,6 +157,15 @@ export function StockTakeScanClient({ allMaterials, allLocations }: StockTakeSca
     setCountedQuantity(1);
   };
   
+  const handleLocationSelect = (locationCode: string) => {
+    setLocationInput(locationCode);
+    setMapOpen(false);
+  };
+
+  const availableLocations = useMemo(() => {
+    return allLocations.filter(loc => loc.status === 'Active').map(loc => loc.code);
+  }, [allLocations]);
+  
   const renderStep = () => {
     switch (step) {
       case "location":
@@ -161,7 +173,7 @@ export function StockTakeScanClient({ allMaterials, allLocations }: StockTakeSca
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2"><Warehouse className="h-6 w-6 text-primary"/> Bước 1: Quét Vị trí kho</CardTitle>
-              <CardDescription>Bắt đầu bằng cách quét mã vạch hoặc QR code trên kệ hàng.</CardDescription>
+              <CardDescription>Bắt đầu bằng cách quét, nhập hoặc chọn vị trí trên bản đồ.</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="flex w-full items-center space-x-2">
@@ -169,13 +181,22 @@ export function StockTakeScanClient({ allMaterials, allLocations }: StockTakeSca
                       <ScanLine className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                       <Input
                           type="text"
-                          placeholder="Quét hoặc nhập mã vị trí..."
+                          placeholder="Quét, nhập hoặc chọn vị trí..."
                           value={locationInput}
                           onChange={(e) => setLocationInput(e.target.value)}
                           onKeyDown={(e) => e.key === 'Enter' && handleFindLocation()}
-                          className="pl-10"
+                          className="pl-10 pr-10"
                           autoFocus
                       />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 text-muted-foreground hover:text-primary"
+                        onClick={() => setIsMapOpen(true)}
+                      >
+                        <MapPin className="h-4 w-4" />
+                      </Button>
                   </div>
                   <Button onClick={handleFindLocation} disabled={isLoading || !locationInput}>
                     {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle className="mr-2 h-4 w-4" />}
@@ -351,6 +372,19 @@ export function StockTakeScanClient({ allMaterials, allLocations }: StockTakeSca
             </Table>
         </CardContent>
       </Card>
+      <Dialog open={isMapOpen} onOpenChange={setIsMapOpen}>
+        <DialogContent className="max-w-4xl">
+            <DialogHeader>
+                <DialogTitle>Chọn vị trí kiểm kê</DialogTitle>
+                <DialogDescription>Các vị trí đang hoạt động sẽ có thể được chọn.</DialogDescription>
+            </DialogHeader>
+            <WarehouseMap
+                locations={allLocations}
+                availableCodes={availableLocations}
+                onSelect={handleLocationSelect}
+            />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
