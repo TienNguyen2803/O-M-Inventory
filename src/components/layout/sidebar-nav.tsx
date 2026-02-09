@@ -30,6 +30,7 @@ import {
   ScanLine,
   PackageSearch,
   Truck,
+  QrCode,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -82,6 +83,7 @@ const navItems = [
       { href: "/picking", label: "Lấy hàng (Picking)", icon: PackageSearch },
       { href: "/quick-issue", label: "Xuất khẩn cấp", icon: Truck },
       { href: "/stock-take", label: "Kiểm kê (Stock Take)", icon: ClipboardList },
+      { href: "/stock-take-scan", label: "Kiểm kê (Scan)", icon: QrCode },
       { href: "/lifecycle", label: "Truy vết Vòng đời", icon: History },
       { href: "/goods-history", label: "Lịch sử hàng hóa", icon: ClipboardPaste },
     ],
