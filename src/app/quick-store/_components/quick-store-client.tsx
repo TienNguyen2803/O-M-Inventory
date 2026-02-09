@@ -192,12 +192,13 @@ ${material.name}` });
                   <div className="space-y-2">
                       <label className="text-sm font-medium">Bước 2: Quét vị trí cất hàng</label>
                       <div className="relative">
+                        <ScanLine className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                         <Input
                             type="text"
                             placeholder="Quét, nhập hoặc chọn mã vị trí"
                             value={locationScanInput}
                             onChange={(e) => setLocationScanInput(e.target.value)}
-                            className="pl-3 pr-10"
+                            className="pl-10 pr-10"
                         />
                          <Button
                             type="button"

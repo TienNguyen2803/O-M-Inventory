@@ -290,12 +290,13 @@ export function PutAwayClient({ initialReceipts, allLocations }: { initialReceip
                                                 {item.putAwayLocations?.map((split, index) => (
                                                     <div key={index} className="grid grid-cols-[1fr_auto_auto] md:grid-cols-[1fr_100px_auto] items-center gap-2">
                                                         <div className="relative">
+                                                            <ScanLine className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                                                             <Input
                                                                 value={split.location}
                                                                 onChange={(e) => handleSplitChange(item.id, index, 'location', e.target.value)}
                                                                 placeholder="Quét, nhập hoặc chọn vị trí..."
                                                                 disabled={currentTask.status === 'Hoàn thành'}
-                                                                className="pr-10"
+                                                                className="pl-10 pr-10"
                                                             />
                                                             <Button
                                                                 type="button"
