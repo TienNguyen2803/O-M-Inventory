@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
@@ -12,6 +13,16 @@ import { cn } from "@/lib/utils";
 import { useSearchParams } from "next/navigation";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { WarehouseMap } from "./warehouse-map";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const Breadcrumbs = () => (
   <div className="text-sm text-muted-foreground mb-1">
@@ -31,6 +42,7 @@ export function PutAwayClient({ initialReceipts, allLocations }: { initialReceip
 
     const [isMapOpen, setMapOpen] = useState(false);
     const [mapViewContext, setMapViewContext] = useState<{ itemId: string; splitIndex: number } | null>(null);
+    const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
 
     const handleSearch = useCallback((query: string) => {
         if (!query) {
@@ -151,29 +163,28 @@ export function PutAwayClient({ initialReceipts, allLocations }: { initialReceip
     const availableCodes = useMemo(() => {
         return allLocations.filter(loc => loc.status === 'Active').map(loc => loc.code);
     }, [allLocations]);
-
-    const handleConfirmPutAway = () => {
-        if (!currentTask || !currentTask.items) return;
-        
-        for (const item of currentTask.items) {
-            const totalSplitQuantity = item.putAwayLocations?.reduce((sum, split) => sum + split.quantity, 0) || 0;
-            if (totalSplitQuantity !== item.receivingQuantity) {
-                 toast({
-                    variant: "destructive",
-                    title: "Số lượng không khớp",
-                    description: `Tổng số lượng xếp kho cho mặt hàng "${item.materialName}" (${totalSplitQuantity}) không khớp với số lượng nhập (${item.receivingQuantity}).`,
-                });
-                return;
-            }
-            if (item.putAwayLocations?.some(split => !split.location.trim())) {
-                toast({
-                    variant: "destructive",
-                    title: "Chưa hoàn tất",
-                    description: `Vui lòng nhập vị trí cho tất cả các lần xếp kho của mặt hàng "${item.materialName}".`,
-                });
-                return;
-            }
+    
+    const isFullyShelved = useMemo(() => {
+        if (!currentTask || !currentTask.items || currentTask.status === 'Hoàn thành') {
+            return true; 
         }
+        return currentTask.items.every(item => {
+            const totalPutAway = item.putAwayLocations?.reduce((sum, p) => sum + p.quantity, 0) || 0;
+            return totalPutAway === item.receivingQuantity;
+        });
+    }, [currentTask]);
+
+    const handleSave = () => {
+        if (!currentTask) return;
+        setReceipts(receipts.map(r => r.id === currentTask.id ? currentTask : r));
+        toast({
+            title: "Đã lưu",
+            description: `Đã lưu tạm thời tiến độ xếp hàng cho phiếu ${currentTask.id}.`,
+        });
+    };
+
+    const executeFinalConfirmation = () => {
+        if (!currentTask) return;
 
         const updatedTask = { ...currentTask, status: 'Hoàn thành' as const };
         setReceipts(receipts.map(t => t.id === updatedTask.id ? updatedTask : t));
@@ -183,7 +194,37 @@ export function PutAwayClient({ initialReceipts, allLocations }: { initialReceip
             title: "Thành công",
             description: `Đã hoàn tất xếp hàng cho phiếu ${currentTask.id}.`,
         });
+        setIsConfirmDialogOpen(false);
     };
+
+    const handleConfirmPutAway = () => {
+        if (!currentTask || !currentTask.items) return;
+        
+        const isPartiallyShelved = currentTask.items.some(item => {
+            const totalSplitQuantity = item.putAwayLocations?.reduce((sum, split) => sum + split.quantity, 0) || 0;
+            return totalSplitQuantity !== item.receivingQuantity;
+        });
+
+        const hasEmptyLocation = currentTask.items.some(item => 
+            item.putAwayLocations?.some(p => !p.location.trim())
+        );
+
+        if (hasEmptyLocation) {
+            toast({
+                variant: "destructive",
+                title: "Thiếu thông tin",
+                description: "Vui lòng nhập vị trí cho tất cả các lần xếp kho.",
+            });
+            return;
+        }
+
+        if (isPartiallyShelved) {
+            setIsConfirmDialogOpen(true);
+        } else {
+            executeFinalConfirmation();
+        }
+    };
+
 
     const AllocatedSummary = ({ item }: { item: InboundReceiptItem }) => {
         const allocated = item.putAwayLocations?.reduce((sum, s) => sum + s.quantity, 0) || 0;
@@ -214,19 +255,17 @@ export function PutAwayClient({ initialReceipts, allLocations }: { initialReceip
 
             <Card>
                 <CardContent className="pt-6">
-                    <div className="flex w-full items-center space-x-2">
-                        <div className="relative flex-grow">
-                            <ScanLine className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                            <Input
-                                type="text"
-                                placeholder="Nhập hoặc quét mã Phiếu nhập kho (PNK)..."
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                onKeyDown={(e) => e.key === 'Enter' && handleSearchButtonClick()}
-                                className="pl-10"
-                            />
-                        </div>
-                        <Button onClick={handleSearchButtonClick} disabled={isLoading}>
+                    <div className="relative flex w-full items-center space-x-2">
+                        <ScanLine className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                        <Input
+                            type="text"
+                            placeholder="Nhập hoặc quét mã Phiếu nhập kho (PNK)..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            onKeyDown={(e) => e.key === 'Enter' && handleSearchButtonClick()}
+                            className="flex-grow pl-10"
+                        />
+                        <Button onClick={handleSearchButtonClick} disabled={isLoading} className="shrink-0">
                             {isLoading ? (
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                             ) : (
@@ -349,10 +388,13 @@ export function PutAwayClient({ initialReceipts, allLocations }: { initialReceip
                             )}
                         </div>
                         {currentTask.items && currentTask.items.length > 0 && currentTask.status !== 'Hoàn thành' && (
-                            <div className="flex justify-end mt-6">
-                                <Button onClick={handleConfirmPutAway} size="lg">
+                           <div className="flex justify-end gap-2 mt-6">
+                                <Button variant="outline" onClick={handleSave}>
                                     <Save className="mr-2 h-4 w-4"/>
-                                    Xác nhận Xếp hàng Toàn bộ Phiếu
+                                    Lưu
+                                </Button>
+                                <Button onClick={handleConfirmPutAway} disabled={isFullyShelved}>
+                                    Xác nhận xếp hàng toàn bộ phiếu
                                 </Button>
                             </div>
                         )}
@@ -372,6 +414,23 @@ export function PutAwayClient({ initialReceipts, allLocations }: { initialReceip
                     />
                 </DialogContent>
             </Dialog>
+            <AlertDialog open={isConfirmDialogOpen} onOpenChange={setIsConfirmDialogOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                    <AlertDialogTitle>Cảnh báo: Hàng chưa được xếp hết</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        Một hoặc nhiều mặt hàng chưa được xếp đủ số lượng vào kho. Việc xác nhận sẽ hoàn tất phiếu nhập này và có thể gây chênh lệch tồn kho.
+                        <br/><br/>
+                        Bạn có chắc chắn muốn tiếp tục?
+                    </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                    <AlertDialogCancel>Hủy</AlertDialogCancel>
+                    <AlertDialogAction onClick={executeFinalConfirmation} className="bg-destructive hover:bg-destructive/90">Vẫn xác nhận</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }
+
