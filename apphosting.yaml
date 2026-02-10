@@ -1,7 +1,21 @@
 # Settings to manage and configure a Firebase App Hosting backend.
 # https://firebase.google.com/docs/app-hosting/configure
 
+# Recommended configuration for up to 200 concurrent users.
+# This configuration balances performance and cost, ensuring a smooth
+# experience by keeping at least one instance warm and allowing scaling
+# up to 10 instances during peak traffic.
 runConfig:
-  # Increase this value if you'd like to automatically spin up
-  # more instances in response to increased traffic.
-  maxInstances: 1
+  cpu: 2
+  memoryMiB: 2048
+  minInstances: 1
+  maxInstances: 10
+
+# Minimum configuration for up to 200 concurrent users.
+# This is a more cost-effective option, but may result in slower
+# response times during initial user access (cold starts).
+#
+# runConfig:
+#   cpu: 1
+#   memoryMiB: 1024
+#   maxInstances: 5
