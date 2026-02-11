@@ -31,6 +31,7 @@ import {
   PackageSearch,
   Truck,
   QrCode,
+  Wrench, // Import the Wrench icon
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -84,6 +85,7 @@ const navItems = [
       { href: "/quick-issue", label: "Xuất khẩn cấp", icon: Truck },
       { href: "/stock-take", label: "Kiểm kê (Stock Take)", icon: ClipboardList },
       { href: "/stock-take-scan", label: "Kiểm kê (Scan)", icon: QrCode },
+      { href: "/repair-management", label: "Quản lý Sửa chữa", icon: Wrench },
       { href: "/lifecycle", label: "Truy vết Vòng đời", icon: History },
       { href: "/goods-history", label: "Lịch sử hàng hóa", icon: ClipboardPaste },
     ],
