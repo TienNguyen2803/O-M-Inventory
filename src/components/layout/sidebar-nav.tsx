@@ -73,6 +73,7 @@ const navItems = [
       { href: "/materials", label: "Danh mục Vật tư", icon: Package },
       { href: "/warehouses", label: "Danh mục Kho", icon: Warehouse },
       { href: "/suppliers", label: "Nhà cung cấp", icon: Users },
+      { href: "/other-categories", label: "Các danh mục khác", icon: Archive },
     ],
   },
   {

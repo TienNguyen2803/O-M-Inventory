@@ -317,3 +317,15 @@ export interface ActivityLog {
   };
   details: string;
 }
+
+export interface MasterDataItem {
+  id: string;
+  value: string;
+}
+
+export interface MasterDataCategory {
+  id: string;
+  name: string;
+  description: string;
+  items: MasterDataItem[];
+}

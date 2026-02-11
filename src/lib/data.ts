@@ -1,4 +1,4 @@
-import type { Material, InventoryLog, WarehouseLocation, WarehouseItem, Supplier, MaterialRequest, MaterialRequestItem, PurchaseRequest, PurchaseRequestItem, BiddingPackage, BiddingItem, BiddingResult, InboundReceipt, InboundReceiptItem, InboundReceiptDocument, OutboundVoucher, OutboundVoucherItem, StockTake, StockTakeResult, User, Role, ActivityLog, GoodsHistoryEvent, OutboundVoucherPick } from "./types";
+import type { Material, InventoryLog, WarehouseLocation, WarehouseItem, Supplier, MaterialRequest, MaterialRequestItem, PurchaseRequest, PurchaseRequestItem, BiddingPackage, BiddingItem, BiddingResult, InboundReceipt, InboundReceiptItem, InboundReceiptDocument, OutboundVoucher, OutboundVoucherItem, StockTake, StockTakeResult, User, Role, ActivityLog, GoodsHistoryEvent, OutboundVoucherPick, MasterDataCategory } from "./types";
 
 export const materials: Material[] = [
   {
@@ -1328,6 +1328,123 @@ roles[0].permissions = Object.entries(allPermissions).reduce((acc, [group, perms
   return acc;
 }, {} as Role['permissions']);
 
+export const masterDataCategories: MasterDataCategory[] = [
+    {
+        id: 'units',
+        name: 'Đơn vị tính',
+        description: 'Đơn vị tính cho vật tư, hàng hóa.',
+        items: [
+            { id: 'unit-1', value: 'Cái' },
+            { id: 'unit-2', value: 'Hộp' },
+            { id: 'unit-3', value: 'Kg' },
+            { id: 'unit-4', value: 'Lít' },
+            { id: 'unit-5', value: 'Mét' },
+            { id: 'unit-6', value: 'Đôi' },
+            { id: 'unit-7', value: 'Viên' },
+            { id: 'unit-8', value: 'Bịch' },
+            { id: 'unit-9', value: 'Bộ' },
+            { id: 'unit-10', value: 'Sợi' },
+        ]
+    },
+    {
+        id: 'material-status',
+        name: 'Trạng thái vật tư',
+        description: 'Trạng thái chất lượng và sử dụng của vật tư.',
+        items: [
+            { id: 'mat-status-1', value: 'Mới' },
+            { id: 'mat-status-2', value: 'Cũ nhưng dùng được' },
+            { id: 'mat-status-3', value: 'Hư hỏng' },
+            { id: 'mat-status-4', value: 'Hư hỏng không thể sửa chữa' },
+            { id: 'mat-status-5', value: 'Thanh lý' },
+        ]
+    },
+    {
+        id: 'countries',
+        name: 'Quốc gia',
+        description: 'Danh sách các quốc gia xuất xứ hoặc của nhà cung cấp.',
+        items: [
+            { id: 'country-1', value: 'Việt Nam' },
+            { id: 'country-2', value: 'USA' },
+            { id: 'country-3', value: 'Germany' },
+            { id: 'country-4', value: 'Japan' },
+            { id: 'country-5', value: 'Switzerland' },
+            { id: 'country-6', value: 'France' },
+            { id: 'country-7', value: 'Denmark' },
+            { id: 'country-8', value: 'Trung Quốc' },
+            { id: 'country-9', value: 'Hàn Quốc' },
+        ]
+    },
+    {
+        id: 'supplier-types',
+        name: 'Loại hình NCC',
+        description: 'Phân loại nhà cung cấp (OEM, nhà phân phối, v.v.).',
+        items: [
+            { id: 'sup-type-1', value: 'OEM' },
+            { id: 'sup-type-2', value: 'Distributor' },
+            { id: 'sup-type-3', value: 'Manufacturer' },
+            { id: 'sup-type-4', value: 'Agent' },
+        ]
+    },
+    {
+        id: 'payment-terms',
+        name: 'Điều khoản thanh toán',
+        description: 'Các điều khoản thanh toán áp dụng với NCC.',
+        items: [
+            { id: 'pay-term-1', value: 'Net 30' },
+            { id: 'pay-term-2', value: 'Net 45' },
+            { id: 'pay-term-3', value: 'Net 60' },
+            { id: 'pay-term-4', value: 'COD' },
+        ]
+    },
+    {
+        id: 'currencies',
+        name: 'Tiền tệ',
+        description: 'Các loại tiền tệ được sử dụng trong giao dịch.',
+        items: [
+            { id: 'curr-1', value: 'VND' },
+            { id: 'curr-2', value: 'USD' },
+            { id: 'curr-3', value: 'EUR' },
+            { id: 'curr-4', value: 'JPY' },
+            { id: 'curr-5', value: 'CHF' },
+        ]
+    },
+     {
+        id: 'funding-sources',
+        name: 'Nguồn vốn',
+        description: 'Nguồn vốn cho các yêu cầu mua sắm.',
+        items: [
+            { id: 'fund-1', value: 'SCL' },
+            { id: 'fund-2', value: 'ĐTXD' },
+            { id: 'fund-3', value: 'Khác' },
+        ]
+    },
+     {
+        id: 'departments',
+        name: 'Phòng ban',
+        description: 'Danh sách các phòng ban trong công ty.',
+        items: [
+            { id: 'dept-1', value: 'Phòng Kỹ thuật' },
+            { id: 'dept-2', value: 'PX Vận hành' },
+            { id: 'dept-3', value: 'Phòng Kế hoạch' },
+            { id: 'dept-4', value: 'Ban Giám đốc' },
+            { id: 'dept-5', value: 'Phòng Tài chính' },
+            { id: 'dept-6', value: 'PX Sửa chữa Cơ' },
+            { id: 'dept-7', value: 'PX Sửa chữa Điện' },
+            { id: 'dept-8', value: 'PX TĐH-ĐK' },
+        ]
+    },
+    {
+        id: 'warehouse-location-types',
+        name: 'Loại lưu trữ kho',
+        description: 'Các loại hình lưu trữ trong kho.',
+        items: [
+            { id: 'loc-type-1', value: 'Kệ Pallet' },
+            { id: 'loc-type-2', value: 'Kệ Trung Tải' },
+            { id: 'loc-type-3', value: 'Sàn' },
+        ]
+    },
+];
+
 export const activityLogs: ActivityLog[] = Array.from({ length: 50 }, (_, i) => {
     const id = i + 1;
     const users = [
@@ -1516,3 +1633,8 @@ export const getGoodsHistory = async (serialNumber: string): Promise<{material: 
   }
   return { material, history: [] };
 }
+
+export const getMasterDataCategories = async (): Promise<MasterDataCategory[]> => {
+    await new Promise(resolve => setTimeout(resolve, 100));
+    return masterDataCategories;
+};
