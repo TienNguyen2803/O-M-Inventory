@@ -1443,6 +1443,200 @@ export const masterDataCategories: MasterDataCategory[] = [
             { id: 'loc-type-3', value: 'Sàn' },
         ]
     },
+    {
+        id: 'warehouse-location-status',
+        name: 'Trạng thái vị trí kho',
+        description: 'Trạng thái sử dụng của một vị trí trong kho.',
+        items: [
+            { id: 'wh-status-1', value: 'Active' },
+            { id: 'wh-status-2', value: 'Full' },
+            { id: 'wh-status-3', value: 'Maintenance' },
+            { id: 'wh-status-4', value: 'Inactive' },
+        ]
+    },
+    {
+        id: 'warehouses',
+        name: 'Danh sách kho',
+        description: 'Danh sách các kho thuộc các nhà máy.',
+        items: [
+            { id: 'wh-list-1', value: 'Kho Nhà máy Phú Mỹ 1' },
+            { id: 'wh-list-2', value: 'Kho Nhà máy Vĩnh Tân 2' },
+            { id: 'wh-list-3', value: 'Kho Tổng công ty (GENCO3)' },
+        ]
+    },
+    {
+        id: 'material-categories',
+        name: 'Nhóm vật tư',
+        description: 'Phân loại các nhóm vật tư theo chức năng hoặc loại hình.',
+        items: [
+            { id: 'mat-cat-1', value: 'Phụ tùng TĐH' },
+            { id: 'mat-cat-2', value: 'Thiết bị đo lường' },
+            { id: 'mat-cat-3', value: 'Phụ tùng tuabin' },
+            { id: 'mat-cat-4', value: 'Phụ tùng van' },
+            { id: 'mat-cat-5', value: 'Vật tư tiêu hao' },
+            { id: 'mat-cat-6', value: 'Hóa chất/Dầu mỡ' },
+            { id: 'mat-cat-7', value: 'Phụ tùng cơ khí' },
+            { id: 'mat-cat-8', value: 'BHLĐ' },
+            { id: 'mat-cat-9', value: 'Phụ tùng máy chủ' },
+        ]
+    },
+    {
+        id: 'material-management-types',
+        name: 'Loại quản lý vật tư',
+        description: 'Phương thức quản lý vật tư (theo lô hoặc theo số serial).',
+        items: [
+            { id: 'mat-mgt-1', value: 'Batch' },
+            { id: 'mat-mgt-2', value: 'Serial' },
+        ]
+    },
+    {
+        id: 'request-priorities',
+        name: 'Độ ưu tiên yêu cầu',
+        description: 'Mức độ khẩn cấp của các yêu cầu.',
+        items: [
+            { id: 'req-prio-1', value: 'Bình thường' },
+            { id: 'req-prio-2', value: 'Khẩn cấp' },
+        ]
+    },
+    {
+        id: 'material-request-statuses',
+        name: 'Trạng thái YCVT',
+        description: 'Các trạng thái của một yêu cầu vật tư.',
+        items: [
+            { id: 'mat-req-stat-1', value: 'Chờ duyệt' },
+            { id: 'mat-req-stat-2', value: 'Đã duyệt' },
+            { id: 'mat-req-stat-3', value: 'Hoàn thành' },
+        ]
+    },
+    {
+        id: 'purchase-sources',
+        name: 'Nguồn gốc mua sắm',
+        description: 'Nguồn gốc của hàng hóa được mua sắm.',
+        items: [
+            { id: 'pur-src-1', value: 'Trong nước' },
+            { id: 'pur-src-2', value: 'Nhập khẩu' },
+        ]
+    },
+    {
+        id: 'purchase-request-statuses',
+        name: 'Trạng thái YCMS',
+        description: 'Các trạng thái của một yêu cầu mua sắm.',
+        items: [
+            { id: 'pr-stat-1', value: 'Approved' },
+            { id: 'pr-stat-2', value: 'Pending' },
+            { id: 'pr-stat-3', value: 'Rejected' },
+            { id: 'pr-stat-4', value: 'Completed' },
+        ]
+    },
+    {
+        id: 'bidding-methods',
+        name: 'Hình thức đấu thầu',
+        description: 'Các phương thức lựa chọn nhà thầu.',
+        items: [
+            { id: 'bid-meth-1', value: 'Đấu thầu rộng rãi' },
+            { id: 'bid-meth-2', value: 'Chỉ định thầu' },
+        ]
+    },
+    {
+        id: 'bidding-statuses',
+        name: 'Trạng thái gói thầu',
+        description: 'Các trạng thái của một gói thầu.',
+        items: [
+            { id: 'bid-stat-1', value: 'Đang mời thầu' },
+            { id: 'bid-stat-2', value: 'Đã mở thầu' },
+            { id: 'bid-stat-3', value: 'Đang chấm thầu' },
+            { id: 'bid-stat-4', value: 'Hoàn thành' },
+            { id: 'bid-stat-5', value: 'Đã hủy' },
+        ]
+    },
+    {
+        id: 'inbound-types',
+        name: 'Loại nhập kho',
+        description: 'Các loại hình nhập kho.',
+        items: [
+            { id: 'in-type-1', value: 'Theo PO' },
+            { id: 'in-type-2', value: 'Sau Sửa chữa' },
+            { id: 'in-type-3', value: 'Hàng Mượn' },
+            { id: 'in-type-4', value: 'Hoàn trả' },
+        ]
+    },
+    {
+        id: 'inbound-statuses',
+        name: 'Trạng thái phiếu nhập',
+        description: 'Các trạng thái của một phiếu nhập kho.',
+        items: [
+            { id: 'in-stat-1', value: 'Hoàn thành' },
+            { id: 'in-stat-2', value: 'Đang nhập' },
+            { id: 'in-stat-3', value: 'KCS & Hồ sơ' },
+            { id: 'in-stat-4', value: 'Yêu cầu nhập' },
+            { id: 'in-stat-5', value: 'Chờ xếp hàng' },
+        ]
+    },
+    {
+        id: 'outbound-purposes',
+        name: 'Mục đích xuất kho',
+        description: 'Các lý do/mục đích khi xuất kho.',
+        items: [
+            { id: 'out-pur-1', value: 'Cấp O&M' },
+            { id: 'out-pur-2', value: 'Khẩn cấp' },
+            { id: 'out-pur-3', value: 'Cho mượn' },
+            { id: 'out-pur-4', value: 'Đi Sửa chữa' },
+        ]
+    },
+    {
+        id: 'outbound-statuses',
+        name: 'Trạng thái phiếu xuất',
+        description: 'Các trạng thái của một phiếu xuất kho.',
+        items: [
+            { id: 'out-stat-1', value: 'Đã xuất' },
+            { id: 'out-stat-2', value: 'Chờ xuất' },
+            { id: 'out-stat-3', value: 'Đã hủy' },
+            { id: 'out-stat-4', value: 'Đang soạn hàng' },
+        ]
+    },
+    {
+        id: 'stock-take-areas',
+        name: 'Khu vực kiểm kê',
+        description: 'Phạm vi của một đợt kiểm kê.',
+        items: [
+            { id: 'st-area-1', value: 'Toàn bộ' },
+            { id: 'st-area-2', value: 'Khu A' },
+            { id: 'st-area-3', value: 'Khu B' },
+            { id: 'st-area-4', value: 'Kho Lạnh' },
+        ]
+    },
+    {
+        id: 'stock-take-statuses',
+        name: 'Trạng thái kiểm kê',
+        description: 'Các trạng thái của một đợt kiểm kê.',
+        items: [
+            { id: 'st-stat-1', value: 'Đã hoàn thành' },
+            { id: 'st-stat-2', value: 'Đang tiến hành' },
+            { id: 'st-stat-3', value: 'Đã hủy' },
+        ]
+    },
+    {
+        id: 'user-statuses',
+        name: 'Trạng thái người dùng',
+        description: 'Trạng thái tài khoản của người dùng.',
+        items: [
+            { id: 'user-stat-1', value: 'Active' },
+            { id: 'user-stat-2', value: 'Inactive' },
+        ]
+    },
+    {
+        id: 'activity-log-actions',
+        name: 'Loại hành động',
+        description: 'Các loại hành động được ghi lại trong nhật ký hệ thống.',
+        items: [
+            { id: 'act-log-1', value: 'Tạo' },
+            { id: 'act-log-2', value: 'Cập nhật' },
+            { id: 'act-log-3', value: 'Xóa' },
+            { id: 'act-log-4', value: 'Đăng nhập' },
+            { id: 'act-log-5', value: 'Duyệt' },
+            { id: 'act-log-6', value: 'Xuất file' },
+        ]
+    },
 ];
 
 export const activityLogs: ActivityLog[] = Array.from({ length: 50 }, (_, i) => {
