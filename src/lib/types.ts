@@ -81,7 +81,7 @@ export interface WarehouseLocation {
   code: string; // Mã vị trí (auto-generated: PM1-A-01-R01-L01)
   name: string; // Tên/Mô tả vị trí
   type: string; // Loại lưu trữ (Kệ, Sàn)
-  status: "Active" | "Inactive";
+  status: "Active" | "Full" | "Maintenance" | "Inactive";
   barcode?: string;
   maxWeight?: number;
   dimensions?: string;

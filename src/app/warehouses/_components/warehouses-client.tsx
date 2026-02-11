@@ -158,7 +158,6 @@ export function WarehousesClient({ initialLocations }: WarehousesClientProps) {
       const updatedLocation: WarehouseLocation = {
         ...selectedLocation,
         ...values,
-        status: selectedLocation.status, // Keep original status
       };
       setLocations(
         locations.map((l) =>
@@ -168,7 +167,6 @@ export function WarehousesClient({ initialLocations }: WarehousesClientProps) {
     } else {
       const newLocation: WarehouseLocation = {
         id: `wh-${Date.now()}`,
-        status: "Active", // Default status
         items: [],
         ...values,
       };
@@ -185,6 +183,21 @@ export function WarehousesClient({ initialLocations }: WarehousesClientProps) {
 
   const handleCancel = () => {
     setIsFormOpen(false);
+  };
+  
+  const getStatusBadgeProps = (status: WarehouseLocation['status']) => {
+    switch (status) {
+      case 'Active':
+        return { className: 'bg-green-100 text-green-800', text: 'Hoạt động' };
+      case 'Full':
+        return { className: 'bg-blue-100 text-blue-800', text: 'Đã đầy' };
+      case 'Maintenance':
+        return { className: 'bg-yellow-100 text-yellow-800', text: 'Bảo trì' };
+      case 'Inactive':
+        return { className: 'bg-red-100 text-red-800', text: 'Ngừng hoạt động' };
+      default:
+        return { className: 'bg-gray-100 text-gray-800', text: status };
+    }
   };
 
   return (
@@ -253,7 +266,9 @@ export function WarehousesClient({ initialLocations }: WarehousesClientProps) {
             </TableHeader>
             <TableBody>
               {paginatedLocations.length > 0 ? (
-                paginatedLocations.map((location, index) => (
+                paginatedLocations.map((location, index) => {
+                  const statusProps = getStatusBadgeProps(location.status);
+                  return (
                   <TableRow key={location.id}>
                     <TableCell
                       className="font-medium text-primary hover:underline cursor-pointer"
@@ -275,14 +290,10 @@ export function WarehousesClient({ initialLocations }: WarehousesClientProps) {
                       <span
                         className={cn(
                           "rounded-md px-2.5 py-1 text-xs font-semibold",
-                          location.status === "Active"
-                            ? "bg-green-100 text-green-800"
-                            : "bg-red-100 text-red-800"
+                          statusProps.className
                         )}
                       >
-                        {location.status === "Active"
-                          ? "Hoạt động"
-                          : "Không hoạt động"}
+                        {statusProps.text}
                       </span>
                     </TableCell>
                     <TableCell>
@@ -337,7 +348,7 @@ export function WarehousesClient({ initialLocations }: WarehousesClientProps) {
                       </div>
                     </TableCell>
                   </TableRow>
-                ))
+                )})
               ) : (
                 <TableRow>
                   <TableCell

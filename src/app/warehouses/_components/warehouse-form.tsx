@@ -45,6 +45,7 @@ const formSchema = z.object({
   name: z.string().min(1, "Tên/Mô tả là bắt buộc."),
   barcode: z.string().optional(),
   type: z.string({ required_error: "Vui lòng chọn loại lưu trữ." }),
+  status: z.string({ required_error: "Vui lòng chọn trạng thái." }),
   maxWeight: z.coerce.number().optional(),
   dimensions: z.string().optional(),
 });
@@ -93,6 +94,7 @@ export function WarehouseForm({
           name: "",
           barcode: "",
           type: "Kệ Pallet",
+          status: "Active",
           dimensions: "",
         },
   });
@@ -262,6 +264,29 @@ export function WarehouseForm({
                   <FormControl>
                     <Input placeholder="Vd: 2.7m x 1.2m" {...field} disabled={viewMode} />
                   </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+             <FormField
+              control={form.control}
+              name="status"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Trạng thái</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value} disabled={viewMode}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Chọn trạng thái" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="Active">Hoạt động</SelectItem>
+                      <SelectItem value="Full">Đã đầy</SelectItem>
+                      <SelectItem value="Maintenance">Bảo trì</SelectItem>
+                      <SelectItem value="Inactive">Ngừng hoạt động</SelectItem>
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
