@@ -74,11 +74,11 @@ export function WarehousesClient({ initialLocations }: WarehousesClientProps) {
 
   // Filter and search states
   const [searchQuery, setSearchQuery] = useState("");
-  const [areaFilter, setAreaFilter] = useState("all");
+  const [warehouseFilter, setWarehouseFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
 
-  const areas = useMemo(
-    () => [...new Set(locations.map((l) => l.area))],
+  const warehouses = useMemo(
+    () => [...new Set(locations.map((l) => l.warehouse))],
     [locations]
   );
   const types = useMemo(
@@ -94,12 +94,12 @@ export function WarehousesClient({ initialLocations }: WarehousesClientProps) {
         location.code.toLowerCase().includes(searchLower) ||
         location.name.toLowerCase().includes(searchLower);
 
-      const matchesArea = areaFilter === "all" || location.area === areaFilter;
+      const matchesWarehouse = warehouseFilter === "all" || location.warehouse === warehouseFilter;
       const matchesType = typeFilter === "all" || location.type === typeFilter;
 
-      return matchesSearch && matchesArea && matchesType;
+      return matchesSearch && matchesWarehouse && matchesType;
     });
-  }, [locations, searchQuery, areaFilter, typeFilter]);
+  }, [locations, searchQuery, warehouseFilter, typeFilter]);
 
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
@@ -107,7 +107,7 @@ export function WarehousesClient({ initialLocations }: WarehousesClientProps) {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, areaFilter, typeFilter]);
+  }, [searchQuery, warehouseFilter, typeFilter]);
 
   const totalPages = Math.ceil(filteredLocations.length / itemsPerPage);
   const paginatedLocations = filteredLocations.slice(
@@ -202,15 +202,15 @@ export function WarehousesClient({ initialLocations }: WarehousesClientProps) {
       <Card>
         <CardContent className="pt-6">
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
-            <Select value={areaFilter} onValueChange={setAreaFilter}>
+            <Select value={warehouseFilter} onValueChange={setWarehouseFilter}>
               <SelectTrigger>
-                <SelectValue placeholder="-- Tất cả khu vực --" />
+                <SelectValue placeholder="-- Tất cả kho --" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">-- Tất cả khu vực --</SelectItem>
-                {areas.map((area) => (
-                  <SelectItem key={area} value={area}>
-                    {area}
+                <SelectItem value="all">-- Tất cả kho --</SelectItem>
+                {warehouses.map((warehouse) => (
+                  <SelectItem key={warehouse} value={warehouse}>
+                    {warehouse}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -242,9 +242,9 @@ export function WarehousesClient({ initialLocations }: WarehousesClientProps) {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[50px]">STT</TableHead>
                 <TableHead>Mã vị trí</TableHead>
                 <TableHead>Tên vị trí</TableHead>
+                <TableHead>Kho</TableHead>
                 <TableHead>Khu vực</TableHead>
                 <TableHead>Loại</TableHead>
                 <TableHead>Trạng thái</TableHead>
@@ -255,9 +255,6 @@ export function WarehousesClient({ initialLocations }: WarehousesClientProps) {
               {paginatedLocations.length > 0 ? (
                 paginatedLocations.map((location, index) => (
                   <TableRow key={location.id}>
-                    <TableCell className="text-center">
-                      {startItem + index}
-                    </TableCell>
                     <TableCell
                       className="font-medium text-primary hover:underline cursor-pointer"
                       onClick={() => handleView(location)}
@@ -265,6 +262,9 @@ export function WarehousesClient({ initialLocations }: WarehousesClientProps) {
                       {location.code}
                     </TableCell>
                     <TableCell>{location.name}</TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {location.warehouse}
+                    </TableCell>
                     <TableCell className="text-muted-foreground">
                       {location.area}
                     </TableCell>

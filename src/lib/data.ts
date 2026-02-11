@@ -545,40 +545,19 @@ const warehouseItems2: WarehouseItem[] = [
 
 
 export const warehouseLocations: WarehouseLocation[] = [
-  { id: 'wh-1', code: 'A1-01-01', name: 'Kệ 01 - Tầng 1 - Dãy A', area: 'Khu A', type: 'Kệ Pallet', status: 'Active', barcode: 'LOC-A10101', maxWeight: 2000, dimensions: '2.7m x 1.2m', items: warehouseItems1 },
-  { id: 'wh-2', code: 'A1-01-02', name: 'Kệ 01 - Tầng 2 - Dãy A', area: 'Khu A', type: 'Kệ Pallet', status: 'Active', items: warehouseItems2 },
-  { id: 'wh-3', code: 'A1-01-03', name: 'Kệ 01 - Tầng 3 - Dãy A', area: 'Khu A', type: 'Kệ Pallet', status: 'Active', items: [] },
-  { id: 'wh-4', code: 'A1-02-01', name: 'Kệ 02 - Tầng 1 - Dãy A', area: 'Khu A', type: 'Kệ Pallet', status: 'Inactive', items: [] },
-  { id: 'wh-5', code: 'A1-02-02', name: 'Kệ 02 - Tầng 2 - Dãy A', area: 'Khu A', type: 'Kệ Pallet', status: 'Active', items: [
-      {
-        materialId: "mat-001",
-        materialCode: "PM-ELEC-GT-001",
-        materialName: "Card điều khiển Tuabin khí Siemens SGT5-4000F",
-        quantity: 1,
-        unit: "Cái",
-        batchSerial: "SN-CARD-001C",
-      }
-  ] },
-  { id: 'wh-6', code: 'B1-01-01', name: 'Kệ 01 - Tầng 1 - Dãy B', area: 'Khu B', type: 'Kệ Trung Tải', status: 'Active', items: [] },
-  { id: 'wh-7', code: 'B1-01-02', name: 'Kệ 01 - Tầng 2 - Dãy B', area: 'Khu B', type: 'Kệ Trung Tải', status: 'Active', items: [] },
-  { id: 'wh-8', code: 'B1-02-01', name: 'Kệ 02 - Tầng 1 - Dãy B', area: 'Khu B', type: 'Kệ Trung Tải', status: 'Active', items: [] },
-  { id: 'wh-9', code: 'B1-02-02', name: 'Kệ 02 - Tầng 2 - Dãy B', area: 'Khu B', type: 'Kệ Trung Tải', status: 'Inactive', items: [] },
-  { id: 'wh-10', code: 'CL-01-01', name: 'Kệ 01 - Kho Lạnh', area: 'Kho Lạnh', type: 'Kệ Pallet', status: 'Active', items: [] },
-  { id: 'wh-11', code: 'CL-01-02', name: 'Kệ 02 - Kho Lạnh', area: 'Kho Lạnh', type: 'Kệ Pallet', status: 'Active', items: [] },
-  { id: 'wh-12', code: 'CH-01', name: 'Sàn 01 - Kho Hóa chất', area: 'Kho Hóa chất', type: 'Sàn', status: 'Active', items: [] },
-  { id: 'wh-13', code: 'CH-02', name: 'Sàn 02 - Kho Hóa chất', area: 'Kho Hóa chất', type: 'Sàn', status: 'Active', items: [] },
-  { id: 'wh-14', code: 'A2-01-01', name: 'Kệ 01 - Tầng 1 - Dãy A2', area: 'Khu A', type: 'Kệ Pallet', status: 'Active', items: [] },
-  { id: 'wh-15', code: 'A2-01-02', name: 'Kệ 01 - Tầng 2 - Dãy A2', area: 'Khu A', type: 'Kệ Pallet', status: 'Active', items: [] },
-  { id: 'wh-16', code: 'A2-02-01', name: 'Kệ 02 - Tầng 1 - Dãy A2', area: 'Khu A', type: 'Kệ Pallet', status: 'Active', items: [] },
-  { id: 'wh-17', code: 'A2-02-02', name: 'Kệ 02 - Tầng 2 - Dãy A2', area: 'Khu A', type: 'Kệ Pallet', status: 'Active', items: [] },
-  { id: 'wh-18', code: 'B2-01-01', name: 'Kệ 01 - Tầng 1 - Dãy B2', area: 'Khu B', type: 'Kệ Trung Tải', status: 'Active', items: [] },
-  { id: 'wh-19', code: 'B2-01-02', name: 'Kệ 01 - Tầng 2 - Dãy B2', area: 'Khu B', type: 'Kệ Trung Tải', status: 'Active', items: [] },
-  { id: 'wh-20', code: 'B2-02-01', name: 'Kệ 02 - Tầng 1 - Dãy B2', area: 'Khu B', type: 'Kệ Trung Tải', status: 'Active', items: [] },
-  { id: 'wh-21', code: 'A3-01-01', name: 'Kệ 01 - Tầng 1 - Dãy A3', area: 'Khu A', type: 'Kệ Pallet', status: 'Active', items: [] },
-  { id: 'wh-22', code: 'A3-01-02', name: 'Kệ 01 - Tầng 2 - Dãy A3', area: 'Khu A', type: 'Kệ Pallet', status: 'Inactive', items: [] },
-  { id: 'wh-23', code: 'C1-01', name: 'Vị trí sàn C1', area: 'Khu C', type: 'Sàn', status: 'Active', items: [] },
-  { id: 'wh-24', code: 'C1-02', name: 'Vị trí sàn C2', area: 'Khu C', type: 'Sàn', status: 'Active', items: [] },
-  { id: 'wh-25', code: 'B3-01-01', name: 'Kệ 01 - Tầng 1 - Dãy B3', area: 'Khu B', type: 'Kệ Trung Tải', status: 'Active', items: [] },
+  { id: 'wh-1', warehouse: 'Kho Nhà máy Phú Mỹ 1', area: 'A', aisle: '01', rack: '01', level: '01', code: 'PM1-A-01-R01-L01', name: 'Tầng 01, Kệ 01, Dãy 01, Khu vực A, Kho Nhà máy Phú Mỹ 1', type: 'Kệ Pallet', status: 'Active', barcode: 'LOC-A10101', maxWeight: 2000, dimensions: '2.7m x 1.2m', items: warehouseItems1 },
+  { id: 'wh-2', warehouse: 'Kho Nhà máy Phú Mỹ 1', area: 'A', aisle: '01', rack: '01', level: '02', code: 'PM1-A-01-R01-L02', name: 'Tầng 02, Kệ 01, Dãy 01, Khu vực A, Kho Nhà máy Phú Mỹ 1', type: 'Kệ Pallet', status: 'Active', items: warehouseItems2 },
+  { id: 'wh-3', warehouse: 'Kho Nhà máy Phú Mỹ 1', area: 'A', aisle: '01', rack: '01', level: '03', code: 'PM1-A-01-R01-L03', name: 'Tầng 03, Kệ 01, Dãy 01, Khu vực A, Kho Nhà máy Phú Mỹ 1', type: 'Kệ Pallet', status: 'Active', items: [] },
+  { id: 'wh-4', warehouse: 'Kho Nhà máy Phú Mỹ 1', area: 'A', aisle: '02', rack: '01', level: '01', code: 'PM1-A-02-R01-L01', name: 'Tầng 01, Kệ 01, Dãy 02, Khu vực A, Kho Nhà máy Phú Mỹ 1', type: 'Kệ Pallet', status: 'Inactive', items: [] },
+  { id: 'wh-5', warehouse: 'Kho Nhà máy Phú Mỹ 1', area: 'A', aisle: '02', rack: '02', level: '02', code: 'PM1-A-02-R02-L02', name: 'Tầng 02, Kệ 02, Dãy 02, Khu vực A, Kho Nhà máy Phú Mỹ 1', type: 'Kệ Pallet', status: 'Active', items: [ { materialId: "mat-001", materialCode: "PM-ELEC-GT-001", materialName: "Card điều khiển Tuabin khí Siemens SGT5-4000F", quantity: 1, unit: "Cái", batchSerial: "SN-CARD-001C", } ] },
+  { id: 'wh-6', warehouse: 'Kho Nhà máy Phú Mỹ 1', area: 'B', aisle: '01', rack: '01', level: '01', code: 'PM1-B-01-R01-L01', name: 'Tầng 01, Kệ 01, Dãy 01, Khu vực B, Kho Nhà máy Phú Mỹ 1', type: 'Kệ Trung Tải', status: 'Active', items: [] },
+  { id: 'wh-7', warehouse: 'Kho Nhà máy Phú Mỹ 1', area: 'B', aisle: '01', rack: '01', level: '02', code: 'PM1-B-01-R01-L02', name: 'Tầng 02, Kệ 01, Dãy 01, Khu vực B, Kho Nhà máy Phú Mỹ 1', type: 'Kệ Trung Tải', status: 'Active', items: [] },
+  { id: 'wh-8', warehouse: 'Kho Nhà máy Phú Mỹ 1', area: 'B', aisle: '02', rack: '01', level: '01', code: 'PM1-B-02-R01-L01', name: 'Tầng 01, Kệ 01, Dãy 02, Khu vực B, Kho Nhà máy Phú Mỹ 1', type: 'Kệ Trung Tải', status: 'Active', items: [] },
+  { id: 'wh-9', warehouse: 'Kho Nhà máy Phú Mỹ 1', area: 'B', aisle: '02', rack: '02', level: '02', code: 'PM1-B-02-R02-L02', name: 'Tầng 02, Kệ 02, Dãy 02, Khu vực B, Kho Nhà máy Phú Mỹ 1', type: 'Kệ Trung Tải', status: 'Inactive', items: [] },
+  { id: 'wh-10', warehouse: 'Kho Nhà máy Phú Mỹ 1', area: 'Kho Lạnh', aisle: '01', rack: '01', level: '01', code: 'PM1-KHO_LANH-01-R01-L01', name: 'Tầng 01, Kệ 01, Dãy 01, Khu vực Kho Lạnh, Kho Nhà máy Phú Mỹ 1', type: 'Kệ Pallet', status: 'Active', items: [] },
+  { id: 'wh-11', warehouse: 'Kho Nhà máy Phú Mỹ 1', area: 'Kho Lạnh', aisle: '01', rack: '02', level: '01', code: 'PM1-KHO_LANH-01-R02-L01', name: 'Tầng 01, Kệ 02, Dãy 01, Khu vực Kho Lạnh, Kho Nhà máy Phú Mỹ 1', type: 'Kệ Pallet', status: 'Active', items: [] },
+  { id: 'wh-12', warehouse: 'Kho Nhà máy Vĩnh Tân 2', area: 'Hóa chất', code: 'VT2-HOA_CHAT', name: 'Khu vực Hóa chất, Kho Nhà máy Vĩnh Tân 2', type: 'Sàn', status: 'Active', items: [] },
+  { id: 'wh-13', warehouse: 'Kho Nhà máy Vĩnh Tân 2', area: 'Ngoài trời', code: 'VT2-NGOAI_TROI', name: 'Khu vực Ngoài trời, Kho Nhà máy Vĩnh Tân 2', type: 'Sàn', status: 'Active', items: [] },
 ];
 
 export const suppliers: Supplier[] = [
@@ -1191,7 +1170,7 @@ export const outboundVouchers: OutboundVoucher[] = Array.from({ length: 25 }, (_
             pickLocations: status === 'Đã xuất' && item.requestedQuantity > 1 ?
             [
                 { location: findLocationForMaterial(item.materialId), quantity: item.requestedQuantity -1, serial: `BATCH-${id}-A`},
-                { location: 'A1-02-02', quantity: 1, serial: `BATCH-${id}-B`}
+                { location: 'PM1-A-02-R02-L02', quantity: 1, serial: `BATCH-${id}-B`}
             ] : undefined,
         })),
     };
@@ -1209,7 +1188,7 @@ export const stockTakes: StockTake[] = Array.from({ length: 25 }, (_, i) => {
         materialId: 'mat-001',
         materialCode: 'PM-ELEC-GT-001',
         materialName: 'Card điều khiển Tuabin khí Siemens SGT5-4000F',
-        location: 'A1-01-01',
+        location: 'PM1-A-01-R01-L01',
         bookQuantity: 10,
         actualQuantity: 10,
         notes: ''
@@ -1219,7 +1198,7 @@ export const stockTakes: StockTake[] = Array.from({ length: 25 }, (_, i) => {
         materialId: 'mat-002',
         materialCode: 'PM-INST-GT-002',
         materialName: 'Cảm biến nhiệt độ ống khói',
-        location: 'A1-01-02',
+        location: 'PM1-A-01-R01-L02',
         bookQuantity: 50,
         actualQuantity: 48,
         notes: 'Mất/Hỏng'
@@ -1229,7 +1208,7 @@ export const stockTakes: StockTake[] = Array.from({ length: 25 }, (_, i) => {
         materialId: 'mat-005',
         materialCode: 'PM-MECH-FIL-005',
         materialName: 'Lọc khí đầu vào tuabin (Air Inlet Filter)',
-        location: 'A1-02-01',
+        location: 'PM1-A-02-R01-L01',
         bookQuantity: 100,
         actualQuantity: 102,
         notes: 'Thừa 2 bộ'

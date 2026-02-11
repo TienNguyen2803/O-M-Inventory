@@ -73,11 +73,15 @@ export interface WarehouseItem {
 
 export interface WarehouseLocation {
   id: string;
-  code: string; // Mã vị trí
-  name: string; // Tên vị trí
-  area: string; // Khu vực
-  type: string; // Loại
-  status: "Active" | "Inactive"; // Trạng thái
+  warehouse: string; // Tên kho (e.g., Kho chính Phú Mỹ, Kho Vĩnh Tân)
+  area: string; // Khu vực/Block (e.g., A, B, C)
+  aisle?: string; // Dãy (e.g., 01, 02)
+  rack?: string; // Kệ
+  level?: string; // Tầng
+  code: string; // Mã vị trí (auto-generated: PM1-A-01-R01-L01)
+  name: string; // Tên/Mô tả vị trí
+  type: string; // Loại lưu trữ (Kệ, Sàn)
+  status: "Active" | "Inactive";
   barcode?: string;
   maxWeight?: number;
   dimensions?: string;

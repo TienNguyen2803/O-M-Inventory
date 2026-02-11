@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
+import * as React from "react";
 import * as z from "zod";
 import { QrCode, Save } from "lucide-react";
 
@@ -32,12 +33,17 @@ import {
 } from "@/components/ui/table";
 import type { WarehouseLocation } from "@/lib/types";
 import { DialogFooter } from "@/components/ui/dialog";
+import { cn } from "@/lib/utils";
 
 const formSchema = z.object({
+  warehouse: z.string().min(1, "Kho là bắt buộc."),
+  area: z.string().min(1, "Khu vực là bắt buộc."),
+  aisle: z.string().optional(),
+  rack: z.string().optional(),
+  level: z.string().optional(),
   code: z.string().min(1, "Mã vị trí là bắt buộc."),
   name: z.string().min(1, "Tên/Mô tả là bắt buộc."),
   barcode: z.string().optional(),
-  area: z.string({ required_error: "Vui lòng chọn khu vực." }),
   type: z.string({ required_error: "Vui lòng chọn loại lưu trữ." }),
   maxWeight: z.coerce.number().optional(),
   dimensions: z.string().optional(),
@@ -51,6 +57,12 @@ type WarehouseFormProps = {
   onCancel: () => void;
   viewMode: boolean;
 };
+
+const warehouseOptions = [
+  { value: "Kho Nhà máy Phú Mỹ 1", label: "Kho Nhà máy Phú Mỹ 1", shortCode: "PM1" },
+  { value: "Kho Nhà máy Vĩnh Tân 2", label: "Kho Nhà máy Vĩnh Tân 2", shortCode: "VT2" },
+  { value: "Kho Tổng công ty", label: "Kho Tổng công ty (GENCO3)", shortCode: "G3" },
+];
 
 const FormSectionHeader = ({ title }: { title: string }) => (
   <div className="bg-muted/70 px-4 py-2 rounded-t-md border-b">
@@ -72,12 +84,50 @@ export function WarehouseForm({
           maxWeight: location.maxWeight ?? undefined,
         }
       : {
+          warehouse: "",
+          area: "",
+          aisle: "",
+          rack: "",
+          level: "",
           code: "",
           name: "",
           barcode: "",
+          type: "Kệ Pallet",
           dimensions: "",
         },
   });
+  
+  const { watch, setValue } = form;
+  const warehouse = watch("warehouse");
+  const area = watch("area");
+  const aisle = watch("aisle");
+  const rack = watch("rack");
+  const level = watch("level");
+
+  React.useEffect(() => {
+    const warehouseShortCode = warehouseOptions.find(w => w.value === warehouse)?.shortCode || '';
+    const parts = [
+        warehouseShortCode, 
+        area?.toUpperCase(), 
+        aisle ? `D${aisle}` : '', 
+        rack ? `K${rack}`: '', 
+        level ? `T${level}` : ''
+    ].filter(Boolean);
+    const code = parts.join('-');
+    setValue("code", code);
+
+    const nameParts = [
+      level ? `Tầng ${level}` : '',
+      rack ? `Kệ ${rack}` : '',
+      aisle ? `Dãy ${aisle}` : '',
+      area ? `Khu vực ${area}` : '',
+      warehouse || '',
+    ].filter(Boolean);
+    const name = nameParts.join(', ');
+    setValue("name", name);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [warehouse, area, aisle, rack, level, setValue]);
+
 
   return (
     <Form {...form}>
@@ -87,16 +137,42 @@ export function WarehouseForm({
       >
         {/* THÔNG TIN VỊ TRÍ */}
         <div className="space-y-4">
-          <FormSectionHeader title="THÔNG TIN VỊ TRÍ" />
-          <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+          <FormSectionHeader title="Định nghĩa Vị trí Phân cấp" />
+          <div className="grid grid-cols-5 gap-x-4 gap-y-4">
+            <div className="col-span-2">
+                <FormField
+                  control={form.control}
+                  name="warehouse"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Kho</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value} disabled={viewMode}>
+                        <FormControl>
+                          <SelectTrigger><SelectValue placeholder="Chọn kho" /></SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {warehouseOptions.map(w => <SelectItem key={w.value} value={w.value}>{w.label}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+            </div>
+            <FormField control={form.control} name="area" render={({ field }) => ( <FormItem><FormLabel>Khu vực</FormLabel><FormControl><Input {...field} disabled={viewMode} placeholder="A, B..." /></FormControl><FormMessage /></FormItem> )} />
+            <FormField control={form.control} name="aisle" render={({ field }) => ( <FormItem><FormLabel>Dãy</FormLabel><FormControl><Input {...field} disabled={viewMode} placeholder="01, 02..." /></FormControl><FormMessage /></FormItem> )} />
+            <FormField control={form.control} name="rack" render={({ field }) => ( <FormItem><FormLabel>Kệ</FormLabel><FormControl><Input {...field} disabled={viewMode} placeholder="01, 02..." /></FormControl><FormMessage /></FormItem> )} />
+            <FormField control={form.control} name="level" render={({ field }) => ( <FormItem><FormLabel>Tầng</FormLabel><FormControl><Input {...field} disabled={viewMode} placeholder="01, 02..." /></FormControl><FormMessage /></FormItem> )} />
+          </div>
+          <div className="grid grid-cols-2 gap-x-6 gap-y-4 pt-4">
             <FormField
               control={form.control}
               name="code"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Mã Vị trí (Bin)</FormLabel>
+                  <FormLabel>Mã Vị trí (Tự động)</FormLabel>
                   <FormControl>
-                    <Input {...field} disabled={viewMode} />
+                    <Input {...field} disabled />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -104,10 +180,30 @@ export function WarehouseForm({
             />
             <FormField
               control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Tên/Mô tả (Tự động)</FormLabel>
+                  <FormControl>
+                    <Input {...field} disabled />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        </div>
+
+        {/* THÔNG TIN BỔ SUNG */}
+        <div className="space-y-4">
+          <FormSectionHeader title="Thông tin Bổ sung & Điều kiện" />
+          <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+            <FormField
+              control={form.control}
               name="barcode"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Mã Barcode</FormLabel>
+                  <FormLabel>Mã Barcode (Nếu có)</FormLabel>
                    <div className="relative">
                     <FormControl>
                       <Input {...field} disabled={viewMode} className="pr-10" />
@@ -118,50 +214,7 @@ export function WarehouseForm({
                 </FormItem>
               )}
             />
-            <div className="col-span-2">
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Tên/Mô tả</FormLabel>
-                    <FormControl>
-                      <Input {...field} disabled={viewMode} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-             <FormField
-              control={form.control}
-              name="area"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Khu vực</FormLabel>
-                   <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                    disabled={viewMode}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Chọn khu vực" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="Khu A">Khu A</SelectItem>
-                      <SelectItem value="Khu B">Khu B</SelectItem>
-                      <SelectItem value="Khu C">Khu C</SelectItem>
-                      <SelectItem value="Kho Lạnh">Kho Lạnh</SelectItem>
-                      <SelectItem value="Kho Hóa chất">Kho Hóa chất</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-             <FormField
+            <FormField
               control={form.control}
               name="type"
               render={({ field }) => (
@@ -187,13 +240,6 @@ export function WarehouseForm({
                 </FormItem>
               )}
             />
-          </div>
-        </div>
-
-        {/* SỨC CHỨA & ĐIỀU KIỆN */}
-        <div className="space-y-4">
-          <FormSectionHeader title="SỨC CHỨA & ĐIỀU KIỆN" />
-          <div className="grid grid-cols-2 gap-x-6 gap-y-4">
              <FormField
               control={form.control}
               name="maxWeight"
@@ -222,38 +268,39 @@ export function WarehouseForm({
             />
           </div>
         </div>
-
-        {/* TỒN KHO HIỆN TẠI */}
-        <div className="space-y-4">
-          <FormSectionHeader title="TỒN KHO HIỆN TẠI" />
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="bg-muted">MÃ VT</TableHead>
-                <TableHead className="bg-muted">TÊN</TableHead>
-                <TableHead className="bg-muted text-right">SL</TableHead>
-                <TableHead className="bg-muted">ĐVT</TableHead>
-                <TableHead className="bg-muted">BATCH/SERIAL</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {location?.items?.map((item) => (
-                <TableRow key={item.materialId}>
-                  <TableCell className="font-medium text-primary hover:underline cursor-pointer">{item.materialCode}</TableCell>
-                  <TableCell>{item.materialName}</TableCell>
-                  <TableCell className="text-right">{item.quantity}</TableCell>
-                  <TableCell>{item.unit}</TableCell>
-                  <TableCell>{item.batchSerial}</TableCell>
+        
+        {viewMode && (
+          <div className="space-y-4">
+            <FormSectionHeader title="TỒN KHO HIỆN TẠI" />
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="bg-muted">MÃ VT</TableHead>
+                  <TableHead className="bg-muted">TÊN</TableHead>
+                  <TableHead className="bg-muted text-right">SL</TableHead>
+                  <TableHead className="bg-muted">ĐVT</TableHead>
+                  <TableHead className="bg-muted">BATCH/SERIAL</TableHead>
                 </TableRow>
-              ))}
-              {(!location?.items || location.items.length === 0) && (
-                 <TableRow>
-                    <TableCell colSpan={5} className="text-center text-muted-foreground">Không có vật tư trong vị trí này.</TableCell>
-                 </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </div>
+              </TableHeader>
+              <TableBody>
+                {location?.items?.map((item) => (
+                  <TableRow key={item.materialId}>
+                    <TableCell className="font-medium text-primary hover:underline cursor-pointer">{item.materialCode}</TableCell>
+                    <TableCell>{item.materialName}</TableCell>
+                    <TableCell className="text-right">{item.quantity}</TableCell>
+                    <TableCell>{item.unit}</TableCell>
+                    <TableCell>{item.batchSerial}</TableCell>
+                  </TableRow>
+                ))}
+                {(!location?.items || location.items.length === 0) && (
+                  <TableRow>
+                      <TableCell colSpan={5} className="text-center text-muted-foreground">Không có vật tư trong vị trí này.</TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        )}
 
         <DialogFooter className="!justify-end items-center pt-6 sticky bottom-0 bg-background py-4">
           <Button type="button" variant="outline" onClick={onCancel}>
