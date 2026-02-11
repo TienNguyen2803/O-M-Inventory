@@ -225,6 +225,8 @@ export interface InboundReceiptItem {
   location: string;
   putAwayLocations?: { location: string; quantity: number }[];
   kcs: boolean;
+  kcsResult?: "passed" | "failed";
+  kcsNotes?: string;
 }
 
 export interface InboundReceiptDocument {

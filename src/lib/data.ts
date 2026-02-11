@@ -1065,6 +1065,15 @@ export const inboundReceipts: InboundReceipt[] = Array.from({ length: 25 }, (_, 
     const types: InboundReceipt['inboundType'][] = ['Theo PO', 'Sau Sửa chữa', 'Hàng Mượn', 'Hoàn trả'];
     const statuses: InboundReceipt['status'][] = ['Hoàn thành', 'Đang nhập', 'KCS & Hồ sơ', 'Yêu cầu nhập', 'Chờ xếp hàng'];
     const status = statuses[i % statuses.length];
+    
+    let step = 1;
+    if (status === 'KCS & Hồ sơ') {
+      step = 2;
+    } else if (status === 'Chờ xếp hàng') {
+      step = 3;
+    } else if (status === 'Hoàn thành') {
+      step = 4;
+    }
 
     // Create a list of items for the receipt
     const items: InboundReceiptItem[] = [];
@@ -1136,7 +1145,7 @@ export const inboundReceipts: InboundReceipt[] = Array.from({ length: 25 }, (_, 
         inboundDate: new Date(2025, i % 6, id % 28 + 1).toISOString(),
         partner: suppliers[i % suppliers.length].name,
         status: status,
-        step: (i % 4) + 1,
+        step: step,
         items: items,
         documents: documents,
     };

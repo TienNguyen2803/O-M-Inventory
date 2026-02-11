@@ -32,6 +32,7 @@ import {
   Truck,
   QrCode,
   Wrench,
+  ShieldCheck,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -78,6 +79,7 @@ const navItems = [
     group: "VẬN HÀNH KHO",
     items: [
       { href: "/inbound", label: "Nhập kho (Inbound)", icon: ArrowDownToLine },
+      { href: "/kcs", label: "Kiểm tra Chất lượng (KCS)", icon: ShieldCheck },
       { href: "/put-away", label: "Xếp hàng vào kho", icon: Archive },
       { href: "/quick-store", label: "Cất hàng nhanh", icon: ScanLine },
       { href: "/outbound", label: "Xuất kho (Outbound)", icon: ArrowUpFromLine },

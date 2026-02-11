@@ -82,10 +82,10 @@ type InboundFormProps = {
 
 const Stepper = ({ currentStep }: { currentStep: number }) => {
   const steps = [
-    { id: 1, name: "Mua sắm (PO)" },
-    { id: 2, name: "Yêu cầu Nhập" },
-    { id: 3, name: "KCS & Hồ sơ" },
-    { id: 4, name: "Nhập kho (GRN)" },
+    { id: 1, name: "Yêu cầu Nhập" },
+    { id: 2, name: "KCS & Hồ sơ" },
+    { id: 3, name: "Xếp hàng" },
+    { id: 4, name: "Hoàn thành" },
   ];
 
   return (

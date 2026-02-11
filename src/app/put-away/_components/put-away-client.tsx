@@ -186,7 +186,7 @@ export function PutAwayClient({ initialReceipts, allLocations }: { initialReceip
     const executeFinalConfirmation = () => {
         if (!currentTask) return;
 
-        const updatedTask = { ...currentTask, status: 'Hoàn thành' as const };
+        const updatedTask = { ...currentTask, status: 'Hoàn thành' as const, step: 4 };
         setReceipts(receipts.map(t => t.id === updatedTask.id ? updatedTask : t));
         setCurrentTask(updatedTask);
         
@@ -389,7 +389,7 @@ export function PutAwayClient({ initialReceipts, allLocations }: { initialReceip
                         </div>
                         {currentTask.items && currentTask.items.length > 0 && currentTask.status !== 'Hoàn thành' && (
                            <div className="flex justify-end gap-2 mt-6">
-                                <Button onClick={handleSave}>
+                                <Button onClick={handleSave} variant="secondary">
                                     <Save className="mr-2 h-4 w-4"/>
                                     Lưu
                                 </Button>
